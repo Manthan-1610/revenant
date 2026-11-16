@@ -1,0 +1,2 @@
+# The victim, pinned to the original 2013 release. Never upgrade or patch it.
+ystockquote==0.2.4
