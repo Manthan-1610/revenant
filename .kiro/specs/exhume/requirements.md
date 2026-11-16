@@ -9,7 +9,7 @@ Machine CDX API, downloads a small deterministic sample of raw captures and stor
 
 This is the MVP scope for a 1.5 to 2 day build. It also covers the project scaffold, because
 Exhume is the first code in the repository. Exhume follows `tech.md`, `necromancy-ethics.md`
-and `structure.md`. References F1 to F10 point to the observed Archive facts in Appendix A.
+and `structure.md`. References F1 to F12 point to the observed Archive facts in Appendix A.
 
 ## Glossary
 
@@ -406,3 +406,42 @@ The body begins:
 Observation: the Archive replays an archived 4xx with the archived status code and a
 `Memento-Datetime` header. The HTTP status alone cannot tell a replayed archived 404 apart
 from the Archive's own "not archived" 404; the Memento-Datetime header can.
+
+### F11: httpx sends `^` unencoded (verified by the user on 2026-11-15)
+
+Query (redirects followed, sent with httpx):
+`GET https://web.archive.org/web/20050518204302id_/http://ichart.finance.yahoo.com:80/table.csv?s=^DJI&`
+
+httpx raw request path:
+`/web/20050518204302id_/http://ichart.finance.yahoo.com:80/table.csv?s=^DJI&`
+
+Response: HTTP 200, 0 redirects. Headers excerpt:
+
+```
+Content-Type: text/csv
+Memento-Datetime: Wed, 18 May 2005 20:43:02 GMT
+```
+
+The body is 44 bytes. Its base32(SHA-1) is `ASWL2AKBV45KRJN7BD5UYGRV4GPEDJRR`, equal to the CDX
+digest of the same capture.
+
+Observation: passing `original` unchanged through httpx works for raw `^` symbols; no
+re-encoding is needed.
+
+### F12: CSV header drift (verified by the user on 2026-11-15)
+
+Query: the F11 capture. The 2005 body is header-only, with no data rows:
+
+```
+Date,Open,High,Low,Close,Volume,Adj. Close*
+```
+
+The 2013 and 2016 captures (F1, F5) use:
+
+```
+Date,Open,High,Low,Close,Volume,Adj Close
+```
+
+Observation: the header changed over the API's lifetime, and a header-only body is a valid
+archived response. Exhume stores both as-is because it does no CSV parsing; format inference
+is the Autopsy stage's job.

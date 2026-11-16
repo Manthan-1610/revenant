@@ -45,7 +45,9 @@ Contract facts verified from archived captures and old client code:
 - Query params: `s` symbol; `a`,`b`,`c` = start month, day, year; `d`,`e`,`f` = end
   month, day, year; `g` = interval (`d`, `w`, `m`); `ignore=.csv`.
 - **Months are 0-indexed** (`a=0` means January). Clients do `int(month) - 1`.
-- Response is `text/csv` with the header `Date,Open,High,Low,Close,Volume,Adj Close`.
+- The CSV header changed over time: `Adj. Close*` (2005) vs `Adj Close` (2016) (F12).
+  Autopsy must detect format variants by capture year; a header-only body (no rows) is
+  a valid response.
 - **Rows are newest first.**
 - Every quirk must be preserved. Old clients depend on them.
 
