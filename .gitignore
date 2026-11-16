@@ -14,3 +14,6 @@ web/node_modules/
 web/dist/
 
 # NOTE: never ignore .kiro/ — the hackathon requires it in the repo.
+
+# Exhume: stored CDX Listings are a regenerable cache (several MB per host)
+evidence/*/cdx/
