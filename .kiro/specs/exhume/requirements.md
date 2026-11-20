@@ -244,7 +244,9 @@ a fake Clock whose sleep advances time without waiting, and a temporary Evidence
 
 Facts F1 to F8 and F10 were observed on 2026-11-15 with the User-Agent
 `Revenant/0.1 (+https://github.com/Manthan-1610/revenant)` and at least 1 second between
-requests. Fact F9 is user-provided or taken from steering files and was not re-observed.
+requests. Facts F11 and F12 were observed by the user on 2026-11-15 with the User-Agent
+`Revenant/0.1 (test)`, one request each. Fact F9 is user-provided or taken from steering files and was not
+re-observed.
 
 ### F1: CDX data page 1 (collapse, fl, filters, pagination)
 
