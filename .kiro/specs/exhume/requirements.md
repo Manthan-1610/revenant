@@ -9,7 +9,7 @@ Machine CDX API, downloads a small deterministic sample of raw captures and stor
 
 This is the MVP scope for a 1.5 to 2 day build. It also covers the project scaffold, because
 Exhume is the first code in the repository. Exhume follows `tech.md`, `necromancy-ethics.md`
-and `structure.md`. References F1 to F13 point to the observed Archive facts in Appendix A.
+and `structure.md`. References F1 to F16 point to the observed Archive facts in Appendix A.
 
 ## Glossary
 
@@ -53,6 +53,7 @@ and `structure.md`. References F1 to F13 point to the observed Archive facts in 
 - **Auth-like parameter**: a parameter whose name contains `crumb`, `cookie`, `token`, `key`,
   `session` or `email`, compared case-insensitively.
 - **Capture_Fetcher**: downloads raw captures.
+- **Substituted capture**: a stored-candidate response whose `served_timestamp` is not null, differs from `requested_timestamp`, and whose computed digest does not equal the CDX digest (F14).
 - **Evidence_Root**: the directory from `--evidence-dir`, default `./evidence`.
 - **Evidence_Store**: writes capture files, Listings and the Index below the Evidence_Root.
 - **Index**: `<Evidence_Root>/<slug>/index.json`, listing every capture stored for the Slug.
@@ -106,7 +107,7 @@ and `structure.md`. References F1 to F13 point to the observed Archive facts in 
 
 #### Acceptance Criteria
 
-1. THE Query_Parser SHALL parse the query string of an `original` URL, including URLs with `:80` and any parameter order, into percent-decoded name-value pairs, so that `s=^DJI` and `s=%5EDJI` give the same `s` value (F1, F9).
+1. THE Query_Parser SHALL HTML-unescape the query string of an `original` URL (`html.unescape`) and parse the result, including URLs with `:80` and any parameter order, into percent-decoded name-value pairs, so that `s=^DJI` and `s=%5EDJI` give the same `s` value, `s=DISH&amp` yields `s=DISH` and `&amp;g=d` yields `g=d`, while fetching uses `original` unchanged (F1, F9, F15).
 2. THE Selector SHALL place each Candidate of a Host in the Group of its (Interval, Parameter shape) and order the Candidates of each Group by (timestamp, digest).
 3. THE Selector SHALL allocate picks round-robin across Groups in sorted (Interval, Parameter shape) order, and for a Group of m Candidates given k picks SHALL take the Candidates at indices floor(i × m / k) for i = 0 to k − 1, using no random number generator.
 4. THE Selector SHALL select at most N Candidates per Host, at most one per digest, and at least one from every Group when N is at least the number of Groups.
@@ -124,6 +125,7 @@ and `structure.md`. References F1 to F13 point to the observed Archive facts in 
 3. THE Capture_Fetcher SHALL pass the body to the Content_Validator and the Evidence_Store byte for byte, without charset decoding, newline conversion or trimming.
 4. IF a Data capture's final response has a 4xx status other than 429, THEN THE Capture_Fetcher SHALL reject the capture without retry.
 5. IF a Data capture is rejected, exhausts its retries or is classified as an Error page, THEN THE Capture_Fetcher SHALL fetch the next Candidate in backfill order (Requirement 4.6) until N Data captures of kind `data` are stored for the Host or no Candidate remains.
+6. IF a Data capture's response is a Substituted capture, THEN THE Capture_Fetcher SHALL re-fetch the capture once through the Archive_Client, and IF the second response is also a Substituted capture, THEN THE Capture_Fetcher SHALL reject the capture, store nothing and count the capture as rejected (F14).
 
 ### Requirement 6: Politeness
 
@@ -149,7 +151,7 @@ and `structure.md`. References F1 to F13 point to the observed Archive facts in 
 3. WHEN the Offline_Detector classifies a response as an Offline page, THE Evidence_Store SHALL store nothing from the response, and THE Retry_Policy SHALL retry the request under Requirement 6.2.
 4. WHEN a Data capture body is HTML and not an Offline page while its CDX mimetype is not `text/html`, THE Content_Validator SHALL classify the body as an Error page.
 5. WHEN an Error page is classified, THE Evidence_Store SHALL store the Error page with `kind="error_page"` and extension `html` if fewer than 10 Error_Evidence items exist for the Slug, and SHALL discard the body as rejected otherwise.
-6. THE Content_Validator SHALL set `digest_verified` to whether the unpadded upper-case base32 SHA-1 of the stored bytes equals the CDX digest (F8), and SHALL store the capture whatever the result.
+6. THE Content_Validator SHALL set `digest_verified` to whether the unpadded upper-case base32 SHA-1 of the stored bytes equals the CDX digest (F8), and SHALL store a capture whose digest mismatches with `digest_verified=false` when its `served_timestamp` is null or equals its `requested_timestamp` (Substituted captures follow Requirement 5.6).
 
 ### Requirement 8: Ethics filter
 
@@ -463,3 +465,41 @@ between requests, 48 requests in total.
 Observation: server-side `collapse=digest` only collapses ADJACENT rows; the CDX reported 14,651
 rows for ichart.yahoo.com but only 10,620 digests are unique. Client-side de-duplication
 (`merge_rows`, Requirement 3.4) is therefore required.
+
+### F14: The Archive can substitute a different capture (verified by the user on 2026-11-20)
+
+The Archive can answer an exact, existing timestamp with a 302 to a different capture; a retry
+gets the exact one.
+
+Kiro's live task 5.5 run requested
+`https://web.archive.org/web/20041129204236id_/http://ichart.yahoo.com:80/table.csv?s=DISH&amp`
+and got a 302 to `.../web/20050301233508id_/...`, then 200 with a 44-byte header-only body whose
+digest `ASWL2AKBV45KRJN7BD5UYGRV4GPEDJRR` differs from the CDX digest
+`2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW`.
+
+The user then requested the same URL 4 times (curl once, httpx with `follow_redirects=False`
+three times). Each time: 200, 125 bytes, `Memento-Datetime: Mon, 29 Nov 2004 20:42:36 GMT`,
+digest `2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW` (matches the CDX).
+
+Observation: the substitution is temporary and is not caused by `&amp`.
+
+### F15: HTML-escaped crawler artifacts in `original` (verified by the user on 2026-11-20)
+
+Rows whose `original` contains `&amp`:
+
+| Host | Rows with `&amp` | Unique digests |
+|---|---|---|
+| ichart.yahoo.com | 8,151 | 10,620 |
+| ichart.finance.yahoo.com | 6,132 | 19,317 |
+| real-chart.finance.yahoo.com | 3 | 5,015 |
+
+Example: `s=%5EVIX&amp;g=d&amp;ignore=.csv`. The responses are real Yahoo responses; `amp` is
+not an API parameter.
+
+### F16: Server comment line at the end of a body (verified by the user on 2026-11-20)
+
+The 2004-11-29 DISH body (F14) ends with the server comment line:
+
+```
+<!-- ichart9.finance.scd.yahoo.com uncompressed Mon Nov 29 12:42:31 PST 2004 -->
+```

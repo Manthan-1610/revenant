@@ -119,6 +119,9 @@ class ArchiveClient:
             retry_after = 0.0
             try:
                 response = self._client.get(url, params=params)
+            except (httpx.TooManyRedirects, httpx.DecodingError) as exc:
+                # Not TransportErrors and not transient: fail now, with no retry or sleep.
+                raise ArchiveError(f"GET {url} failed: {type(exc).__name__}: {exc}") from exc
             except httpx.TransportError as exc:
                 last_problem = f"{type(exc).__name__}: {exc}"
             else:

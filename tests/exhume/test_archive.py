@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from datetime import timedelta
 from email.utils import format_datetime
 from itertools import pairwise
@@ -186,3 +186,54 @@ def test_user_agent_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     archive.get(F6_SOURCE)
     for request in recorder.requests:
         assert request.headers.get_list("User-Agent") == ["Revenant/0.1 (test)"]
+
+
+# --- Non-retryable client errors ----------------------------------------------------------
+
+
+def _client_with(
+    handler: Callable[[httpx.Request], httpx.Response],
+) -> tuple[ArchiveClient, FakeClock, list[httpx.Request]]:
+    clock = FakeClock()
+    seen: list[httpx.Request] = []
+
+    def record(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return handler(request)
+
+    client = make_client(RateLimiter(clock), DEFAULT_USER_AGENT, httpx.MockTransport(record))
+    return ArchiveClient(client, clock), clock, seen
+
+
+def test_too_many_redirects_raises_archive_error_without_retry() -> None:
+    def loop(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(302, headers={"Location": str(request.url)})
+
+    archive, clock, seen = _client_with(loop)
+    with pytest.raises(ArchiveError, match="TooManyRedirects"):
+        archive.get(PLAIN_URL)
+    # One attempt: the hops of a single redirect chain (httpx default max_redirects=20).
+    assert len(seen) == 21
+    # Only Rate_Limiter spacing sleeps (<= 1 s); no backoff sleep.
+    assert all(s <= 1.0 for s in clock.sleeps)
+
+
+class _RawStream(httpx.SyncByteStream):
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+
+    def __iter__(self) -> Iterator[bytes]:
+        yield self._data
+
+
+def test_decoding_error_raises_archive_error_without_retry() -> None:
+    def bad_gzip(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200, headers={"Content-Encoding": "gzip"}, stream=_RawStream(b"not gzip at all")
+        )
+
+    archive, clock, seen = _client_with(bad_gzip)
+    with pytest.raises(ArchiveError, match="DecodingError"):
+        archive.get(PLAIN_URL)
+    assert len(seen) == 1
+    assert clock.sleeps == []

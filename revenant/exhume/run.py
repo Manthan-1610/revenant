@@ -1,0 +1,113 @@
+"""Exhume orchestration: discovery, selection, download and storage per Host."""
+
+from __future__ import annotations
+
+import re
+from datetime import UTC
+from email.utils import parsedate_to_datetime
+
+import httpx
+
+from revenant.exhume.archive import ArchiveClient, ArchiveError
+from revenant.exhume.cdx import DiscoveryError, fetch_listing
+from revenant.exhume.content import wayback_digest
+from revenant.exhume.models import CdxRow, HostSummary, RunResult, Tombstone
+from revenant.exhume.store import EvidenceStore
+
+WAYBACK_PREFIX = "https://web.archive.org/web/"
+_SERVED_RE = re.compile(r"^/web/(\d{14})id_/")
+
+
+def wayback_url(timestamp: str, original: str) -> str:
+    """Raw-capture URL; `original` is copied unchanged (keeps `:80` and raw `^`, F5, F11)."""
+    return f"{WAYBACK_PREFIX}{timestamp}id_/{original}"
+
+
+def served_timestamp(response: httpx.Response) -> str | None:
+    """Timestamp actually served: final URL path, else `Memento-Datetime` in UTC, else None."""
+    match = _SERVED_RE.match(response.url.path)
+    if match:
+        return match.group(1)
+    memento = response.headers.get("Memento-Datetime")
+    if memento:
+        try:
+            when = parsedate_to_datetime(memento)
+        except (TypeError, ValueError, IndexError):
+            return None
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=UTC)
+        return when.astimezone(UTC).strftime("%Y%m%d%H%M%S")
+    return None
+
+
+def _is_substituted(row: CdxRow, response: httpx.Response) -> bool:
+    """Req 5.6, F14: served a different, non-null timestamp whose body digest does not match."""
+    served = served_timestamp(response)
+    return (
+        served is not None
+        and served != row.timestamp
+        and wayback_digest(response.content) != row.digest
+    )
+
+
+def _fetch_capture(archive: ArchiveClient, row: CdxRow) -> httpx.Response | None:
+    """Fetch a Data capture; re-fetch once if substituted. None means reject (Req 5.4, 5.6).
+
+    Raises `ArchiveError` when the Retry_Policy gives up.
+    """
+    url = wayback_url(row.timestamp, row.original)
+    for _ in range(2):
+        response = archive.get(url)
+        if not 200 <= response.status_code <= 299:
+            return None
+        if not _is_substituted(row, response):
+            return response
+    return None
+
+
+def _error_evidence(store: EvidenceStore) -> int:
+    entries = store.load_index().entries.values()
+    return sum(1 for entry in entries if entry.kind in ("error", "error_page"))
+
+
+def exhume(
+    tombstone: Tombstone,
+    store: EvidenceStore,
+    archive: ArchiveClient,
+    max_captures: int,
+    refresh: bool,
+) -> RunResult:
+    """Run the data pass for every Host. Naive pick: the first N merged rows (task 8 replaces it).
+
+    `refresh` is accepted now; Listing cache reuse arrives in task 9.
+    """
+    summaries: list[HostSummary] = []
+    for host in tombstone.hosts:
+        summary = HostSummary(host=host)
+        summaries.append(summary)
+        try:
+            listing = fetch_listing(archive, tombstone, host, "data")
+        except DiscoveryError:
+            summary.discovery_failed.append("data")
+            continue
+        store.save_listing(listing)
+        summary.found = len(listing.rows)
+        for row in listing.rows[:max_captures]:
+            try:
+                response = _fetch_capture(archive, row)
+            except ArchiveError:
+                summary.rejected += 1
+                continue
+            if response is None:
+                summary.rejected += 1
+                continue
+            store.save_capture(
+                host,
+                row,
+                "data",
+                response,
+                served_timestamp(response),
+                wayback_digest(response.content) == row.digest,
+            )
+            summary.downloaded += 1
+    return RunResult(hosts=summaries, error_evidence=_error_evidence(store))

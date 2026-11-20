@@ -1,0 +1,59 @@
+{
+  "entries": {
+    "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7": {
+      "content_type": "text/csv",
+      "digest": "RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7",
+      "digest_verified": true,
+      "fetched_at": "2026-11-20T23:28:36Z",
+      "final_url": "https://web.archive.org/web/20041021172219id_/http://ichart.finance.yahoo.com:80/table.csv?s=SBLUQ.PK&amp",
+      "host": "ichart.finance.yahoo.com",
+      "kind": "data",
+      "length": "235",
+      "mimetype": "text/csv",
+      "original": "http://ichart.finance.yahoo.com:80/table.csv?s=SBLUQ.PK&amp",
+      "path": "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7.csv",
+      "requested_timestamp": "20041021172219",
+      "served_timestamp": "20041021172219",
+      "sha256": "edbdc2210791b8e446ef476124c677312b2f14ae49c619ba0f9bcc0e2c5ac482",
+      "size": 125,
+      "statuscode": "200"
+    },
+    "ichart.yahoo.com/20041129204236-2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW": {
+      "content_type": "text/csv",
+      "digest": "2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW",
+      "digest_verified": true,
+      "fetched_at": "2026-11-20T23:27:22Z",
+      "final_url": "https://web.archive.org/web/20041129204236id_/http://ichart.yahoo.com:80/table.csv?s=DISH&amp",
+      "host": "ichart.yahoo.com",
+      "kind": "data",
+      "length": "232",
+      "mimetype": "text/csv",
+      "original": "http://ichart.yahoo.com:80/table.csv?s=DISH&amp",
+      "path": "ichart.yahoo.com/20041129204236-2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW.csv",
+      "requested_timestamp": "20041129204236",
+      "served_timestamp": "20041129204236",
+      "sha256": "c943d51d56540cc437919be58153a8c711fe5183c35107aceb2ddb0074d29e6b",
+      "size": 125,
+      "statuscode": "200"
+    },
+    "real-chart.finance.yahoo.com/20140706194927-Q6BBDEGZRLFIGCRUIWVW2EESOH2FY63U": {
+      "content_type": "text/csv",
+      "digest": "Q6BBDEGZRLFIGCRUIWVW2EESOH2FY63U",
+      "digest_verified": true,
+      "fetched_at": "2026-11-20T23:28:50Z",
+      "final_url": "https://web.archive.org/web/20140706194927id_/http://real-chart.finance.yahoo.com/table.csv?s=KGC&d=5&e=25&f=2014&g=d&a=9&b=19&c=1994&ignore=.csv",
+      "host": "real-chart.finance.yahoo.com",
+      "kind": "data",
+      "length": "67005",
+      "mimetype": "text/csv",
+      "original": "http://real-chart.finance.yahoo.com/table.csv?s=KGC&d=5&e=25&f=2014&g=d&a=9&b=19&c=1994&ignore=.csv",
+      "path": "real-chart.finance.yahoo.com/20140706194927-Q6BBDEGZRLFIGCRUIWVW2EESOH2FY63U.csv",
+      "requested_timestamp": "20140706194927",
+      "served_timestamp": "20140706194927",
+      "sha256": "2d3125a72bd3f0c8892b8b626b547413abca357ccb1fc704ef118476039dd5f9",
+      "size": 222684,
+      "statuscode": "200"
+    }
+  },
+  "slug": "yahoo-finance-ichart"
+}

@@ -80,26 +80,28 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 3.1, 3.3, 3.4, 3.5_
 
-- [ ] 5. Build the thin vertical slice: store, naive run and CLI wiring, verified live
-  - [ ] 5.1 Write the minimal Evidence_Store (`store.py`) and digest helper
+- [-] 5. Build the thin vertical slice: store, naive run and CLI wiring, verified live
+  - [x] 5.1 Write the minimal Evidence_Store (`store.py`) and digest helper
     - `atomic_write(path, data)` (temp file in the target dir, `os.replace`, temp removed on failure), `extension(mimetype, kind)`, `entry_key(host, ts, digest)`, `dump_index(index)` (sorted keys, indent 2, trailing newline)
     - `EvidenceStore(root, slug)`: `load_index`, `save_listing` (compact JSON to `cdx/<host>.json`), `save_capture(...)` writing `<host>/<timestamp>-<digest>.<ext>` byte for byte then rewriting `index.json`
     - Create `content.py` with `wayback_digest(body)` only (unpadded upper-case base32 SHA-1); the rest of `content.py` comes in task 6
     - _Requirements: 3.4, 5.3, 7.6, 9.1, 9.2, 9.3_
-  - [ ] 5.2 Write the naive orchestration (`run.py`)
+  - [x] 5.2 Write the naive orchestration (`run.py`)
     - `wayback_url(timestamp, original)` with `original` unchanged (keeps `:80`, raw `^`); `served_timestamp(response)` from the final URL's `/web/<14 digits>`, else `Memento-Datetime` in UTC, else None
     - `exhume(tombstone, store, archive, max_captures, refresh)`: per Host, `fetch_listing` + `save_listing`, take the first N merged rows (naive pick, replaced in task 8), fetch each through `ArchiveClient`, reject non-429 4xx without retry, store accepted bodies with `digest_verified`; record discovery failures per Host and pass and continue with the next Host; return `RunResult`
-    - _Requirements: 3.5, 5.1, 5.2, 5.3, 5.4, 7.6_
-  - [ ] 5.3 Wire the CLI `exhume` command (`revenant/cli.py`)
+    - Substituted-capture rule: re-fetch once on served ≠ requested + digest mismatch; reject if substituted twice (Req 5.6, F14)
+    - _Requirements: 3.5, 5.1, 5.2, 5.3, 5.4, 5.6, 7.6_
+  - [x] 5.3 Wire the CLI `exhume` command (`revenant/cli.py`)
     - Load the Tombstone; on `TombstoneError` print the file and fields and exit 1 before creating any client
     - Build `SystemClock`, `RateLimiter`, `make_client`, `ArchiveClient`, `EvidenceStore(evidence_dir, slug)`; call `exhume`; print plain per-Host counts (the Rich table comes in task 11); exit 1 when any discovery failed
     - `--max-captures` uses `typer.Option(min=1)`, default 50; `--evidence-dir` defaults to `evidence`
     - _Requirements: 2.5, 10.1, 10.4_
-  - [ ] 5.4 Write an end-to-end example test in `tests/exhume/test_run.py`
+  - [x] 5.4 Write an end-to-end example test in `tests/exhume/test_run.py`
     - MockTransport serving an F1-style CDX page and F5-style CSV bodies; assert capture files at the Req 9.1 paths, an `index.json` with all Req 9.2 fields, `served_timestamp` from the F6 redirect and from `Memento-Datetime`, a 404 data capture rejected after one request, and a CLI run with an invalid Tombstone sending no request
+    - MockTransport test: substituted then correct (stored); substituted twice (rejected, nothing written)
     - Checkpoint: run pytest; all non-live tests pass
-    - _Requirements: 2.5, 5.1, 5.2, 5.4, 9.1, 9.2, 9.3_
-  - [ ] 5.5 Manual live check against the real Archive
+    - _Requirements: 2.5, 5.1, 5.2, 5.4, 5.6, 9.1, 9.2, 9.3_
+  - [x] 5.5 Manual live check against the real Archive
     - Run `.venv\Scripts\revenant exhume yahoo-finance-ichart --max-captures 1` from the repo root
     - Confirm at least 1 capture file exists under `evidence/yahoo-finance-ichart/ichart.yahoo.com/` and `evidence/yahoo-finance-ichart/index.json` lists it with `digest_verified: true`; fix any failure before continuing
     - _Requirements: 5.1, 9.1, 9.2_
@@ -142,7 +144,7 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
 
 - [ ] 8. Implement deterministic selection (`select.py`) and replace the naive pick
   - [ ] 8.1 Write query parsing, Parameter shape and Interval
-    - `parse_query(original)` with `urlsplit` + `parse_qsl(keep_blank_values=True)` (handles `:80`, any order, `s=^DJI` equals `s=%5EDJI`); `parameter_shape(pairs)` returning `s_only`, `empty_range`, `full_range` or `other`; `interval(pairs)` returning `g` or `none`
+    - `parse_query(original)` with `urlsplit` + `html.unescape(query)` + `parse_qsl(keep_blank_values=True)` (handles `:80`, any order, `s=^DJI` equals `s=%5EDJI`, `&amp` artifacts per F15); fetching still uses `original` unchanged; `parameter_shape(pairs)` returning `s_only`, `empty_range`, `full_range` or `other`; `interval(pairs)` returning `g` or `none`
     - _Requirements: 4.1_
   - [ ] 8.2 Write `select` and `backfill_order`
     - Dedup by digest (earliest wins), group by (Interval, Parameter shape), sort groups and members by (timestamp, digest), allocate picks round-robin while `k_g < m_g`, take indices `floor(i*m/k)`, output in (group, timestamp, digest) order; no RNG
@@ -154,7 +156,7 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - **Property 3: Selection determinism**: for any generated Candidate set (seeded from F1 `original` URLs with varied `g` values, shapes, timestamps and digests), any permutation of it and any N ≥ 1, `select` returns the same rows, at most N, with unique digests
     - **Validates: Requirements 4.3, 4.4, 4.5**
   - [ ] 8.5 Write example tests for selection in `tests/exhume/test_select.py`
-    - `parse_query` on F1 URLs and `%5E` symbols; shape classification of each kind; every Group gets one pick when N ≥ number of Groups; `floor(i*m/k)` indices on a known Group; backfill order on a known set
+    - `parse_query` on F1 URLs and `%5E` symbols; F15 forms: `s=DISH&amp` → `s_only`, `s=%5EVIX&amp;g=d&amp;ignore=.csv` → Interval `d`; shape classification of each kind; every Group gets one pick when N ≥ number of Groups; `floor(i*m/k)` indices on a known Group; backfill order on a known set
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.6_
 

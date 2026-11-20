@@ -49,6 +49,9 @@ Contract facts verified from archived captures and old client code:
 - The CSV header changed over time: `Adj. Close*` (2005) vs `Adj Close` (2016) (F12).
   Autopsy must detect format variants by capture year; a header-only body (no rows) is
   a valid response.
+- Some old bodies end with a server comment line, e.g.
+  `<!-- ichart9.finance.scd.yahoo.com uncompressed Mon Nov 29 12:42:31 PST 2004 -->`
+  (2004-11-29 DISH capture, F16). Autopsy must treat it as part of the format, not a data row.
 - **Rows are newest first.**
 - Every quirk must be preserved. Old clients depend on them.
 

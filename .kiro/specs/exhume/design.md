@@ -69,7 +69,7 @@ Eight modules in `revenant/exhume/`, each under ~150 LOC. The Tombstone loader s
   kind: PassKind, refresh: bool) -> Listing`: reuses the cached Listing unless `refresh`, else fetches and saves.
 
 **select.py**: deterministic sampling.
-- `parse_query(original: str) -> list[tuple[str, str]]`: `urlsplit` + `parse_qsl(keep_blank_values=True)`.
+- `parse_query(original: str) -> list[tuple[str, str]]`: `urlsplit` + `html.unescape` of the query + `parse_qsl(keep_blank_values=True)` (F15).
 - `parameter_shape(pairs: list[tuple[str, str]]) -> Shape`; `interval(pairs: list[tuple[str, str]]) -> str`.
 - `select(candidates: Sequence[CdxRow], n: int) -> list[CdxRow]`.
 - `backfill_order(candidates: Sequence[CdxRow], selected: Sequence[CdxRow]) -> list[CdxRow]`.
@@ -189,7 +189,8 @@ For any URL, `has_auth_param` is true iff a decoded parameter name contains an A
 | Error replay mismatch | no | nothing | not counted (error column deferred) |
 | HTML error page, cap < 10 | no | `.html` + entry `kind="error_page"` | `rejected` + backfill; Error_Evidence +1 |
 | HTML error page, cap full | no | nothing (refetched on rerun) | `rejected` + backfill |
-| Digest mismatch | no | stored, `digest_verified=false` | `downloaded` |
+| Substituted capture (served ≠ requested and digest mismatch) | yes, 1 re-fetch | nothing if substituted twice; else stored | `rejected` + backfill if twice |
+| Digest mismatch (same/null served timestamp) | no | stored, `digest_verified=false` | `downloaded` |
 | Ethics-filtered row | no request | URL written nowhere | `rejected` via `ethics_dropped` |
 | CDX page parse failure | no | no Listing | discovery failed, exit 1 |
 | CDX retries exhausted | (done) | no Listing | discovery failed, exit 1 |
