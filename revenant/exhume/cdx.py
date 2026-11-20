@@ -7,6 +7,7 @@ import re
 from collections.abc import Iterable
 
 from revenant.exhume.archive import ArchiveClient, ArchiveError
+from revenant.exhume.ethics import has_auth_param
 from revenant.exhume.models import CdxRow, Listing, PassKind, Tombstone
 
 CDX_URL = "https://web.archive.org/cdx/search/cdx"
@@ -117,6 +118,7 @@ def fetch_listing(
 ) -> Listing:
     """List every page of every Tombstone path for one Host and pass, merged by digest.
 
+    Rows with an Auth-like parameter are dropped and only counted (Req 8.1, 8.5).
     Raises `DiscoveryError` on any failure, so a partial Listing is never returned.
     """
     first_params: list[tuple[str, str]] | None = None
@@ -132,10 +134,22 @@ def fetch_listing(
             collected.extend(rows)
             if key is None:
                 break
+    # Ethics_Filter before merging (Req 8.1): a clean row is never lost to an earlier auth row
+    # sharing its digest. `ethics_dropped` counts unique digests seen only in dropped rows, so
+    # `len(rows) + ethics_dropped` is the number of unique captures the CDX listed.
+    clean: list[CdxRow] = []
+    dropped_digests: set[str] = set()
+    for row in collected:
+        if has_auth_param(row.original):
+            dropped_digests.add(row.digest)
+        else:
+            clean.append(row)
+    rows = merge_rows(clean)
+    dropped_digests -= {row.digest for row in rows}
     return Listing(
         host=host,
         kind=kind,
         params=first_params or [],
-        rows=merge_rows(collected),
-        ethics_dropped=0,
+        rows=rows,
+        ethics_dropped=len(dropped_digests),
     )

@@ -11,6 +11,10 @@
     "6.3 Write property test P2 in `tests/exhume/test_content.py`": {
       "status": "passed",
       "lastRunTimestamp": 1795217607393
+    },
+    "7.3 Write property test P5 in `tests/exhume/test_ethics.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795217809107
     }
   },
   "executionHistory": {
@@ -64,6 +68,18 @@
         "executionId": "4f0211f5-2b5a-453b-b9a1-9e6f3236e9d0",
         "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
         "timestamp": 1795217435384
+      },
+      {
+        "executionId": "4f0211f5-2b5a-453b-b9a1-9e6f3236e9d0",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795217657963
+      }
+    ],
+    "7. Implement the ethics filter (`ethics.py`) and apply it to Listings": [
+      {
+        "executionId": "4f0211f5-2b5a-453b-b9a1-9e6f3236e9d0",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795217664197
       }
     ]
   }

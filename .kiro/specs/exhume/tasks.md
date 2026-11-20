@@ -106,7 +106,7 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Confirm at least 1 capture file exists under `evidence/yahoo-finance-ichart/ichart.yahoo.com/` and `evidence/yahoo-finance-ichart/index.json` lists it with `digest_verified: true`; fix any failure before continuing
     - _Requirements: 5.1, 9.1, 9.2_
 
-- [-] 6. Implement content checks (`content.py`) and hook them into the client and run
+- [x] 6. Implement content checks (`content.py`) and hook them into the client and run
   - [x] 6.1 Write `is_html`, `is_offline_page` and `classify`
     - `is_html`: Content-Type media type `text/html`, or a body starting with `<!DOCTYPE` or `<html` (case-insensitive) after an optional UTF-8 BOM and whitespace
     - `is_offline_page`: HTML whose first `<title>` contains `Temporarily Offline`, status ignored
@@ -128,17 +128,17 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Note: no Archive request outside 5.5 and 12, so the known pairs are F11 (44-byte header-only body) and F14 (committed 125-byte DISH capture); the full 15479-byte F5 fixture is deferred to task 12
     - _Requirements: 7.3, 7.4, 7.5, 7.6_
 
-- [ ] 7. Implement the ethics filter (`ethics.py`) and apply it to Listings
-  - [ ] 7.1 Write `has_auth_param`
+- [x] 7. Implement the ethics filter (`ethics.py`) and apply it to Listings
+  - [x] 7.1 Write `has_auth_param`
     - `AUTH_SUBSTRINGS = ("crumb", "cookie", "token", "key", "session", "email")`; parse the query with `parse_qsl(keep_blank_values=True)` so names without values count, percent-decode names and match case-insensitive substrings on names only
     - _Requirements: 8.2, 8.3_
-  - [ ] 7.2 Apply the filter in `fetch_listing` and count drops
+  - [x] 7.2 Apply the filter in `fetch_listing` and count drops
     - Drop matching rows before merging is saved, set `Listing.ethics_dropped`, so dropped URLs reach no Listing file, no request and no Index entry; in `run.py` set `found = len(rows) + ethics_dropped` and add `ethics_dropped` to `rejected`
     - _Requirements: 8.1, 8.4, 8.5, 10.3_
-  - [ ] 7.3 Write property test P5 in `tests/exhume/test_ethics.py`
+  - [x] 7.3 Write property test P5 in `tests/exhume/test_ethics.py`
     - **Property 5: Auth filter matches names only**: for any generated URL, `has_auth_param` is true iff some decoded parameter name contains an Auth substring in any case; Auth substrings placed only in values, the path or the fragment never count; examples `apiKey=x`, `X-Crumb=1`, `%63rumb=1`, `keyword=x` rejected and `s=TOKEN` accepted
     - **Validates: Requirements 8.2, 8.3**
-  - [ ] 7.4 Write an example test for drop handling in `tests/exhume/test_run.py`
+  - [x] 7.4 Write an example test for drop handling in `tests/exhume/test_run.py`
     - A CDX page with a `crumb=` URL: no request is sent for it, its URL appears in no file under the Evidence_Root, the Listing records `ethics_dropped=1`, and `found`/`rejected` include it
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 8.1, 8.4, 8.5, 10.3_

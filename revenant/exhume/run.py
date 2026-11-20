@@ -87,7 +87,9 @@ def exhume(
             summary.discovery_failed.append("data")
             continue
         store.save_listing(listing)
-        summary.found = len(listing.rows)
+        # Req 10.3: Ethics_Filter drops count as found and as rejected.
+        summary.found = len(listing.rows) + listing.ethics_dropped
+        summary.rejected += listing.ethics_dropped
         for row in listing.rows[:max_captures]:
             try:
                 response = _fetch_capture(archive, row)

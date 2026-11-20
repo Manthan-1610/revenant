@@ -375,3 +375,34 @@ def test_eleventh_error_page_is_discarded(tmp_path: Path) -> None:
     assert len(list((store.slug_dir / HOST).iterdir())) == 10
     for entry in entries.values():
         assert (store.slug_dir / entry.path).read_bytes() == F10_404
+
+
+# ---- task 7: Ethics_Filter ----------------------------------------------------------------
+
+CRUMB_TS = "20160101000000"
+CRUMB_ORIGINAL = "http://ichart.yahoo.com:80/table.csv?s=GOOG&crumb=SeCrEtCrUmB42&g=d"
+
+
+def test_crumb_url_is_dropped_everywhere(tmp_path: Path) -> None:
+    row = (ROW_GOOG[0], ROW_GOOG[1], wayback_digest(F5_BODY))
+    crumb = (CRUMB_TS, CRUMB_ORIGINAL, "CRUMBDIGESTCRUMBDIGESTCRUMBDIGES")
+    fake = ScriptedArchive([row, crumb], {row[0]: ["csv"]})
+    _, store, summary, _ = _run_scripted(tmp_path, fake, 5)
+
+    # No request was sent for the dropped row.
+    assert CRUMB_TS not in fake.capture_fetches
+    assert fake.capture_fetches == {row[0]: 1}
+
+    listing = json.loads((store.slug_dir / "cdx" / f"{HOST}.json").read_bytes())
+    assert listing["ethics_dropped"] == 1
+    assert [r["timestamp"] for r in listing["rows"]] == [row[0]]
+    assert (summary.found, summary.downloaded, summary.rejected) == (2, 1, 1)
+
+    # Neither the URL nor its secret value appears in any file under the Evidence_Root.
+    files = [p for p in tmp_path.rglob("*") if p.is_file()]
+    assert files
+    for path in files:
+        data = path.read_bytes()
+        assert b"SeCrEtCrUmB42" not in data, path
+        assert b"crumb" not in data.lower(), path
+        assert CRUMB_TS.encode() not in data, path
