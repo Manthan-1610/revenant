@@ -7,6 +7,10 @@
     "4.3 Write property test P1 in `tests/exhume/test_cdx.py`": {
       "status": "passed",
       "lastRunTimestamp": 1795215645522
+    },
+    "6.3 Write property test P2 in `tests/exhume/test_content.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795217607393
     }
   },
   "executionHistory": {
@@ -48,6 +52,18 @@
         "executionId": "9086c1d2-f72a-4f9d-9e9f-ffc3b9c66646",
         "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
         "timestamp": 1795216165906
+      },
+      {
+        "executionId": "4f0211f5-2b5a-453b-b9a1-9e6f3236e9d0",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795217430316
+      }
+    ],
+    "6. Implement content checks (`content.py`) and hook them into the client and run": [
+      {
+        "executionId": "4f0211f5-2b5a-453b-b9a1-9e6f3236e9d0",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795217435384
       }
     ]
   }

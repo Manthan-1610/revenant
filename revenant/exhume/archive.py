@@ -10,6 +10,8 @@ from typing import Protocol
 
 import httpx
 
+from revenant.exhume.content import is_offline_page
+
 DEFAULT_USER_AGENT = "Revenant/0.1 (+https://github.com/Manthan-1610/revenant)"
 MAX_ATTEMPTS = 5
 MAX_BACKOFF = 60.0
@@ -113,7 +115,10 @@ class ArchiveClient:
         self._clock = clock
 
     def get(self, url: str, params: list[tuple[str, str]] | None = None) -> httpx.Response:
-        """GET with up to 5 attempts; returns any non-retryable response, including 4xx."""
+        """GET with up to 5 attempts; returns any non-retryable response, including 4xx.
+
+        Connection errors, timeouts, 429, 5xx and Offline pages (any status) are retried.
+        """
         last_problem = "no attempt made"
         for attempt in range(1, MAX_ATTEMPTS + 1):
             retry_after = 0.0
@@ -125,9 +130,13 @@ class ArchiveClient:
             except httpx.TransportError as exc:
                 last_problem = f"{type(exc).__name__}: {exc}"
             else:
-                if not _retryable_status(response.status_code):
+                if is_offline_page(response.headers.get("content-type"), response.content):
+                    # F9: the outage page can come with any status, including 200.
+                    last_problem = f"Offline page (HTTP {response.status_code})"
+                elif not _retryable_status(response.status_code):
                     return response
-                last_problem = f"HTTP {response.status_code}"
+                else:
+                    last_problem = f"HTTP {response.status_code}"
                 retry_after = parse_retry_after(
                     response.headers.get("Retry-After"), self._clock.now_utc()
                 )

@@ -80,7 +80,7 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 3.1, 3.3, 3.4, 3.5_
 
-- [-] 5. Build the thin vertical slice: store, naive run and CLI wiring, verified live
+- [x] 5. Build the thin vertical slice: store, naive run and CLI wiring, verified live
   - [x] 5.1 Write the minimal Evidence_Store (`store.py`) and digest helper
     - `atomic_write(path, data)` (temp file in the target dir, `os.replace`, temp removed on failure), `extension(mimetype, kind)`, `entry_key(host, ts, digest)`, `dump_index(index)` (sorted keys, indent 2, trailing newline)
     - `EvidenceStore(root, slug)`: `load_index`, `save_listing` (compact JSON to `cdx/<host>.json`), `save_capture(...)` writing `<host>/<timestamp>-<digest>.<ext>` byte for byte then rewriting `index.json`
@@ -106,25 +106,26 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Confirm at least 1 capture file exists under `evidence/yahoo-finance-ichart/ichart.yahoo.com/` and `evidence/yahoo-finance-ichart/index.json` lists it with `digest_verified: true`; fix any failure before continuing
     - _Requirements: 5.1, 9.1, 9.2_
 
-- [ ] 6. Implement content checks (`content.py`) and hook them into the client and run
-  - [ ] 6.1 Write `is_html`, `is_offline_page` and `classify`
+- [-] 6. Implement content checks (`content.py`) and hook them into the client and run
+  - [x] 6.1 Write `is_html`, `is_offline_page` and `classify`
     - `is_html`: Content-Type media type `text/html`, or a body starting with `<!DOCTYPE` or `<html` (case-insensitive) after an optional UTF-8 BOM and whitespace
     - `is_offline_page`: HTML whose first `<title>` contains `Temporarily Offline`, status ignored
     - `classify(body, content_type, cdx_mimetype)`: `error_page` when the body is non-Offline HTML and the CDX mimetype is not `text/html`, else `data`
     - _Requirements: 7.1, 7.2, 7.4_
-  - [ ] 6.2 Hook content checks into `ArchiveClient.get` and `run.py`
+  - [x] 6.2 Hook content checks into `ArchiveClient.get` and `run.py`
     - `ArchiveClient.get` treats an Offline page (any status) as retryable under the 5-attempt limit and never returns it as a success
     - `run.py` classifies each Data capture; stores an Error page with `kind="error_page"` and extension `html` while the Slug has fewer than 10 Error_Evidence items, else discards it; counts it as rejected; Offline bodies are never stored
     - Add `EvidenceStore.error_evidence_count()`
     - _Requirements: 6.2, 7.3, 7.5, 9.1_
-  - [ ] 6.3 Write property test P2 in `tests/exhume/test_content.py`
+  - [x] 6.3 Write property test P2 in `tests/exhume/test_content.py`
     - **Property 2: Offline detector**: for any generated valid CSV, JSON or XML body with a non-`text/html` Content-Type, `is_offline_page` is false; the F9 Offline page is detected with any generated status code, including 200
     - Fixtures: F5 CSV head, an F9 Offline page, the F10 Yahoo 404 HTML, the F11/F12 header-only CSV (`Date,Open,High,Low,Close,Volume,Adj. Close*`)
     - **Validates: Requirements 7.1, 7.2**
-  - [ ] 6.4 Write example tests for classification and digests
+  - [x] 6.4 Write example tests for classification and digests
     - In `tests/exhume/test_content.py`: F10 HTML under a `text/csv` CDX mimetype is `error_page`; header-only CSV is `data`; the F8 known pair: fetch the full F5 body once (one-off script, committed as `tests/exhume/fixtures/f5_goog_weekly.csv`, 15479 bytes) and assert `wayback_digest` is `M37VRFD74CQFJ6RCU52MNGMWIP5YDNFY`
     - In `tests/exhume/test_run.py`: an Offline page with status 200 is retried and not stored; the 11th Error page is discarded; a digest mismatch is stored with `digest_verified=false`
     - Checkpoint: run pytest; all non-live tests pass
+    - Note: no Archive request outside 5.5 and 12, so the known pairs are F11 (44-byte header-only body) and F14 (committed 125-byte DISH capture); the full 15479-byte F5 fixture is deferred to task 12
     - _Requirements: 7.3, 7.4, 7.5, 7.6_
 
 - [ ] 7. Implement the ethics filter (`ethics.py`) and apply it to Listings

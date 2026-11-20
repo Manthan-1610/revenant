@@ -115,3 +115,8 @@ class EvidenceStore:
         index.entries[entry_key(host, row.timestamp, row.digest)] = entry
         atomic_write(self.index_path, dump_index(index))
         return entry
+
+    def error_evidence_count(self) -> int:
+        """Number of Index entries of kind `error` or `error_page` for the Slug."""
+        entries = self.load_index().entries.values()
+        return sum(1 for entry in entries if entry.kind in ("error", "error_page"))

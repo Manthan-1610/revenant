@@ -10,11 +10,12 @@ import httpx
 
 from revenant.exhume.archive import ArchiveClient, ArchiveError
 from revenant.exhume.cdx import DiscoveryError, fetch_listing
-from revenant.exhume.content import wayback_digest
+from revenant.exhume.content import classify, wayback_digest
 from revenant.exhume.models import CdxRow, HostSummary, RunResult, Tombstone
 from revenant.exhume.store import EvidenceStore
 
 WAYBACK_PREFIX = "https://web.archive.org/web/"
+ERROR_EVIDENCE_CAP = 10
 _SERVED_RE = re.compile(r"^/web/(\d{14})id_/")
 
 
@@ -65,11 +66,6 @@ def _fetch_capture(archive: ArchiveClient, row: CdxRow) -> httpx.Response | None
     return None
 
 
-def _error_evidence(store: EvidenceStore) -> int:
-    entries = store.load_index().entries.values()
-    return sum(1 for entry in entries if entry.kind in ("error", "error_page"))
-
-
 def exhume(
     tombstone: Tombstone,
     store: EvidenceStore,
@@ -101,13 +97,22 @@ def exhume(
             if response is None:
                 summary.rejected += 1
                 continue
+            kind = classify(response.content, response.headers.get("content-type"), row.mimetype)
+            if kind == "error_page":
+                # Req 7.5: keep it as Error_Evidence while the Slug cap allows; never as data.
+                summary.rejected += 1
+                if store.error_evidence_count() >= ERROR_EVIDENCE_CAP:
+                    continue
             store.save_capture(
                 host,
                 row,
-                "data",
+                kind,
                 response,
                 served_timestamp(response),
                 wayback_digest(response.content) == row.digest,
             )
-            summary.downloaded += 1
-    return RunResult(hosts=summaries, error_evidence=_error_evidence(store))
+            if kind == "error_page":
+                summary.error_evidence += 1
+            else:
+                summary.downloaded += 1
+    return RunResult(hosts=summaries, error_evidence=store.error_evidence_count())

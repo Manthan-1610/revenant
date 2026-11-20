@@ -11,3 +11,12 @@ Bodies copied from `.kiro/specs/exhume/requirements.md` Appendix A. No rows are 
   `CdxParseError` on this page.
 - `cdx_last_page.json`: derived from F1 + F3. F1's three rows under the six-field header, with
   no `[]` + key tail, which is the "last page has no resume key" shape observed in F3.
+- `f5_csv_head.csv`: the three F5 body lines shown in Appendix A (head only, not the full
+  15479-byte body; the full F5 fixture is deferred to task 12).
+- `f9_offline.html`: a minimal page built only from the F9 description (title
+  "Internet Archive: Temporarily Offline"). F9 was never observed, so the rest is synthetic.
+- `f10_yahoo_404_head.html`: the F10 body head as shown in Appendix A.
+- `f12_header_only.csv`: the 44-byte F11/F12 header-only body; its digest is the F11 CDX digest.
+- `f14_dish_20041129.csv`: byte copy of the live task 5.5 evidence file
+  `evidence/yahoo-finance-ichart/ichart.yahoo.com/20041129204236-2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW.csv`
+  (F14, F16), 125 bytes.

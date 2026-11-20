@@ -284,3 +284,94 @@ def test_cli_invalid_tombstone_sends_no_request(
     assert "broken.toml" in result.output
     assert "hosts" in result.output
     assert not (tmp_path / "evidence").exists()
+
+
+# ---- task 6: Offline pages and Error pages -----------------------------------------------
+
+FIXTURES = Path(__file__).parent / "fixtures"
+F9_OFFLINE = (FIXTURES / "f9_offline.html").read_bytes()
+F10_404 = (FIXTURES / "f10_yahoo_404_head.html").read_bytes()
+
+
+class ScriptedArchive:
+    """CDX page of `rows`; each capture timestamp answers from its own list of responses."""
+
+    def __init__(self, rows: list[tuple[str, str, str]], replies: dict[str, list[str]]) -> None:
+        self.rows = rows
+        self.replies = {ts: list(script) for ts, script in replies.items()}
+        self.capture_fetches: dict[str, int] = {}
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/cdx/search/cdx":
+            page = [["timestamp", "original", "mimetype", "statuscode", "digest", "length"]]
+            page += [
+                [ts, original, "text/csv", "200", digest, "1"] for ts, original, digest in self.rows
+            ]
+            return httpx.Response(200, content=json.dumps(page).encode())
+        ts = path.removeprefix("/web/")[:14]
+        self.capture_fetches[ts] = self.capture_fetches.get(ts, 0) + 1
+        step = self.replies[ts].pop(0)
+        if step == "offline":
+            return httpx.Response(200, content=F9_OFFLINE, headers={"Content-Type": "text/html"})
+        if step == "yahoo404":
+            # An archived Yahoo HTML error page served under a text/csv CDX row.
+            return httpx.Response(
+                200, content=F10_404, headers={"Content-Type": "text/html; charset=iso-8859-1"}
+            )
+        return httpx.Response(200, content=F5_BODY, headers={"Content-Type": "text/csv"})
+
+
+def _run_scripted(
+    tmp_path: Path, fake: ScriptedArchive, n: int
+) -> tuple[FakeClock, EvidenceStore, HostSummary, int]:
+    clock = FakeClock()
+    client = make_client(RateLimiter(clock), DEFAULT_USER_AGENT, httpx.MockTransport(fake))
+    store = EvidenceStore(tmp_path, "yahoo-finance-ichart")
+    result = exhume(_tombstone(), store, ArchiveClient(client, clock), n, False)
+    [summary] = result.hosts
+    return clock, store, summary, result.error_evidence
+
+
+def test_offline_page_with_status_200_is_retried_then_stored(tmp_path: Path) -> None:
+    row = (ROW_GOOG[0], ROW_GOOG[1], wayback_digest(F5_BODY))
+    fake = ScriptedArchive([row], {row[0]: ["offline", "csv"]})
+    clock, store, summary, _ = _run_scripted(tmp_path, fake, 1)
+
+    assert fake.capture_fetches[row[0]] == 2
+    assert 2.0 in clock.sleeps  # backoff after attempt 1
+    assert (summary.downloaded, summary.rejected) == (1, 0)
+    [entry] = store.load_index().entries.values()
+    assert entry.kind == "data"
+    assert (store.slug_dir / entry.path).read_bytes() == F5_BODY
+
+
+def test_offline_on_every_attempt_is_rejected_and_not_stored(tmp_path: Path) -> None:
+    row = (ROW_GOOG[0], ROW_GOOG[1], wayback_digest(F5_BODY))
+    fake = ScriptedArchive([row], {row[0]: ["offline"] * 5})
+    _, store, summary, _ = _run_scripted(tmp_path, fake, 1)
+
+    assert fake.capture_fetches[row[0]] == 5
+    assert (summary.downloaded, summary.rejected) == (0, 1)
+    assert not (store.slug_dir / HOST).exists()
+    assert not store.index_path.exists()
+
+
+def test_eleventh_error_page_is_discarded(tmp_path: Path) -> None:
+    rows = [
+        (f"20{i:02d}0101000000", f"http://ichart.yahoo.com:80/table.csv?s=E{i}", f"D{i:02d}")
+        for i in range(11)
+    ]
+    fake = ScriptedArchive(rows, {ts: ["yahoo404"] for ts, _, _ in rows})
+    _, store, summary, error_evidence = _run_scripted(tmp_path, fake, 11)
+
+    assert (summary.downloaded, summary.rejected, summary.error_evidence) == (0, 11, 10)
+    assert error_evidence == 10 == store.error_evidence_count()
+    entries = store.load_index().entries
+    assert len(entries) == 10
+    assert all(e.kind == "error_page" and e.path.endswith(".html") for e in entries.values())
+    # Rows are merged in timestamp order, so the last one is the discarded 11th.
+    assert f"{HOST}/{rows[-1][0]}-{rows[-1][2]}" not in entries
+    assert len(list((store.slug_dir / HOST).iterdir())) == 10
+    for entry in entries.values():
+        assert (store.slug_dir / entry.path).read_bytes() == F10_404
