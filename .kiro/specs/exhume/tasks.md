@@ -16,7 +16,7 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
 
 ## Tasks
 
-- [-] 1. Scaffold the project, install it and make `revenant --help` work
+- [x] 1. Scaffold the project, install it and make `revenant --help` work
   - [x] 1.1 Write the minimal packaging, package skeleton, test layout and Tombstone
     - Write root `pyproject.toml`: hatchling build backend, `requires-python = ">=3.12"`, dependencies `httpx`, `pydantic>=2`, `typer`, `rich`; optional `dev` group `pytest`, `hypothesis`, `ruff`; console script `revenant = "revenant.cli:main"`
     - In `[tool.pytest.ini_options]` set `addopts = "-m 'not live'"`, `testpaths = ["tests"]` and register the `live` marker
@@ -32,12 +32,12 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Verify `.venv\Scripts\python -m pytest` exits 0
     - _Requirements: 1.2, 1.4_
 
-- [ ] 2. Implement the data models and the Tombstone loader (`models.py`)
-  - [ ] 2.1 Write the models and `load_tombstone`
+- [x] 2. Implement the data models and the Tombstone loader (`models.py`)
+  - [x] 2.1 Write the models and `load_tombstone`
     - Define `PassKind`, `Kind`, `Shape`, `Tombstone` (`extra="forbid"`, non-empty lists, Hosts lowercased by a field validator), `CdxRow` (frozen), `Listing`, `IndexEntry`, `Index`, `HostSummary`, `RunResult` as in the design's Data Models
     - Implement `load_tombstone(slug, root=Path("tombstones"))` with `tomllib`; raise `TombstoneError` naming the file and failing fields for a missing file, invalid TOML, validation errors and a slug/file-name mismatch (naming both values)
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
-  - [ ] 2.2 Write example tests in `tests/exhume/test_models.py`
+  - [x] 2.2 Write example tests in `tests/exhume/test_models.py`
     - Valid Tombstone loads; missing field, extra field, empty list, bad TOML, missing file and slug mismatch raise `TombstoneError` with the file name and field names; Hosts are lowercased
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
