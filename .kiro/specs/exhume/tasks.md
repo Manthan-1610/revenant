@@ -62,20 +62,20 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 4. Implement CDX discovery (`cdx.py`)
-  - [ ] 4.1 Write query building, page parsing and merging
+- [x] 4. Implement CDX discovery (`cdx.py`)
+  - [x] 4.1 Write query building, page parsing and merging
     - `mimetype_regex(mimetypes)` (regex-escaped members, `text/csv` or `(text/csv|text/xml)`), `build_params(host, path, kind, mimetypes)` for the data pass with `limit=1000`, `showResumeKey=true`, `collapse=digest`, the `fl` list, `filter=statuscode:2..` and one mimetype filter
     - `parse_page(payload)`: map rows by header name, return the one-string row after `[]` as the Resume_Key, raise `CdxParseError` on malformed pages
     - `merge_rows(rows)`: one row per digest, earliest timestamp, sorted by (timestamp, digest)
     - _Requirements: 3.1, 3.2, 3.4_
-  - [ ] 4.2 Write `fetch_listing` with resumeKey pagination
+  - [x] 4.2 Write `fetch_listing` with resumeKey pagination
     - Loop over Tombstone paths in order and over pages via `resumeKey` until a page has no key; merge into one `Listing` with `ethics_dropped=0` (the filter is added in task 7); raise a discovery error on `ArchiveError`, non-2xx CDX status or `CdxParseError`, so no partial Listing is produced
     - Save the F1, F2 and F3 response excerpts from `requirements.md` Appendix A as fixtures in `tests/exhume/fixtures/` (`cdx_f1.json`, `cdx_f2.json`, `cdx_f3.json`)
     - _Requirements: 3.3, 3.4, 3.5_
-  - [ ] 4.3 Write property test P1 in `tests/exhume/test_cdx.py`
+  - [x] 4.3 Write property test P1 in `tests/exhume/test_cdx.py`
     - **Property 1: CDX page parse**: for any permutation of the six header fields, any generated rows and an optional `[]` plus one-string key tail, `parse_page` maps every row by field name, returns the key only when the tail is present and never returns the key as a row; F1 to F3 fixtures parse as expected
     - **Validates: Requirements 3.2**
-  - [ ] 4.4 Write example tests for discovery in `tests/exhume/test_cdx.py`
+  - [x] 4.4 Write example tests for discovery in `tests/exhume/test_cdx.py`
     - Exact query parameters of Req 3.1; MockTransport pagination F1 → F2 → F3 stops at the page without a key and sends `resumeKey`; dedup keeps the earliest timestamp per digest; a parse failure or exhausted retries yields a discovery error
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 3.1, 3.3, 3.4, 3.5_
