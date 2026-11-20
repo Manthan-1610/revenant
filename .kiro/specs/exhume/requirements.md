@@ -9,7 +9,7 @@ Machine CDX API, downloads a small deterministic sample of raw captures and stor
 
 This is the MVP scope for a 1.5 to 2 day build. It also covers the project scaffold, because
 Exhume is the first code in the repository. Exhume follows `tech.md`, `necromancy-ethics.md`
-and `structure.md`. References F1 to F12 point to the observed Archive facts in Appendix A.
+and `structure.md`. References F1 to F13 point to the observed Archive facts in Appendix A.
 
 ## Glossary
 
@@ -447,3 +447,19 @@ Date,Open,High,Low,Close,Volume,Adj Close
 Observation: the header changed over the API's lifetime, and a header-only body is a valid
 archived response. Exhume stores both as-is because it does no CSV parsing; format inference
 is the Autopsy stage's job.
+
+### F13: Live CDX listing sizes after client-side merge (verified by the user on 2026-11-20)
+
+Run: `revenant.exhume.cdx.fetch_listing` (data pass, `limit=1000`, `resumeKey` pagination) for
+each Host of `tombstones/yahoo-finance-ichart.toml`, with the default User-Agent, at least 1 second
+between requests, 48 requests in total.
+
+| Host | Unique digests after `merge_rows` | Pages | Years |
+|---|---|---|---|
+| ichart.yahoo.com | 10,620 | 15 | not reported |
+| ichart.finance.yahoo.com | 19,317 | 27 | not reported |
+| real-chart.finance.yahoo.com | 5,015 | 6 | 2014–2017 |
+
+Observation: server-side `collapse=digest` only collapses ADJACENT rows; the CDX reported 14,651
+rows for ichart.yahoo.com but only 10,620 digests are unique. Client-side de-duplication
+(`merge_rows`, Requirement 3.4) is therefore required.

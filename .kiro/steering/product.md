@@ -54,8 +54,8 @@ Contract facts verified from archived captures and old client code:
 
 Archived evidence (CDX, unique captures by digest, checked 2026-11-15):
 - Data captures (`200 text/csv`): ichart.yahoo.com has 14,651 (2004–2017).
-  ichart.finance.yahoo.com has 22,209 (2004–2017). real-chart.finance.yahoo.com has not
-  been checked yet.
+  ichart.finance.yahoo.com has 22,209 (2004–2017). real-chart.finance.yahoo.com has
+  5,015 (2014–2017). Counts after client-side de-duplication: 10,620 / 19,317 / 5,015 (F13).
 - Error captures for ichart.yahoo.com: 229 (223 × 404, 6 × 400, all text/html).
 - Captures include `g=d` and `g=w` intervals. ichart.finance.yahoo.com also has `g=m` (37)
   and `g=v` (18); `g=v` is not one of the documented intervals.

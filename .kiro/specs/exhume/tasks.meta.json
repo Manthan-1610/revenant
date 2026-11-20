@@ -1,0 +1,47 @@
+{
+  "pbtResults": {
+    "3.3 Write property test P4 in `tests/exhume/test_archive.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795215460683
+    },
+    "4.3 Write property test P1 in `tests/exhume/test_cdx.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795215645522
+    }
+  },
+  "executionHistory": {
+    "1. Scaffold the project, install it and make `revenant --help` work": [
+      {
+        "executionId": "0c444512-7b2d-47d3-8837-f0e71b891b64",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795215138869
+      },
+      {
+        "executionId": "0c444512-7b2d-47d3-8837-f0e71b891b64",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795215277357
+      }
+    ],
+    "2. Implement the data models and the Tombstone loader (`models.py`)": [
+      {
+        "executionId": "0c444512-7b2d-47d3-8837-f0e71b891b64",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795215282645
+      }
+    ],
+    "3. Implement the polite Archive client (`archive.py`)": [
+      {
+        "executionId": "0c444512-7b2d-47d3-8837-f0e71b891b64",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795215369737
+      }
+    ],
+    "4. Implement CDX discovery (`cdx.py`)": [
+      {
+        "executionId": "0c444512-7b2d-47d3-8837-f0e71b891b64",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795215519727
+      }
+    ]
+  }
+}
