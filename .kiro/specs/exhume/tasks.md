@@ -42,22 +42,22 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 3. Implement the polite Archive client (`archive.py`)
-  - [ ] 3.1 Write Clock, RateLimiter, User-Agent and client factory
+- [x] 3. Implement the polite Archive client (`archive.py`)
+  - [x] 3.1 Write Clock, RateLimiter, User-Agent and client factory
     - `Clock` protocol and `SystemClock`; `FakeClock` in `tests/exhume/conftest.py` (sleep advances monotonic and UTC time, records start times)
     - `user_agent()` from env `REVENANT_USER_AGENT`, default `Revenant/0.1 (+https://github.com/Manthan-1610/revenant)`
     - `RateLimiter(clock, min_interval=1.0).on_request(request)` sleeping through `clock.sleep` only
     - `make_client(limiter, ua, transport=None)`: sync `httpx.Client`, `follow_redirects=True`, `event_hooks={"request": [limiter.on_request]}`, `httpx.Timeout(connect=10.0, read=60.0, write=10.0, pool=10.0)`, exactly one `User-Agent` header
     - _Requirements: 6.1, 6.5, 6.6_
-  - [ ] 3.2 Write retry and backoff in `ArchiveClient.get`
+  - [x] 3.2 Write retry and backoff in `ArchiveClient.get`
     - `parse_retry_after(value, now)` for integer seconds and HTTP dates, 0 when absent or unparseable
     - `backoff_delay(attempt, retry_after) = min(60, max(2 * 2**(attempt-1), retry_after))`
     - `ArchiveClient(client, clock).get(url, params)`: retry connection errors, timeouts, 429 and 5xx up to 5 attempts in total, sleeping via the Clock; return any other response including non-429 4xx without retry; raise `ArchiveError` when attempts run out. Offline-page retry is added in task 6.2
     - _Requirements: 6.2, 6.3, 6.4, 6.6_
-  - [ ] 3.3 Write property test P4 in `tests/exhume/test_archive.py`
+  - [x] 3.3 Write property test P4 in `tests/exhume/test_archive.py`
     - **Property 4: Rate limiter spacing**: for any generated sequence of mocked responses (200, 429 with and without `Retry-After`, 5xx, connection errors, and the F6 302 redirect) under `FakeClock`, every pair of recorded request starts is at least 1 s apart, including retries and redirect hops
     - **Validates: Requirements 6.1**
-  - [ ] 3.4 Write example tests for retry and headers in `tests/exhume/test_archive.py`
+  - [x] 3.4 Write example tests for retry and headers in `tests/exhume/test_archive.py`
     - Backoff sequence 2, 4, 8, 16 s; `Retry-After` of 30 s and an HTTP date honoured, capped at 60 s; exactly 5 attempts then `ArchiveError`; 404 returned after 1 attempt; single `User-Agent` header with default and env override
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 6.2, 6.3, 6.4, 6.5_
