@@ -16,8 +16,8 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
 
 ## Tasks
 
-- [ ] 1. Scaffold the project, install it and make `revenant --help` work
-  - [ ] 1.1 Write the minimal packaging, package skeleton, test layout and Tombstone
+- [-] 1. Scaffold the project, install it and make `revenant --help` work
+  - [x] 1.1 Write the minimal packaging, package skeleton, test layout and Tombstone
     - Write root `pyproject.toml`: hatchling build backend, `requires-python = ">=3.12"`, dependencies `httpx`, `pydantic>=2`, `typer`, `rich`; optional `dev` group `pytest`, `hypothesis`, `ruff`; console script `revenant = "revenant.cli:main"`
     - In `[tool.pytest.ini_options]` set `addopts = "-m 'not live'"`, `testpaths = ["tests"]` and register the `live` marker
     - Create `revenant/__init__.py` and subpackages `exhume`, `autopsy`, `reanimate`, `pulse`, `haunt`, `api`, each with an empty `__init__.py`
@@ -26,7 +26,7 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Write `tombstones/yahoo-finance-ichart.toml` with the six fields of Req 1.5
     - Check `.gitignore`: it must not ignore `.kiro/`, `evidence/<slug>/index.json` or capture files; add `evidence/*/cdx/` and `.venv/`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
-  - [ ] 1.2 Create the virtual environment, install and verify
+  - [x] 1.2 Create the virtual environment, install and verify
     - First command-line step: `python -m venv .venv` at the repo root, then `.venv\Scripts\python -m pip install -e ".[dev]"`
     - Verify `.venv\Scripts\revenant --help` exits 0 and lists `exhume`
     - Verify `.venv\Scripts\python -m pytest` exits 0
