@@ -145,24 +145,24 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 1.4_
 
-- [-] 8. Implement the Spec_Renderer (`render.py`) and wire it into the CLI
-  - [ ] 8.1 Write `render` and `write_spec`
+- [x] 8. Implement the Spec_Renderer (`render.py`) and wire it into the CLI
+  - [x] 8.1 Write `render` and `write_spec`
     - Fixed section order, f-strings and `"\n".join`, one trailing newline; EARS requirements for routes (every host alias and path), each parameter with type and required/optional, for each `int` parameter a requirement to accept every value from the observed min to the observed max and never reject a value Yahoo accepted (`d` up to 12, F21), month indexing, the row-order class with the highest count, each shape's default range, the `X-Revenant-Donor` header
     - Served variant per Interval: latest last year, then higher Evidence, then lowest header; served precision: most frequent in the latest year, ties to more digits; error requirement for the top status (ties to lower code) with its top content type (ties to code-point order) when the donor has no rows
     - Informational section: unselected variants, every Row_Date format, the Comment_Line example, and that "observed, unexplained" parameters are ignored
     - `write_spec` via `atomic_write` to `<specs_dir>/revenant-<slug>/requirements.md`
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
-  - [ ] 8.2 Wire rendering into the CLI flow
+  - [x] 8.2 Wire rendering into the CLI flow
     - After `write_contract` and the `undetermined` check: `load_contract` from disk → `render` → `write_spec`; print the spec path
     - _Requirements: 1.5, 8.1_
-  - [ ] 8.3 Write example tests in `tests/autopsy/test_render.py`
+  - [x] 8.3 Write example tests in `tests/autopsy/test_render.py`
     - Rendering a fixed contract twice gives identical bytes; each tie-break of Req 8.3, 8.4 and 8.6; no error requirement when `errors` is null; the informational section lists unselected variants; the rendered spec states the full observed range (min to max) of each `int` parameter
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 8.1, 8.3, 8.4, 8.5, 8.6_
 
-- [ ] 9. Write the CLI tests
+- [-] 9. Write the CLI tests
   - [ ] 9.1 Write `tests/autopsy/test_cli.py` with `CliRunner` and `tmp_path` evidence
-    - Exit 0 writes both files and prints the indexing, both Decisive counts and each path; exit 1 for each input error with no file written or modified; a non-UTF-8 body exits 1; `undetermined` exits 2 with `contract.json` only; two runs from two working directories (absolute `--evidence-dir` vs relative) give byte-identical `contract.json`; `--help` lists the three options
+    - Exit 0 writes both files and prints the indexing, both Decisive counts and each path; exit 1 for each input error with no file written or modified; a non-UTF-8 body exits 1; `undetermined` exits 2 with `contract.json` only; a Contract `ValidationError` exits 1, prints `error: contract.json: ...` and leaves an existing `contract.json` untouched (monkeypatch to force it); two runs from two working directories (absolute `--evidence-dir` vs relative) give byte-identical `contract.json`; `--help` lists the three options
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 1.1, 1.3, 1.5, 3.5, 4.3, 7.2, 7.6_
 
