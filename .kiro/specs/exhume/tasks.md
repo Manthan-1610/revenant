@@ -174,14 +174,14 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 5.5, 9.4, 9.5, 9.6_
 
-- [ ] 10. Implement the error pass
-  - [ ] 10.1 Extend `cdx.py` for the error pass
+- [-] 10. Implement the error pass
+  - [x] 10.1 Extend `cdx.py` for the error pass
     - `build_params(..., kind="error")` with `filter=statuscode:4..` and no mimetype filter; `get_listing` caches to `cdx/<host>.errors.json`; Ethics_Filter applies to this pass too
     - _Requirements: 3.6, 3.4, 8.1_
-  - [ ] 10.2 Write the error pass in `run.py`
+  - [x] 10.2 Write the error pass in `run.py`
     - After all data downloads, while the Slug has fewer than 10 Error_Evidence items, fetch Error captures round-robin over Hosts in Tombstone order, each Host in (timestamp, digest) order; accept only when the replay status equals the CDX status and `Memento-Datetime` is present, store with `kind="error"`; reject mismatches without retry; skip Cached captures; record error-pass discovery failures per Host
     - _Requirements: 3.5, 3.6, 7.5, 9.4_
-  - [ ] 10.3 Write example tests in `tests/exhume/test_run.py`
+  - [x] 10.3 Write example tests in `tests/exhume/test_run.py`
     - F4-style error Listing and F10 replays: entries stored with `kind="error"`; a 404 without `Memento-Datetime` and a status mismatch are rejected after one request; Error pages from the data pass and Error captures share the cap of 10; round-robin order across two Hosts
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 3.6, 7.5_

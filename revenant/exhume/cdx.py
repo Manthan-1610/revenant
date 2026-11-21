@@ -35,16 +35,24 @@ def mimetype_regex(mimetypes: list[str]) -> str:
 def build_params(
     host: str, path: str, kind: PassKind, mimetypes: list[str]
 ) -> list[tuple[str, str]]:
-    """CDX query parameters for one Host, path and pass (data pass only until task 10)."""
-    if kind != "data":
-        raise NotImplementedError("the error pass is added in task 10")
+    """CDX query parameters for one Host, path and pass.
+
+    Data pass: `statuscode:2..` plus one mimetype filter (Req 3.1). Error pass: `statuscode:4..`
+    and no mimetype filter, because archived 4xx replies are `text/html` (Req 3.6, F3, F4).
+    """
+    if kind == "data":
+        filters = [
+            ("filter", "statuscode:2.."),
+            ("filter", f"mimetype:{mimetype_regex(mimetypes)}"),
+        ]
+    else:
+        filters = [("filter", "statuscode:4..")]
     return [
         ("url", f"{host}/{path}*"),
         ("output", "json"),
         ("collapse", "digest"),
         ("fl", ",".join(FIELDS)),
-        ("filter", "statuscode:2.."),
-        ("filter", f"mimetype:{mimetype_regex(mimetypes)}"),
+        *filters,
         ("limit", str(PAGE_SIZE)),
         ("showResumeKey", "true"),
     ]

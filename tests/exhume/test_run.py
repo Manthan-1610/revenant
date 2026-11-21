@@ -71,6 +71,17 @@ INDEX_FIELDS = {
 }
 
 
+CDX_HEADER = ["timestamp", "original", "mimetype", "statuscode", "digest", "length"]
+EMPTY_CDX_PAGE = json.dumps([CDX_HEADER]).encode()
+
+
+def is_error_cdx(request: httpx.Request) -> bool:
+    """True for an error-pass CDX query (`filter=statuscode:4..`, Req 3.6)."""
+    return request.url.path == "/cdx/search/cdx" and "statuscode:4.." in (
+        request.url.params.get_list("filter")
+    )
+
+
 class FakeArchive:
     """MockTransport handler: one CDX page, an F6 redirect, Memento-Datetime and a 404."""
 
@@ -80,6 +91,8 @@ class FakeArchive:
     def __call__(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         path = request.url.path
+        if is_error_cdx(request):
+            return httpx.Response(200, content=EMPTY_CDX_PAGE)
         if path == "/cdx/search/cdx":
             return httpx.Response(
                 200, content=CDX_PAGE, headers={"Content-Type": "application/json"}
@@ -186,6 +199,8 @@ class SubstitutingArchive:
     def __call__(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         path = request.url.path
+        if is_error_cdx(request):
+            return httpx.Response(200, content=EMPTY_CDX_PAGE)
         if path == "/cdx/search/cdx":
             page = [
                 ["timestamp", "original", "mimetype", "statuscode", "digest", "length"],
@@ -234,8 +249,9 @@ def test_substituted_then_exact_capture_is_stored(tmp_path: Path) -> None:
     assert entry["served_timestamp"] == DISH_TS
     assert entry["digest_verified"] is True
     assert (tmp_path / "yahoo-finance-ichart" / entry["path"]).read_bytes() == DISH_BODY
-    # The re-fetch went through the same rate-limited client: 1 CDX + (302 + hop) + 1 exact.
-    assert len(fake.requests) == 4
+    # The re-fetch went through the same rate-limited client:
+    # 1 data CDX + (302 + hop) + 1 exact + 1 error-pass CDX.
+    assert len(fake.requests) == 5
     assert clock.monotonic() >= len(fake.requests) - 1
 
 
@@ -300,10 +316,14 @@ class ScriptedArchive:
         self.rows = rows
         self.replies = {ts: list(script) for ts, script in replies.items()}
         self.capture_fetches: dict[str, int] = {}
-        self.cdx_requests = 0
+        self.cdx_requests = 0  # data pass only
+        self.error_cdx_requests = 0
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         path = request.url.path
+        if is_error_cdx(request):
+            self.error_cdx_requests += 1
+            return httpx.Response(200, content=EMPTY_CDX_PAGE)
         if path == "/cdx/search/cdx":
             self.cdx_requests += 1
             page = [["timestamp", "original", "mimetype", "statuscode", "digest", "length"]]
@@ -528,3 +548,184 @@ def test_load_listing_returns_none_for_missing_or_invalid(tmp_path: Path) -> Non
     assert store.load_listing(HOST, "data") is None
     path.write_bytes(b'{"host": "x"}')
     assert store.load_listing(HOST, "data") is None
+
+
+# ---- task 10: the error pass --------------------------------------------------------------
+
+HOST_B = "ichart.finance.yahoo.com"
+F10_MEMENTO = "Wed, 09 Jun 2004 20:30:20 GMT"
+
+
+def _error_rows(host: str, start: int, count: int) -> list[tuple[str, str, str]]:
+    """F4-style 404 rows: bare `table.csv` URLs with near-identical bodies, distinct digests."""
+    return [
+        (
+            f"2004{start + i:02d}01000000",
+            f"http://{host}:80/table.csv?n={start + i}",
+            f"E{host[:2]}{i}",
+        )
+        for i in range(count)
+    ]
+
+
+class ErrorPassArchive:
+    """Per-Host data and error Listings; each capture timestamp answers from its own script."""
+
+    def __init__(
+        self,
+        data_rows: dict[str, list[tuple[str, str, str]]],
+        error_rows: dict[str, list[tuple[str, str, str]]],
+        replies: dict[str, list[str]],
+    ) -> None:
+        self.data_rows = data_rows
+        self.error_rows = error_rows
+        self.replies = {ts: list(script) for ts, script in replies.items()}
+        self.fetch_order: list[str] = []
+        self.cdx_requests = 0
+        self.error_cdx_requests = 0
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/cdx/search/cdx":
+            host = request.url.params["url"].split("/", 1)[0]
+            page = [CDX_HEADER]
+            if is_error_cdx(request):
+                self.error_cdx_requests += 1
+                page += [
+                    [ts, original, "text/html", "404", digest, "801"]
+                    for ts, original, digest in self.error_rows.get(host, [])
+                ]
+            else:
+                self.cdx_requests += 1
+                page += [
+                    [ts, original, "text/csv", "200", digest, "1"]
+                    for ts, original, digest in self.data_rows.get(host, [])
+                ]
+            return httpx.Response(200, content=json.dumps(page).encode())
+        ts = path.removeprefix("/web/")[:14]
+        self.fetch_order.append(ts)
+        step = self.replies[ts].pop(0)
+        html = {"Content-Type": "text/html; charset=iso-8859-1"}
+        if step == "replay404":  # F10: archived status plus Memento-Datetime
+            return httpx.Response(
+                404, content=F10_404, headers={**html, "Memento-Datetime": F10_MEMENTO}
+            )
+        if step == "bare404":  # the Archive's own "not archived" 404: no Memento-Datetime
+            return httpx.Response(404, content=b"<html>not archived</html>", headers=html)
+        if step == "replay400":  # archived, but its status differs from the CDX 404
+            return httpx.Response(
+                400, content=F10_404, headers={**html, "Memento-Datetime": F10_MEMENTO}
+            )
+        if step == "yahoo404":  # data-pass Error page under a text/csv CDX row
+            return httpx.Response(200, content=F10_404, headers=html)
+        raise AssertionError(f"unknown step {step}")
+
+
+def _two_host_tombstone() -> Tombstone:
+    return _tombstone().model_copy(update={"hosts": [HOST, HOST_B]})
+
+
+def _run_error_pass(
+    tmp_path: Path, fake: ErrorPassArchive, tombstone: Tombstone, n: int = 1
+) -> tuple[EvidenceStore, list[HostSummary], int]:
+    clock = FakeClock()
+    client = make_client(RateLimiter(clock), DEFAULT_USER_AGENT, httpx.MockTransport(fake))
+    store = EvidenceStore(tmp_path, "yahoo-finance-ichart")
+    result = exhume(tombstone, store, ArchiveClient(client, clock), n, False)
+    return store, result.hosts, result.error_evidence
+
+
+def test_error_pass_stores_f10_replays_and_rejects_mismatches(tmp_path: Path) -> None:
+    replay, bare, mismatch = _error_rows(HOST, 6, 3)
+    fake = ErrorPassArchive(
+        {},
+        {HOST: [replay, bare, mismatch]},
+        {replay[0]: ["replay404"], bare[0]: ["bare404"], mismatch[0]: ["replay400"]},
+    )
+    store, [summary], error_evidence = _run_error_pass(tmp_path, fake, _tombstone())
+
+    # Each Error capture is requested exactly once: no retry on a mismatch.
+    assert fake.fetch_order == [replay[0], bare[0], mismatch[0]]
+    assert fake.error_cdx_requests == 1
+    assert (store.slug_dir / "cdx" / f"{HOST}.errors.json").is_file()
+    assert (summary.error_evidence, summary.rejected, summary.downloaded) == (1, 0, 0)
+    assert summary.discovery_failed == []
+    assert error_evidence == 1
+
+    [(key, entry)] = store.load_index().entries.items()
+    assert key == f"{HOST}/{replay[0]}-{replay[2]}"
+    assert entry.kind == "error"
+    assert entry.statuscode == "404"
+    assert entry.path.endswith(".html")
+    assert entry.served_timestamp == replay[0]
+    assert (store.slug_dir / entry.path).read_bytes() == F10_404
+
+
+def test_error_pass_is_round_robin_over_hosts(tmp_path: Path) -> None:
+    rows_a = _error_rows(HOST, 1, 3)
+    rows_b = _error_rows(HOST_B, 4, 2)
+    replies = {ts: ["replay404"] for ts, _, _ in rows_a + rows_b}
+    fake = ErrorPassArchive({}, {HOST: rows_a, HOST_B: rows_b}, replies)
+    store, summaries, error_evidence = _run_error_pass(tmp_path, fake, _two_host_tombstone())
+
+    a, b = (row[0] for row in rows_a), (row[0] for row in rows_b)
+    a0, a1, a2 = a
+    b0, b1 = b
+    assert fake.fetch_order == [a0, b0, a1, b1, a2]
+    assert [s.error_evidence for s in summaries] == [3, 2]
+    assert error_evidence == 5
+    assert all(e.kind == "error" for e in store.load_index().entries.values())
+
+
+def test_error_pages_and_error_captures_share_the_cap_and_rerun_is_idle(tmp_path: Path) -> None:
+    data_rows = [
+        (f"20{10 + i:02d}0101000000", f"http://{HOST}:80/table.csv?s=E{i}", f"P{i:031d}")
+        for i in range(8)
+    ]
+    rows_a = _error_rows(HOST, 1, 3)
+    rows_b = _error_rows(HOST_B, 4, 2)
+    replies = {ts: ["yahoo404"] for ts, _, _ in data_rows}
+    replies |= {ts: ["replay404"] for ts, _, _ in rows_a + rows_b}
+    fake = ErrorPassArchive({HOST: data_rows}, {HOST: rows_a, HOST_B: rows_b}, replies)
+
+    store, summaries, error_evidence = _run_error_pass(tmp_path, fake, _two_host_tombstone(), 8)
+
+    # 8 Error pages from the data pass leave room for 2 Error captures: one per Host.
+    assert fake.fetch_order[8:] == [rows_a[0][0], rows_b[0][0]]
+    assert error_evidence == 10 == store.error_evidence_count()
+    kinds = [e.kind for e in store.load_index().entries.values()]
+    assert (kinds.count("error_page"), kinds.count("error")) == (8, 2)
+    assert [s.error_evidence for s in summaries] == [9, 1]
+    index_bytes = store.index_path.read_bytes()
+
+    # Rerun: the cap is reached, so no CDX and no capture request of either pass.
+    fetches, cdx, error_cdx = len(fake.fetch_order), fake.cdx_requests, fake.error_cdx_requests
+    _, rerun, rerun_total = _run_error_pass(tmp_path, fake, _two_host_tombstone(), 8)
+    assert (len(fake.fetch_order), fake.cdx_requests, fake.error_cdx_requests) == (
+        fetches,
+        cdx,
+        error_cdx,
+    )
+    assert rerun_total == 10
+    assert all(s.downloaded == 0 and s.error_evidence == 0 for s in rerun)
+    assert store.index_path.read_bytes() == index_bytes
+
+
+def test_error_pass_discovery_failure_is_recorded_per_host(tmp_path: Path) -> None:
+    rows_b = _error_rows(HOST_B, 4, 1)
+    fake = ErrorPassArchive({}, {HOST_B: rows_b}, {rows_b[0][0]: ["replay404"]})
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if is_error_cdx(request) and request.url.params["url"].startswith(HOST + "/"):
+            return httpx.Response(200, content=b"not json")
+        return fake(request)
+
+    clock = FakeClock()
+    client = make_client(RateLimiter(clock), DEFAULT_USER_AGENT, httpx.MockTransport(handler))
+    store = EvidenceStore(tmp_path, "yahoo-finance-ichart")
+    result = exhume(_two_host_tombstone(), store, ArchiveClient(client, clock), 1, False)
+
+    assert [s.discovery_failed for s in result.hosts] == [["error"], []]
+    assert not (store.slug_dir / "cdx" / f"{HOST}.errors.json").exists()
+    assert fake.fetch_order == [rows_b[0][0]]
+    assert result.error_evidence == 1

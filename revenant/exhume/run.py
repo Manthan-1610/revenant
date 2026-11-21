@@ -10,7 +10,7 @@ import httpx
 
 from revenant.exhume.archive import ArchiveClient, ArchiveError
 from revenant.exhume.cdx import DiscoveryError, get_listing
-from revenant.exhume.content import classify, wayback_digest
+from revenant.exhume.content import classify, is_offline_page, wayback_digest
 from revenant.exhume.models import CdxRow, HostSummary, RunResult, Tombstone
 from revenant.exhume.select import backfill_order, select
 from revenant.exhume.store import EvidenceStore, entry_key
@@ -139,6 +139,81 @@ def _data_pass(
             stored += 1
 
 
+def _fetch_error_capture(archive: ArchiveClient, row: CdxRow) -> httpx.Response | None:
+    """Fetch one Error capture; None means reject (Req 3.6, F10).
+
+    Accepted only when the replay status equals the CDX status and `Memento-Datetime` is
+    present, which tells an archived 404 apart from the Archive's own "not archived" 404.
+    No retry on a mismatch: `ArchiveClient.get` already returns non-429 4xx after one attempt.
+    """
+    try:
+        response = archive.get(wayback_url(row.timestamp, row.original))
+    except ArchiveError:
+        return None
+    if str(response.status_code) != row.statuscode:
+        return None
+    if not response.headers.get("Memento-Datetime"):
+        return None
+    if is_offline_page(response.headers.get("content-type"), response.content):
+        return None  # defensive: the client never returns an Offline page as a response
+    return response
+
+
+def _error_pass(
+    tombstone: Tombstone,
+    store: EvidenceStore,
+    archive: ArchiveClient,
+    refresh: bool,
+    summaries: list[HostSummary],
+) -> None:
+    """Fetch Error captures round-robin over Hosts until the Slug has 10 Error_Evidence items.
+
+    Each Host's turn takes its next non-cached row in (timestamp, digest) order. Cached
+    captures send no request; they already count through `error_evidence_count` (Req 9.4).
+    """
+    count = store.error_evidence_count()
+    if count >= ERROR_EVIDENCE_CAP:
+        return  # cap already reached: no error-pass discovery or download at all
+    queues: list[tuple[str, HostSummary, list[CdxRow]]] = []
+    for host, summary in zip(tombstone.hosts, summaries, strict=True):
+        try:
+            listing = get_listing(archive, store, tombstone, host, "error", refresh)
+        except DiscoveryError:
+            summary.discovery_failed.append("error")
+            continue
+        rows = sorted(listing.rows, key=lambda r: (r.timestamp, r.digest))
+        queues.append((host, summary, rows))
+
+    positions = [0] * len(queues)
+    while count < ERROR_EVIDENCE_CAP:
+        progressed = False
+        for i, (host, summary, rows) in enumerate(queues):
+            if count >= ERROR_EVIDENCE_CAP:
+                return
+            while positions[i] < len(rows) and store.is_cached(host, rows[positions[i]]):
+                positions[i] += 1
+            if positions[i] >= len(rows):
+                continue
+            row = rows[positions[i]]
+            positions[i] += 1
+            progressed = True
+            response = _fetch_error_capture(archive, row)
+            if response is None:
+                continue  # not counted as data `rejected` (design: error column deferred)
+            store.save_capture(
+                host,
+                row,
+                "error",
+                response,
+                served_timestamp(response),
+                wayback_digest(response.content) == row.digest,
+            )
+            summary.error_evidence += 1
+            count += 1
+        if not progressed:
+            return
+
+
 def exhume(
     tombstone: Tombstone,
     store: EvidenceStore,
@@ -146,10 +221,7 @@ def exhume(
     max_captures: int,
     refresh: bool,
 ) -> RunResult:
-    """Run the data pass for every Host: cached Listing or fresh CDX, then select and backfill.
-
-    The error pass arrives in task 10.
-    """
+    """Data pass for every Host (Listing, select, backfill), then the error pass (Req 3.6)."""
     summaries: list[HostSummary] = []
     for host in tombstone.hosts:
         summary = HostSummary(host=host)
@@ -163,4 +235,5 @@ def exhume(
         summary.found = len(listing.rows) + listing.ethics_dropped
         summary.rejected += listing.ethics_dropped
         _data_pass(store, archive, host, listing.rows, max_captures, summary)
+    _error_pass(tombstone, store, archive, refresh, summaries)
     return RunResult(hosts=summaries, error_evidence=store.error_evidence_count())

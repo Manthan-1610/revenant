@@ -158,6 +158,18 @@ def test_build_params_data_pass_matches_req_3_1() -> None:
     ]
 
 
+def test_build_params_error_pass_has_4xx_filter_and_no_mimetype() -> None:
+    assert build_params("ichart.yahoo.com", "table.csv", "error", ["text/csv"]) == [
+        ("url", "ichart.yahoo.com/table.csv*"),
+        ("output", "json"),
+        ("collapse", "digest"),
+        ("fl", "timestamp,original,mimetype,statuscode,digest,length"),
+        ("filter", "statuscode:4.."),
+        ("limit", "1000"),
+        ("showResumeKey", "true"),
+    ]
+
+
 # --- Merging --------------------------------------------------------------------
 
 
