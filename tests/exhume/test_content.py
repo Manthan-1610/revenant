@@ -147,3 +147,12 @@ def test_digest_known_pairs() -> None:
     # F14: the 125-byte DISH body stored by the live task 5.5 run.
     assert len(F14_DISH) == 125
     assert wayback_digest(F14_DISH) == "2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW"
+
+
+def test_digest_known_pair_f8_full_f5_body() -> None:
+    # F8: the full 15479-byte F5 body hashes to its F1 CDX digest.
+    body = (FIXTURES / "f5_goog_weekly.csv").read_bytes()
+    assert len(body) == 15479
+    assert b"\r" not in body
+    assert body.startswith(F5_HEAD)
+    assert wayback_digest(body) == "M37VRFD74CQFJ6RCU52MNGMWIP5YDNFY"

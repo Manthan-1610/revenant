@@ -11,8 +11,12 @@ Bodies copied from `.kiro/specs/exhume/requirements.md` Appendix A. No rows are 
   `CdxParseError` on this page.
 - `cdx_last_page.json`: derived from F1 + F3. F1's three rows under the six-field header, with
   no `[]` + key tail, which is the "last page has no resume key" shape observed in F3.
-- `f5_csv_head.csv`: the three F5 body lines shown in Appendix A (head only, not the full
-  15479-byte body; the full F5 fixture is deferred to task 12).
+- `f5_csv_head.csv`: the three F5 body lines shown in Appendix A (head only).
+- `f5_goog_weekly.csv`: the full F5 body, 15479 bytes, fetched once during task 12 from
+  `https://web.archive.org/web/20131213174436id_/http://ichart.yahoo.com:80/table.csv?s=GOOG&a=0&b=1&c=2000&d=0&e=31&f=2010&g=w&ignore=.csv`
+  with the Revenant User-Agent (200, `text/csv`, `Memento-Datetime: Fri, 13 Dec 2013 17:44:36 GMT`).
+  Its base32(SHA-1) is `M37VRFD74CQFJ6RCU52MNGMWIP5YDNFY` (F8). The body has LF line endings
+  and no CR bytes, so the `text=auto eol=lf` rule in `.gitattributes` leaves it unchanged.
 - `f9_offline.html`: a minimal page built only from the F9 description (title
   "Internet Archive: Temporarily Offline"). F9 was never observed, so the rest is synthetic.
 - `f10_yahoo_404_head.html`: the F10 body head as shown in Appendix A.

@@ -125,7 +125,7 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - In `tests/exhume/test_content.py`: F10 HTML under a `text/csv` CDX mimetype is `error_page`; header-only CSV is `data`; the F8 known pair: fetch the full F5 body once (one-off script, committed as `tests/exhume/fixtures/f5_goog_weekly.csv`, 15479 bytes) and assert `wayback_digest` is `M37VRFD74CQFJ6RCU52MNGMWIP5YDNFY`
     - In `tests/exhume/test_run.py`: an Offline page with status 200 is retried and not stored; the 11th Error page is discarded; a digest mismatch is stored with `digest_verified=false`
     - Checkpoint: run pytest; all non-live tests pass
-    - Note: no Archive request outside 5.5 and 12, so the known pairs are F11 (44-byte header-only body) and F14 (committed 125-byte DISH capture); the full 15479-byte F5 fixture is deferred to task 12
+    - Note: no Archive request outside 5.5 and 12, so the known pairs here are F11 (44-byte header-only body) and F14 (committed 125-byte DISH capture); the full 15479-byte F5 fixture was fetched once in task 12 and `test_digest_known_pair_f8_full_f5_body` checks the F8 pair
     - _Requirements: 7.3, 7.4, 7.5, 7.6_
 
 - [x] 7. Implement the ethics filter (`ethics.py`) and apply it to Listings
@@ -195,8 +195,8 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
 
-- [ ] 12. Write the live smoke test (final)
-  - [ ] 12.1 Write `tests/exhume/test_live.py` with one `@pytest.mark.live` test
+- [-] 12. Write the live smoke test (final)
+  - [x] 12.1 Write `tests/exhume/test_live.py` with one `@pytest.mark.live` test
     - Run `revenant exhume yahoo-finance-ichart --max-captures 20` against the real Archive with a `tmp_path` Evidence_Root and the repo's `tombstones/`; assert exit 0, 20 `data` entries for `ichart.yahoo.com` in `index.json`, at least 2 distinct `g` values and at least 3 distinct capture years
     - Run the same command again with the same Evidence_Root; assert exit 0 and `downloaded` is 0 for every Host
     - Run `.venv\Scripts\python -m pytest -m live` once, then `.venv\Scripts\python -m pytest` and `ruff check .`; all pass
