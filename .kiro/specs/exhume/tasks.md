@@ -174,7 +174,7 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 5.5, 9.4, 9.5, 9.6_
 
-- [-] 10. Implement the error pass
+- [x] 10. Implement the error pass
   - [x] 10.1 Extend `cdx.py` for the error pass
     - `build_params(..., kind="error")` with `filter=statuscode:4..` and no mimetype filter; `get_listing` caches to `cdx/<host>.errors.json`; Ethics_Filter applies to this pass too
     - _Requirements: 3.6, 3.4, 8.1_
@@ -186,11 +186,11 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 3.6, 7.5_
 
-- [ ] 11. Implement the Run_Summary and exit codes in the CLI
-  - [ ] 11.1 Print the Rich summary in `revenant/cli.py`
+- [x] 11. Implement the Run_Summary and exit codes in the CLI
+  - [x] 11.1 Print the Rich summary in `revenant/cli.py`
     - Rich table with one row per Host in Tombstone order and columns `found`, `downloaded`, `cached`, `rejected`; then a line with the Slug's Error_Evidence count; then each failed Host and pass; exit 1 if any discovery failed, else 0
     - _Requirements: 10.2, 10.3, 10.4_
-  - [ ] 11.2 Write CLI example tests in `tests/exhume/test_cli.py`
+  - [x] 11.2 Write CLI example tests in `tests/exhume/test_cli.py`
     - `CliRunner` with a monkeypatched transport and `tmp_path`: `--help` lists all options; summary shows each Host and the four columns and the Error_Evidence line; a CDX failure names the Host and pass and exits 1; `--max-captures 0` is rejected by Typer
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
