@@ -69,9 +69,10 @@ def captures(draw: st.DrawFn) -> list[Capture]:
         host = draw(st.sampled_from(HOSTS))
         kind = draw(st.sampled_from(["data", "data", "data", "error", "error_page"]))
         newest = draw(st.dates(min_value=date(2004, 1, 1), max_value=date(2016, 12, 1)))
-        span = draw(st.integers(min_value=0, max_value=60))
+        span = draw(st.integers(min_value=0, max_value=120))
         oldest = newest - timedelta(days=span)
-        rows = [newest - timedelta(days=step) for step in range(0, span + 1, 7)]
+        spacing = draw(st.sampled_from([1, 4, 7, 30]))  # Req 6.3 bands `d`, `w`, `m`
+        rows = [newest - timedelta(days=step) for step in range(0, span + 1, spacing)]
         shape = draw(st.sampled_from(["full", "s_only", "empty", "junk"]))
         if shape == "full":
             query = _query(oldest, newest, draw(st.integers(0, 1)), draw(st.sampled_from("dwm")))
@@ -84,23 +85,28 @@ def captures(draw: st.DrawFn) -> list[Capture]:
         query += draw(st.sampled_from(["", "&x=1", "&amp;y=", "&%61mp=1", f"&z=v{number}"]))
         path = draw(st.sampled_from(["/table.csv", "/table.csv", "/other.csv"]))
         body = _body(draw, rows)
-        stamp = f"{newest.year + 1}0101{number:06d}"
+        # Capture_Date 0 to 9 days after the newest row covers both sides of `recent_within_7d`.
+        captured = newest + timedelta(days=draw(st.integers(min_value=0, max_value=9)))
+        stamp = f"{captured:%Y%m%d}{number:06d}"
         digest = f"D{number}"
+        status = "200" if kind == "data" else draw(st.sampled_from(["400", "404"]))
+        mimetype = "text/csv" if kind == "data" else "text/html"
+        content_type = draw(st.sampled_from([mimetype, f"{mimetype}; charset=UTF-8", None]))
         entry = IndexEntry(
             host=host,
             kind=kind,
             requested_timestamp=stamp,
             served_timestamp=draw(st.sampled_from([stamp, None])),
             original=f"http://{host}{path}?{query}",
-            mimetype="text/csv",
-            statuscode="200" if kind == "data" else "404",
+            mimetype=mimetype,
+            statuscode=status,
             digest=digest,
             length=str(len(body)),
             final_url=f"https://web.archive.org/web/{stamp}id_/http://{host}{path}?{query}",
             path=f"{host}/{stamp}-{digest}.csv",
             size=len(body),
             sha256=hashlib.sha256(body).hexdigest(),
-            content_type=draw(st.sampled_from(["text/csv", "text/csv; charset=UTF-8", None])),
+            content_type=content_type,
             digest_verified=draw(st.booleans()),
             fetched_at="2026-11-15T00:00:00Z",
         )

@@ -149,6 +149,31 @@ class Comments(_Model):
     evidence: Evidence
 
 
+class NameCount(_Model):
+    name: str
+    count: int
+
+
+class Default(_Model):
+    """Req 6.1 to 6.3: what one under-specified Capture_Shape returned."""
+
+    shape: Literal["s_only", "empty_range"]
+    evidence: Evidence
+    earliest: str | None  # ISO date: earliest oldest Row_Date
+    latest: str | None  # ISO date: latest newest Row_Date
+    recent_within_7d: int
+    spacing: Literal["d", "w", "m", "unknown"]
+
+
+class ErrorStatus(_Model):
+    """Req 6.4: Error_Captures of one status code."""
+
+    status: str
+    evidence: Evidence
+    media_types: list[NameCount]  # sorted by name
+    shapes: list[NameCount]  # sorted by name
+
+
 class Contract(_Model):
     slug: str
     source: Source
@@ -164,6 +189,8 @@ class Contract(_Model):
     row_order: RowOrder
     precision: list[Precision]  # sorted by (interval, header, year)
     comments: Comments
+    defaults: list[Default]  # sorted by shape
+    errors: list[ErrorStatus] | None  # sorted by status; null without Error_Captures
 
 
 def dump_contract(contract: Contract) -> bytes:

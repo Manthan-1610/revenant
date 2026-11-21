@@ -116,21 +116,21 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 2.3, 2.4, 2.5, 4.1_
 
-- [-] 6. Add response variants and row format to the Contract
-  - [ ] 6.1 Add `body_precision` to `body.py`
+- [x] 6. Add response variants and row format to the Contract
+  - [x] 6.1 Add `body_precision` to `body.py`
     - Maximum fractional digits over numeric fields of Data_Rows, skipping the `Date` and `Volume` columns
     - _Requirements: 5.4_
-  - [ ] 6.2 Add `Variant`, `IntervalVariants`, `FormatEvidence`, `RowOrder`, `Precision`, `DigitsCount`, `Comments` and the fields `intervals`, `headers`, `header_only`, `date_formats`, `row_order`, `precision`, `comments` to `contract.py`
+  - [x] 6.2 Add `Variant`, `IntervalVariants`, `FormatEvidence`, `RowOrder`, `Precision`, `DigitsCount`, `Comments` and the fields `intervals`, `headers`, `header_only`, `date_formats`, `row_order`, `precision`, `comments` to `contract.py`
     - _Requirements: 4.4, 4.5, 4.6, 5.1, 5.2, 5.4, 5.5_
-  - [ ] 6.3 Infer the sections in `infer.py`
+  - [x] 6.3 Infer the sections in `infer.py`
     - Response_Variants per Interval with columns and year range; Header_Variants with year range; Header_Only_Body count (included in variant counts, excluded from Req 3, 5, 6 checks); Row_Date formats with year range; row-order classes plus `unparsed_dates` (excluded from row-order, month and default checks); precision per (Interval, header, year); comment totals, years, first example in key order, after/before last row
     - _Requirements: 4.4, 4.5, 4.6, 5.1, 5.2, 5.3, 5.4, 5.5_
-  - [ ] 6.4 Write example tests in `tests/autopsy/test_infer.py` and `tests/autopsy/test_body.py`, and extend the P2 generator
+  - [x] 6.4 Write example tests in `tests/autopsy/test_infer.py` and `tests/autopsy/test_body.py`, and extend the P2 generator
     - `g=v` maps to `Date,Dividends`; `Adj. Close*` and `Adj Close` are separate variants with their year ranges (F12); Header_Only_Body counted but not in row order; F16 comment counted after the last row with its example; precision on a known body
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 4.4, 4.5, 4.6, 5.1, 5.2, 5.4, 5.5_
 
-- [ ] 7. Add defaults, errors and Contract validation errors
+- [-] 7. Add defaults, errors and Contract validation errors
   - [ ] 7.1 Add `Default`, `ErrorStatus`, `NameCount` and the `defaults` and `errors` fields to `contract.py`
     - _Requirements: 6.1, 6.4, 6.5_
   - [ ] 7.2 Infer defaults and errors in `infer.py`

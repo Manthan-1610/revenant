@@ -60,6 +60,36 @@
       "last_year": 2007
     }
   ],
+  "defaults": [
+    {
+      "earliest": "2008-07-25",
+      "evidence": {
+        "count": 1,
+        "keys": [
+          "ichart.finance.yahoo.com/20150722040224-HIF7M5KERUP7NVB4WXUEUFRG6TFV2MWN"
+        ]
+      },
+      "latest": "2015-07-21",
+      "recent_within_7d": 1,
+      "shape": "empty_range",
+      "spacing": "d"
+    },
+    {
+      "earliest": "1986-07-09",
+      "evidence": {
+        "count": 28,
+        "keys": [
+          "ichart.finance.yahoo.com/20050427190628-XEPUQFNCYI3THTUYPDNJKMKHNHRMQV7Q",
+          "ichart.finance.yahoo.com/20050516112007-AEC45PVM5B6RM46NBTWEPVYUI6LGS33G",
+          "ichart.finance.yahoo.com/20050516231156-MYH7EWU4M7DGG6DSGFH6DF3QHW5RY2WS"
+        ]
+      },
+      "latest": "2016-10-12",
+      "recent_within_7d": 25,
+      "shape": "s_only",
+      "spacing": "d"
+    }
+  ],
   "endpoints": [
     {
       "hosts": [
@@ -98,6 +128,31 @@
         }
       ],
       "path": "/table.csv"
+    }
+  ],
+  "errors": [
+    {
+      "evidence": {
+        "count": 10,
+        "keys": [
+          "ichart.finance.yahoo.com/20040906234958-5UMJH4AMNV5SR3NT3IUY4AM35NB4BDT3",
+          "ichart.finance.yahoo.com/20040912032218-ZLGX6IPHAJ4XLY2RL6EDZ5SMLUXXXD46",
+          "ichart.finance.yahoo.com/20040915034307-7XEDSZLS77ZUMFKG2VT2WLFXTLPK2W6K"
+        ]
+      },
+      "media_types": [
+        {
+          "count": 10,
+          "name": "text/html"
+        }
+      ],
+      "shapes": [
+        {
+          "count": 10,
+          "name": "other"
+        }
+      ],
+      "status": "404"
     }
   ],
   "header_only": {

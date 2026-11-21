@@ -4,11 +4,12 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from pydantic import ValidationError
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from revenant.autopsy.contract import write_contract
+from revenant.autopsy.contract import CONTRACT_FILE, write_contract
 from revenant.autopsy.evidence import AutopsyError, load_evidence
 from revenant.autopsy.infer import infer
 from revenant.exhume.archive import ArchiveClient, RateLimiter, SystemClock, make_client, user_agent
@@ -96,10 +97,14 @@ def autopsy(
     try:
         index_bytes, captures = load_evidence(evidence_dir, slug)
         contract = infer(slug, index_bytes, captures)
+        # write_contract re-validates before its atomic write, so a failure keeps the old file.
+        path = write_contract(contract, crypt_dir)
     except AutopsyError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(1) from exc
-    path = write_contract(contract, crypt_dir)
+    except ValidationError as exc:
+        typer.echo(f"error: {CONTRACT_FILE}: {_validation_message(exc)}", err=True)
+        raise typer.Exit(1) from exc
     months = contract.months
     typer.echo(f"month indexing: {months.indexing}")
     typer.echo(f"decisive: H=0 {months.decisive_h0.count}, H=1 {months.decisive_h1.count}")
@@ -107,6 +112,13 @@ def autopsy(
     if months.indexing == "undetermined":
         typer.echo("error: month indexing undetermined; no spec rendered", err=True)
         raise typer.Exit(2)
+
+
+def _validation_message(exc: ValidationError) -> str:
+    """`<loc>: <message>` of the first Contract validation error (Req 7.2)."""
+    first = exc.errors()[0]
+    loc = ".".join(str(part) for part in first["loc"]) or "<root>"
+    return f"{loc}: {first['msg']}"
 
 
 def _summary_table(result: RunResult, tombstone: Tombstone, n: int) -> Table:

@@ -1,14 +1,25 @@
-"""Example tests for the Contract_Inferrer (Req 1.4, 2.2 to 2.5, 3.2, 4.1)."""
+"""Example tests for the Contract_Inferrer (Req 1.4, 2.2 to 2.5, 3.2, 4 to 6)."""
 
 from __future__ import annotations
 
 import hashlib
+from datetime import date, timedelta
 from pathlib import Path
 
-from revenant.autopsy.contract import Contract, EnumType, IntType, Parameter, StringType
+import pytest
+
+from revenant.autopsy.contract import (
+    Contract,
+    Default,
+    EnumType,
+    IntType,
+    NameCount,
+    Parameter,
+    StringType,
+)
 from revenant.autopsy.evidence import Capture, load_evidence
 from revenant.autopsy.infer import infer
-from revenant.exhume.models import IndexEntry
+from revenant.exhume.models import IndexEntry, Kind
 
 SLUG = "yahoo-finance-ichart"
 REPO_EVIDENCE = Path(__file__).resolve().parents[2] / "evidence"
@@ -22,17 +33,20 @@ def _capture(
     content_type: str | None = "text/csv",
     body: bytes = BODY,
     year: int = 2016,
+    kind: Kind = "data",
+    status: str = "200",
+    mimetype: str = "text/csv",
 ) -> Capture:
-    stamp = f"{year}0110{number:06d}"
+    stamp = f"{year}0110{number:06d}"  # Capture_Date: <year>-01-10
     digest = f"D{number}"
     entry = IndexEntry(
         host=HOST,
-        kind="data",
+        kind=kind,
         requested_timestamp=stamp,
         served_timestamp=stamp,
         original=f"http://{HOST}/table.csv?{query}",
-        mimetype="text/csv",
-        statuscode="200",
+        mimetype=mimetype,
+        statuscode=status,
         digest=digest,
         length=str(len(body)),
         final_url=f"https://web.archive.org/web/{stamp}id_/http://{HOST}/table.csv?{query}",
@@ -213,3 +227,123 @@ def test_committed_evidence_header_variants() -> None:
     headers = {v.header for v in contract.headers}
     assert any("Adj. Close*" in h for h in headers)
     assert any(h.endswith("Adj Close") for h in headers)
+
+
+EMPTY_RANGE = "s=AAPL&a=&b=&c=&d=&e=&f=&g=&ignore=.csv"
+
+
+def _dated(*days: date) -> bytes:
+    return ("Date,Close\n" + "".join(f"{day.isoformat()},1.5\n" for day in days)).encode()
+
+
+def _series(newest: date, gaps: list[int]) -> bytes:
+    days = [newest]
+    for gap in gaps:
+        days.append(days[-1] - timedelta(days=gap))
+    return _dated(*days)
+
+
+def _default(contract: Contract, shape: str) -> Default:
+    return next(d for d in contract.defaults if d.shape == shape)
+
+
+@pytest.mark.parametrize(
+    ("gaps", "spacing"),
+    [
+        ([1, 1, 3], "d"),
+        ([7, 7, 5], "w"),
+        ([31, 29, 30], "m"),
+        ([4, 5], "unknown"),  # median 4.5 falls in no band
+        ([], "unknown"),  # one row: no gap at all
+        ([15, 15], "unknown"),
+    ],
+)
+def test_default_spacing(gaps: list[int], spacing: str) -> None:
+    body = _series(date(2016, 1, 5), gaps)
+    contract = infer(SLUG, b"{}", [_capture(0, "s=AAPL", body=body)])
+    assert _default(contract, "s_only").spacing == spacing
+
+
+def test_default_spacing_pools_gaps_across_captures() -> None:
+    # Gaps [1] and [7, 7]: pooled median is 7, so weekly, though one capture alone is daily.
+    captures = [
+        _capture(0, "s=AAPL", body=_series(date(2016, 1, 5), [1])),
+        _capture(1, "s=IBM", body=_series(date(2016, 1, 5), [7, 7])),
+    ]
+    assert _default(infer(SLUG, b"{}", captures), "s_only").spacing == "w"
+
+
+def test_default_ranges_and_recent_within_7d() -> None:
+    # Capture_Date is 2016-01-10: newest 2016-01-03 is 7 days old, 2016-01-02 is 8.
+    captures = [
+        _capture(0, "s=AAPL", body=_dated(date(2016, 1, 3), date(2016, 1, 1))),
+        _capture(1, "s=IBM", body=_dated(date(2016, 1, 2), date(2015, 12, 31))),
+        _capture(2, EMPTY_RANGE, body=_dated(date(2016, 1, 10), date(2016, 1, 9))),
+        _capture(3, "s=MSFT", body=b"Date,Close\n"),  # Header_Only_Body: excluded
+        _capture(4, "s=GOOG", body=b"Date,Close\nn/a,1\n"),  # unparsed_dates: excluded
+    ]
+    contract = infer(SLUG, b"{}", captures)
+    assert [d.shape for d in contract.defaults] == ["empty_range", "s_only"]
+    s_only = _default(contract, "s_only")
+    assert s_only.evidence.count == 2
+    assert (s_only.earliest, s_only.latest) == ("2015-12-31", "2016-01-03")
+    assert s_only.recent_within_7d == 1
+    empty = _default(contract, "empty_range")
+    assert (empty.evidence.count, empty.recent_within_7d) == (1, 1)
+
+
+def test_default_without_captures_is_zero_and_null() -> None:
+    contract = infer(SLUG, b"{}", [_capture(0, "s=AAPL")])
+    empty = _default(contract, "empty_range")
+    assert (empty.evidence.count, empty.earliest, empty.latest) == (0, None, None)
+    assert (empty.recent_within_7d, empty.spacing) == (0, "unknown")
+
+
+def test_errors_per_status_with_counts() -> None:
+    def error(number: int, query: str, status: str, content_type: str | None) -> Capture:
+        return _capture(
+            number,
+            query,
+            content_type,
+            b"<html/>",
+            kind="error",
+            status=status,
+            mimetype="text/html",
+        )
+
+    captures = [
+        _capture(0, "s=AAPL"),
+        error(1, "s=NOPE", "404", "text/html; charset=utf-8"),
+        error(2, EMPTY_RANGE, "404", None),
+        error(3, "s=X&a=0&b=1&c=2016&d=0&e=5&f=2016&g=d", "404", "Text/Plain"),
+        error(4, "s=", "400", "text/html"),
+        _capture(5, "s=Z", "text/html", b"<html/>", kind="error_page", mimetype="text/html"),
+    ]
+    contract = infer(SLUG, b"{}", captures)
+    assert contract.errors is not None
+    assert [e.status for e in contract.errors] == ["400", "404"]
+    bad, missing = contract.errors
+    assert bad.evidence.count == 1
+    assert missing.evidence.count == 3
+    assert missing.media_types == [
+        NameCount(name="text/html", count=2),
+        NameCount(name="text/plain", count=1),
+    ]
+    assert missing.shapes == [
+        NameCount(name="empty_range", count=1),
+        NameCount(name="full_range", count=1),
+        NameCount(name="s_only", count=1),
+    ]
+    # Error and error_page captures never feed data facts.
+    assert [c.name for c in contract.content_types] == ["text/csv"]
+    assert _param(contract, "s").present.count == 1
+
+
+def test_errors_null_without_error_captures() -> None:
+    captures = [
+        _capture(0, "s=AAPL"),
+        _capture(1, "s=Z", "text/html", b"<html/>", kind="error_page", mimetype="text/html"),
+    ]
+    contract = infer(SLUG, b"{}", captures)
+    assert contract.errors is None
+    assert contract.source.entry_count == 2

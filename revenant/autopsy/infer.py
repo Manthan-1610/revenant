@@ -1,4 +1,4 @@
-"""Contract_Inferrer: derives Contract facts from loaded evidence (Req 1.4, 2 to 5, 7.5).
+"""Contract_Inferrer: derives Contract facts from loaded evidence (Req 1.4, 2 to 6, 7.5).
 
 Pure: no time, path, locale or environment value enters the Contract, and no set or dict is
 iterated without sorting first.
@@ -7,24 +7,30 @@ iterated without sorting first.
 from __future__ import annotations
 
 import hashlib
+import itertools
+import statistics
 from collections.abc import Callable, Hashable, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date
+from typing import Literal
 from urllib.parse import urlsplit
 
 from revenant.autopsy.body import ParsedBody, body_precision, parse_body, parse_row_date, row_order
 from revenant.autopsy.contract import (
     Comments,
     Contract,
+    Default,
     DigitsCount,
     Endpoint,
     EnumType,
+    ErrorStatus,
     Evidence,
     FormatEvidence,
     HostEvidence,
     IntervalVariants,
     IntType,
     Months,
+    NameCount,
     NameEvidence,
     Parameter,
     Precision,
@@ -34,7 +40,7 @@ from revenant.autopsy.contract import (
     ValueCount,
     Variant,
 )
-from revenant.autopsy.evidence import Capture, capture_year
+from revenant.autopsy.evidence import Capture, capture_date, capture_year
 from revenant.autopsy.months import RANGE_PARAMS, MonthSample, Tally, detect
 from revenant.autopsy.normalize import normalize_query
 from revenant.exhume.select import interval, parameter_shape
@@ -44,6 +50,10 @@ MAX_EXAMPLES = 5
 MAX_ENUM = 10
 JUNK_MARKERS = ("{{", "}}", "{%")
 DOCUMENTED_PARAMS = frozenset({"s", "a", "b", "c", "d", "e", "f", "g", "ignore"})
+RECENT_DAYS = 7  # Req 6.2: Capture_Date minus newest Row_Date in 0..7
+DAILY_MAX = 4  # Req 6.3 spacing bands, in days, inclusive
+WEEKLY = (5, 10)
+MONTHLY = (25, 35)
 
 
 def _evidence(keys: Iterable[str]) -> Evidence:
@@ -137,13 +147,17 @@ def _parameters(data: Sequence[Capture]) -> tuple[list[Parameter], Evidence]:
     return parameters, amp
 
 
+def _media_type(capture: Capture) -> str:
+    """Lowercased part before any `;` of `content_type`, else `mimetype`."""
+    raw = capture.entry.content_type or capture.entry.mimetype
+    return raw.split(";", 1)[0].strip().lower()
+
+
 def _content_types(data: Sequence[Capture]) -> list[NameEvidence]:
-    """Req 4.1: lowercased media type before any `;` of `content_type`, else `mimetype`."""
+    """Req 4.1: media type of each Data_Capture with its Evidence."""
     by_type: dict[str, list[str]] = {}
     for capture in data:
-        raw = capture.entry.content_type or capture.entry.mimetype
-        name = raw.split(";", 1)[0].strip().lower()
-        by_type.setdefault(name, []).append(capture.key)
+        by_type.setdefault(_media_type(capture), []).append(capture.key)
     return [NameEvidence(name=name, evidence=_evidence(by_type[name])) for name in sorted(by_type)]
 
 
@@ -297,6 +311,79 @@ def _comments(bodies: Sequence[_Body]) -> Comments:
     )
 
 
+def _spacing(gaps: Sequence[int]) -> Literal["d", "w", "m", "unknown"]:
+    """Req 6.3: band of the median gap; a half-day median such as 4.5 falls in no band."""
+    if not gaps:
+        return "unknown"
+    middle = statistics.median(gaps)
+    if middle <= DAILY_MAX:
+        return "d"
+    if WEEKLY[0] <= middle <= WEEKLY[1]:
+        return "w"
+    if MONTHLY[0] <= middle <= MONTHLY[1]:
+        return "m"
+    return "unknown"
+
+
+def _default(shape: Literal["s_only", "empty_range"], group: Sequence[_Body]) -> Default:
+    """Req 6.1 to 6.3 over bodies with >= 1 Data_Row and no `unparsed_dates`."""
+    oldest = [min(body.dates()) for body in group]
+    newest = [max(body.dates()) for body in group]
+    recent = sum(
+        1
+        for body, last in zip(group, newest, strict=True)
+        if 0 <= (capture_date(body.capture.entry) - last).days <= RECENT_DAYS
+    )
+    gaps = [
+        abs((later - earlier).days)
+        for body in group
+        for earlier, later in itertools.pairwise(body.dates())
+    ]
+    return Default(
+        shape=shape,
+        evidence=_evidence(body.key for body in group),
+        earliest=min(oldest).isoformat() if group else None,
+        latest=max(newest).isoformat() if group else None,
+        recent_within_7d=recent,
+        spacing=_spacing(gaps),
+    )
+
+
+def _defaults(bodies: Sequence[_Body]) -> list[Default]:
+    eligible = [body for body in bodies if body.parsed.rows and not body.unparsed]
+    by_shape = _group(eligible, lambda body: parameter_shape(body.pairs))
+    shapes: tuple[Literal["s_only", "empty_range"], ...] = ("empty_range", "s_only")
+    return [_default(shape, by_shape.get(shape, [])) for shape in shapes]
+
+
+def _name_counts(names: Iterable[str]) -> list[NameCount]:
+    counts: dict[str, int] = {}
+    for name in names:
+        counts[name] = counts.get(name, 0) + 1
+    return [NameCount(name=name, count=counts[name]) for name in sorted(counts)]
+
+
+def _errors(errors: Sequence[Capture]) -> list[ErrorStatus] | None:
+    """Req 6.4, 6.5: per status code from Error_Captures only; null when there are none."""
+    if not errors:
+        return None
+    by_status: dict[str, list[Capture]] = {}
+    for capture in errors:
+        by_status.setdefault(capture.entry.statuscode, []).append(capture)
+    return [
+        ErrorStatus(
+            status=status,
+            evidence=_evidence(capture.key for capture in by_status[status]),
+            media_types=_name_counts(_media_type(capture) for capture in by_status[status]),
+            shapes=_name_counts(
+                parameter_shape(normalize_query(capture.entry.original))
+                for capture in by_status[status]
+            ),
+        )
+        for status in sorted(by_status)
+    ]
+
+
 def _months(bodies: Sequence[_Body]) -> Months:
     samples = [sample for body in bodies if (sample := _month_sample(body)) is not None]
     result = detect(samples)
@@ -331,4 +418,6 @@ def infer(slug: str, index_bytes: bytes, captures: Sequence[Capture]) -> Contrac
         row_order=_row_order(bodies),
         precision=_precision(bodies),
         comments=_comments(bodies),
+        defaults=_defaults(bodies),
+        errors=_errors([capture for capture in ordered if capture.entry.kind == "error"]),
     )
