@@ -1,0 +1,78 @@
+{
+  "endpoints": [
+    {
+      "hosts": [
+        {
+          "evidence": {
+            "count": 50,
+            "keys": [
+              "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7",
+              "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+              "ichart.finance.yahoo.com/20050427190628-XEPUQFNCYI3THTUYPDNJKMKHNHRMQV7Q"
+            ]
+          },
+          "host": "ichart.finance.yahoo.com"
+        },
+        {
+          "evidence": {
+            "count": 50,
+            "keys": [
+              "ichart.yahoo.com/20041129204236-2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW",
+              "ichart.yahoo.com/20050125022251-WLBIV5HP7PWA4NBQRQAWY2H33PFVJUE6",
+              "ichart.yahoo.com/20050125175736-GXVK4UWCFXCG6QV7NK6DFOK6H7STUQ2U"
+            ]
+          },
+          "host": "ichart.yahoo.com"
+        },
+        {
+          "evidence": {
+            "count": 50,
+            "keys": [
+              "real-chart.finance.yahoo.com/20140706194927-Q6BBDEGZRLFIGCRUIWVW2EESOH2FY63U",
+              "real-chart.finance.yahoo.com/20140819110511-5OXWX644JAAKOVYJQFQO4EN5KFYIMX7Z",
+              "real-chart.finance.yahoo.com/20140819112705-2MF4LC4QTQDMRDDBKTRGJE6ZVYXFQ7GW"
+            ]
+          },
+          "host": "real-chart.finance.yahoo.com"
+        }
+      ],
+      "path": "/table.csv"
+    }
+  ],
+  "months": {
+    "ambiguous": {
+      "count": 9,
+      "keys": [
+        "ichart.finance.yahoo.com/20110107223405-UETFQDVHIB6ZKHQZNVZBYPBMAJZPNLQR",
+        "ichart.yahoo.com/20051014232315-2IVNNI4HBQ7YTETMPXIEWN3DLWKQRQB3",
+        "real-chart.finance.yahoo.com/20140912162342-L24JPNPONAYRYSEVCZS6PF25YOHFT45N"
+      ]
+    },
+    "decisive_h0": {
+      "count": 58,
+      "keys": [
+        "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+        "ichart.finance.yahoo.com/20100228082204-PEYSYIBB5AMDY55CHWEG7S4XN44STVTN",
+        "ichart.finance.yahoo.com/20100712060201-PDW3FT7DLMMCHPXUIMMM5E6FD3PTCJPJ"
+      ]
+    },
+    "decisive_h1": {
+      "count": 0,
+      "keys": []
+    },
+    "indexing": "0-indexed",
+    "unfit": {
+      "count": 25,
+      "keys": [
+        "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+        "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP",
+        "ichart.finance.yahoo.com/20051121083735-SJ5MEXRC7C6FZ7T2VQSB2TUTGWDEBEWH"
+      ]
+    }
+  },
+  "slug": "yahoo-finance-ichart",
+  "source": {
+    "entry_count": 160,
+    "index_sha256": "e4c3c7e8daeed5310134783101e22161c4cf60eba6156631d19a8a323a721654"
+  }
+}
