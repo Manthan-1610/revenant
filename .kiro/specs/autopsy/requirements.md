@@ -8,7 +8,7 @@ evidence that Exhume stored (`evidence/<slug>/index.json` and the capture files 
 contract deterministically, with no LLM. Autopsy writes `crypt/<slug>/contract.json` and renders
 `.kiro/specs/revenant-<slug>/requirements.md` from that contract with a fixed template. Reanimate
 hands the rendered file to Kiro CLI headless. The inference rules target the Yahoo CSV family
-(`yahoo-finance-ichart`); other slugs are deferred. F1 to F21 refer to Appendix A of
+(`yahoo-finance-ichart`); other slugs are deferred. F1 to F22 refer to Appendix A of
 `.kiro/specs/exhume/requirements.md`. Unit tests never touch the network.
 
 ## Glossary
@@ -144,7 +144,7 @@ hands the rendered file to Kiro CLI headless. The inference rules target the Yah
 #### Acceptance Criteria
 
 1. THE Spec_Renderer SHALL read only `contract.json` and write `<specs-dir>/revenant-<slug>/requirements.md` with an atomic write, giving byte-identical output for the same contract.
-2. THE Spec_Renderer SHALL emit EARS requirements for the routes (every host alias and path), every parameter with type and requirement status (for every `int` parameter, a requirement that the revenant accepts every value from the observed minimum to the observed maximum, such as `d` up to 12 (F21), and never rejects a value Yahoo accepted), the month indexing, the row-order class with the highest count from 5.2, the default range of each shape from 6.1 and an `X-Revenant-Donor` response header.
+2. THE Spec_Renderer SHALL emit EARS requirements for the routes (every host alias and path), every parameter with type and requirement status (for every `int` Documented_Parameter, one requirement that the revenant accepts at least every value from the observed minimum to the observed maximum, a minimum to accept and never a limit, and never rejects an integer only because it lies outside that range; for every "observed, unexplained" parameter, only a requirement to accept and ignore it), the month indexing (WHERE months are `0-indexed` and the observed maximum of `a` or `d` is 12, a requirement that the value 12 means January of the following year, F21), the row-order class with the highest count from 5.2, the row-order class with the highest count from 5.2, the default range of each shape from 6.1 and an `X-Revenant-Donor` response header.
 3. THE Spec_Renderer SHALL select, per Interval, the served Response_Variant with the latest last Capture_Year, breaking ties by higher Evidence_Count, then by the lowest Header_Variant in code-point order.
 4. THE Spec_Renderer SHALL take the served precision as the most frequent Body_Precision of the served Response_Variant in the latest Capture_Year of its precision distribution, breaking ties toward more digits.
 5. THE Spec_Renderer SHALL list every Response_Variant not selected by 8.3, every Row_Date format and the Comment_Line example in an informational section, and SHALL state that the revenant ignores "observed, unexplained" parameters.

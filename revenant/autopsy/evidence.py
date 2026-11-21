@@ -78,16 +78,17 @@ def load_evidence(evidence_dir: Path, slug: str) -> tuple[bytes, list[Capture]]:
     return index_bytes, captures
 
 
-def _timestamp(entry: IndexEntry) -> str:
+def capture_timestamp(entry: IndexEntry) -> str:
+    """`served_timestamp`, else `requested_timestamp`."""
     return entry.served_timestamp or entry.requested_timestamp
 
 
 def capture_year(entry: IndexEntry) -> int:
     """Capture_Year: first 4 digits of `served_timestamp`, else `requested_timestamp`."""
-    return int(_timestamp(entry)[:4])
+    return int(capture_timestamp(entry)[:4])
 
 
 def capture_date(entry: IndexEntry) -> date:
     """Capture_Date: first 8 digits of the same timestamp as a date."""
-    stamp = _timestamp(entry)
+    stamp = capture_timestamp(entry)
     return date(int(stamp[:4]), int(stamp[4:6]), int(stamp[6:8]))

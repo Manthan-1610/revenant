@@ -104,6 +104,7 @@ def _contract(**update: Any) -> Contract:
             "decisive_h1": _ev(0),
             "ambiguous": _ev(0),
             "unfit": _ev(0),
+            "overflow": _ev(1, "k2"),
         },
         "content_types": [{"name": "text/csv", "evidence": _ev(3, "k1")}],
         "intervals": [
@@ -116,7 +117,7 @@ def _contract(**update: Any) -> Contract:
             }
         ],
         "headers": [],
-        "header_only": _ev(0),
+        "header_only": {**_ev(2, "k1", "k2"), "first_year": 2004, "last_year": 2005},
         "date_formats": [
             {"format": "%Y-%m-%d", "first_year": 2007, "last_year": 2016, "evidence": _ev(2)},
             {"format": "%d-%b-%y", "first_year": 2004, "last_year": 2007, "evidence": _ev(1)},
@@ -258,9 +259,41 @@ def test_informational_section_lists_unselected_variants_formats_and_comment() -
 
 def test_every_int_parameter_states_its_full_range() -> None:
     text = render(_contract())
-    assert "carries `a`, THE Revenant SHALL accept every value from 0 to 11" in text
-    assert "carries `d`, THE Revenant SHALL accept every value from 0 to 12" in text
-    assert "never reject a value the dead API accepted" in text
+    assert "carries `a`, THE Revenant SHALL parse it as an optional int" in text
+    assert "SHALL accept at least every value from 0 to 11 (observed)" in text
+    assert "SHALL accept at least every value from 0 to 12 (observed)" in text
+
+
+def test_observed_range_is_a_minimum_and_unexplained_params_get_no_range() -> None:
+    """Req 8.2: the victim sends c=2016 although c's observed max is 2015."""
+    unexplained = {**_int_param("j", 2013, 2013), "documented": False}
+    params = [_int_param("c", 1888, 2015), unexplained]
+    text = render(_contract(parameters=params))
+    assert (
+        "WHEN a request carries `c`, THE Revenant SHALL parse it as an optional int, SHALL accept"
+        " at least every value from 1888 to 2015 (observed), and SHALL NOT reject an integer only"
+        " because it lies outside the observed range (Evidence_Count 3)."
+    ) in text
+    assert "SHALL NOT reject an integer only because it lies outside the observed range" in text
+    assert "unexplained parameter `j`, THE Revenant SHALL accept it as optional and ignore" in text
+    assert "from 2013 to 2013" not in text
+    j_lines = [line for line in text.splitlines() if "`j`" in line and "SHALL" in line]
+    assert len(j_lines) == 1
+
+
+def test_month_12_rolls_over_only_when_observed() -> None:
+    text = render(_contract())
+    assert (
+        "IF `a` or `d` is 12, THEN THE Revenant SHALL treat it as January of the following year"
+        " (inferred from 1 capture, `k2`, which cannot tell rolling over from capping"
+    ) in text
+    no_12 = render(_contract(parameters=[_int_param("a", 0, 11), _int_param("d", 0, 11)]))
+    assert "is 12, THEN" not in no_12
+
+
+def test_header_only_responses_are_listed() -> None:
+    notes = render(_contract()).split("## Informational Notes", 1)[1]
+    assert "- Header-only 200 responses (2004–2005, Evidence_Count 2)" in notes
 
 
 def test_committed_evidence_spec_states_every_int_range(tmp_path: Path) -> None:
@@ -271,7 +304,14 @@ def test_committed_evidence_spec_states_every_int_range(tmp_path: Path) -> None:
     text = render(contract)
     for parameter in contract.parameters:
         kind = parameter.type
-        if kind.kind == "int":
-            expected = f"`{parameter.name}`, THE Revenant SHALL accept every value from"
-            assert f"{expected} {kind.min} to {kind.max}" in text
-    assert "carries `d`, THE Revenant SHALL accept every value from 0 to 12" in text
+        span = f"from {kind.min} to {kind.max}" if kind.kind == "int" else None
+        if span and parameter.documented:
+            assert f"at least every value {span} (observed)" in text
+        elif span:
+            assert span not in text
+    assert "SHALL accept at least every value from 0 to 12 (observed)" in text
+    assert "IF `a` or `d` is 12" in text
+    assert "`ichart.finance.yahoo.com/20121217014635-DP2RNCXQZKYOFXDUCUXCL34SYCHTKAKU`" in text
+    # Req 6.4: error keys newest first, so the 2016 real-chart 404 (SEYKM.IS) leads.
+    newest = "newest first: `real-chart.finance.yahoo.com/20160719090815-"
+    assert newest in text

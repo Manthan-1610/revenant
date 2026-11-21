@@ -9,7 +9,7 @@ Machine CDX API, downloads a small deterministic sample of raw captures and stor
 
 This is the MVP scope for a 1.5 to 2 day build. It also covers the project scaffold, because
 Exhume is the first code in the repository. Exhume follows `tech.md`, `necromancy-ethics.md`
-and `structure.md`. References F1 to F21 point to the observed Archive facts in Appendix A.
+and `structure.md`. References F1 to F22 point to the observed Archive facts in Appendix A.
 
 ## Glossary
 
@@ -541,3 +541,7 @@ the crawl; 3 of them also ignored the start date. No capture from 2014 on is Unf
 
 `ichart.finance.yahoo.com/20121217014635-DP2RNCXQZKYOFXDUCUXCL34SYCHTKAKU` requested `d=12`
 (month 13 under 0-indexing) and got 61 monthly rows with no error.
+
+### F22: Early `g=v` returned prices
+
+2 `g=v` captures from 2005–2006 returned the price header (`Date,Open,High,Low,Close,Volume,Adj. Close*`), not `Date,Dividends`.

@@ -39,8 +39,9 @@ from revenant.autopsy.contract import (
     StringType,
     ValueCount,
     Variant,
+    YearEvidence,
 )
-from revenant.autopsy.evidence import Capture, capture_date, capture_year
+from revenant.autopsy.evidence import Capture, capture_date, capture_timestamp, capture_year
 from revenant.autopsy.months import RANGE_PARAMS, MonthSample, Tally, detect
 from revenant.autopsy.normalize import normalize_query
 from revenant.exhume.select import interval, parameter_shape
@@ -49,6 +50,7 @@ MAX_KEYS = 3
 MAX_EXAMPLES = 5
 MAX_ENUM = 10
 JUNK_MARKERS = ("{{", "}}", "{%")
+MONTH_PARAMS = ("a", "d")
 DOCUMENTED_PARAMS = frozenset({"s", "a", "b", "c", "d", "e", "f", "g", "ignore"})
 RECENT_DAYS = 7  # Req 6.2: Capture_Date minus newest Row_Date in 0..7
 DAILY_MAX = 4  # Req 6.3 spacing bands, in days, inclusive
@@ -225,7 +227,9 @@ def _group[K: Hashable](bodies: Iterable[_Body], key: Callable[[_Body], K]) -> d
     return groups
 
 
-def _variants(bodies: Sequence[_Body]) -> tuple[list[IntervalVariants], list[Variant], Evidence]:
+def _variants(
+    bodies: Sequence[_Body],
+) -> tuple[list[IntervalVariants], list[Variant], YearEvidence]:
     """Req 4.4 to 4.6: Response_Variants per Interval, Header_Variants, Header_Only_Body count.
 
     Header_Only_Bodies count towards both variant tallies.
@@ -238,7 +242,15 @@ def _variants(bodies: Sequence[_Body]) -> tuple[list[IntervalVariants], list[Var
         intervals.append(IntervalVariants(interval=name, variants=variants))
     by_header = _group(bodies, lambda body: body.parsed.header)
     headers = [_variant(header, by_header[header]) for header in sorted(by_header)]
-    header_only = _evidence(body.key for body in bodies if not body.parsed.rows)
+    empty = [body for body in bodies if not body.parsed.rows]
+    evidence = _evidence(body.key for body in empty)
+    years = [body.year for body in empty]
+    header_only = YearEvidence(
+        count=evidence.count,
+        keys=evidence.keys,
+        first_year=min(years) if years else None,
+        last_year=max(years) if years else None,
+    )
     return intervals, headers, header_only
 
 
@@ -363,6 +375,13 @@ def _name_counts(names: Iterable[str]) -> list[NameCount]:
     return [NameCount(name=name, count=counts[name]) for name in sorted(counts)]
 
 
+def _newest_first(captures: Sequence[Capture]) -> Evidence:
+    """Evidence whose keys run newest Capture timestamp first, ties by ascending key."""
+    ordered = sorted(captures, key=lambda c: c.key)
+    ordered.sort(key=lambda c: capture_timestamp(c.entry), reverse=True)  # stable: keys tie-break
+    return Evidence(count=len(ordered), keys=[c.key for c in ordered[:MAX_KEYS]])
+
+
 def _errors(errors: Sequence[Capture]) -> list[ErrorStatus] | None:
     """Req 6.4, 6.5: per status code from Error_Captures only; null when there are none."""
     if not errors:
@@ -373,7 +392,7 @@ def _errors(errors: Sequence[Capture]) -> list[ErrorStatus] | None:
     return [
         ErrorStatus(
             status=status,
-            evidence=_evidence(capture.key for capture in by_status[status]),
+            evidence=_newest_first(by_status[status]),
             media_types=_name_counts(_media_type(capture) for capture in by_status[status]),
             shapes=_name_counts(
                 parameter_shape(normalize_query(capture.entry.original))
@@ -382,6 +401,15 @@ def _errors(errors: Sequence[Capture]) -> list[ErrorStatus] | None:
         )
         for status in sorted(by_status)
     ]
+
+
+def _is_month_12(body: _Body) -> bool:
+    """F21: the first `a` or `d` value is the integer 12."""
+    first = _first_values(body.pairs)
+    return any(
+        (value := first.get(name, "")).isascii() and value.isdigit() and int(value) == 12
+        for name in MONTH_PARAMS
+    )
 
 
 def _months(bodies: Sequence[_Body]) -> Months:
@@ -393,6 +421,7 @@ def _months(bodies: Sequence[_Body]) -> Months:
         decisive_h1=_from_tally(result.decisive_h1),
         ambiguous=_from_tally(result.ambiguous),
         unfit=_from_tally(result.unfit),
+        overflow=_evidence(body.key for body in bodies if _is_month_12(body)),
     )
 
 

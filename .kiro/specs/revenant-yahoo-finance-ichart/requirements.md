@@ -33,28 +33,20 @@ This document specifies the revenant for the dead API `yahoo-finance-ichart`. It
 
 #### Acceptance Criteria
 
-1. WHEN a request carries parameter `a`, THE Revenant SHALL read it as an optional `int` (Evidence_Count 114, 1 with an empty value).
-2. WHEN a request carries `a`, THE Revenant SHALL accept every value from 0 to 11 and SHALL never reject a value the dead API accepted.
-3. WHEN a request carries parameter `b`, THE Revenant SHALL read it as an optional `int` (Evidence_Count 113, 1 with an empty value).
-4. WHEN a request carries `b`, THE Revenant SHALL accept every value from 1 to 31 and SHALL never reject a value the dead API accepted.
-5. WHEN a request carries parameter `c`, THE Revenant SHALL read it as an optional `int` (Evidence_Count 110, 1 with an empty value).
-6. WHEN a request carries `c`, THE Revenant SHALL accept every value from 1888 to 2015 and SHALL never reject a value the dead API accepted.
-7. WHEN a request carries parameter `d`, THE Revenant SHALL read it as an optional `int` (Evidence_Count 108, 1 with an empty value).
-8. WHEN a request carries `d`, THE Revenant SHALL accept every value from 0 to 12 and SHALL never reject a value the dead API accepted.
-9. WHEN a request carries parameter `e`, THE Revenant SHALL read it as an optional `int` (Evidence_Count 108, 1 with an empty value).
-10. WHEN a request carries `e`, THE Revenant SHALL accept every value from 1 to 31 and SHALL never reject a value the dead API accepted.
-11. WHEN a request carries parameter `f`, THE Revenant SHALL read it as an optional `int` (Evidence_Count 96, 1 with an empty value, 1 with Template_Junk).
-12. WHEN a request carries `f`, THE Revenant SHALL accept every value from 1983 to 2030 and SHALL never reject a value the dead API accepted.
-13. WHEN a request carries parameter `g`, THE Revenant SHALL read it as an optional `enum` and accept every observed value: `d` (62), `m` (19), `v` (18), `w` (16) (Evidence_Count 116, 1 with an empty value).
-14. WHEN a request carries parameter `ignore`, THE Revenant SHALL read it as an optional `enum` and accept every observed value: `.csv` (106), `.csv"` (1) (Evidence_Count 107).
-15. WHEN a request carries the observed, unexplained parameter `j`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 1).
-16. WHEN a request carries `j`, THE Revenant SHALL accept every value from 2013 to 2013 and SHALL never reject a value the dead API accepted.
-17. WHEN a request carries the observed, unexplained parameter `q`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 7).
-18. WHEN a request carries parameter `s`, THE Revenant SHALL read it as a required `string` (117 distinct values observed; Evidence_Count 150).
-19. WHEN a request carries the observed, unexplained parameter `x`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 7).
-20. WHEN a request carries the observed, unexplained parameter `y`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 7).
-21. WHEN a request carries `y`, THE Revenant SHALL accept every value from 0 to 0 and SHALL never reject a value the dead API accepted.
-22. WHEN a request carries the observed, unexplained parameter `z`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 7).
+1. WHEN a request carries `a`, THE Revenant SHALL parse it as an optional int, SHALL accept at least every value from 0 to 11 (observed), and SHALL NOT reject an integer only because it lies outside the observed range (Evidence_Count 114, 1 with an empty value).
+2. WHEN a request carries `b`, THE Revenant SHALL parse it as an optional int, SHALL accept at least every value from 1 to 31 (observed), and SHALL NOT reject an integer only because it lies outside the observed range (Evidence_Count 113, 1 with an empty value).
+3. WHEN a request carries `c`, THE Revenant SHALL parse it as an optional int, SHALL accept at least every value from 1888 to 2015 (observed), and SHALL NOT reject an integer only because it lies outside the observed range (Evidence_Count 110, 1 with an empty value).
+4. WHEN a request carries `d`, THE Revenant SHALL parse it as an optional int, SHALL accept at least every value from 0 to 12 (observed), and SHALL NOT reject an integer only because it lies outside the observed range (Evidence_Count 108, 1 with an empty value).
+5. WHEN a request carries `e`, THE Revenant SHALL parse it as an optional int, SHALL accept at least every value from 1 to 31 (observed), and SHALL NOT reject an integer only because it lies outside the observed range (Evidence_Count 108, 1 with an empty value).
+6. WHEN a request carries `f`, THE Revenant SHALL parse it as an optional int, SHALL accept at least every value from 1983 to 2030 (observed), and SHALL NOT reject an integer only because it lies outside the observed range (Evidence_Count 96, 1 with an empty value, 1 with Template_Junk).
+7. WHEN a request carries parameter `g`, THE Revenant SHALL read it as an optional `enum` and accept every observed value: `d` (62), `m` (19), `v` (18), `w` (16) (Evidence_Count 116, 1 with an empty value).
+8. WHEN a request carries parameter `ignore`, THE Revenant SHALL read it as an optional `enum` and accept every observed value: `.csv` (106), `.csv"` (1) (Evidence_Count 107).
+9. WHEN a request carries the observed, unexplained parameter `j`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 1).
+10. WHEN a request carries the observed, unexplained parameter `q`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 7).
+11. WHEN a request carries parameter `s`, THE Revenant SHALL read it as a required `string` (117 distinct values observed; Evidence_Count 150).
+12. WHEN a request carries the observed, unexplained parameter `x`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 7).
+13. WHEN a request carries the observed, unexplained parameter `y`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 7).
+14. WHEN a request carries the observed, unexplained parameter `z`, THE Revenant SHALL accept it as optional and ignore its value (Evidence_Count 7).
 
 ### Requirement 3: Month indexing
 
@@ -63,6 +55,7 @@ This document specifies the revenant for the dead API `yahoo-finance-ichart`. It
 #### Acceptance Criteria
 
 1. WHEN a request carries `a` or `d`, THE Revenant SHALL read the month as the value + 1, so that `a=0` means January (0-indexed; Decisive_Captures for 0-indexed 58, for 1-indexed 0; Ambiguous 9; Unfit 25; e.g. `ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2`, `ichart.finance.yahoo.com/20100228082204-PEYSYIBB5AMDY55CHWEG7S4XN44STVTN`, `ichart.finance.yahoo.com/20100712060201-PDW3FT7DLMMCHPXUIMMM5E6FD3PTCJPJ`).
+2. IF `a` or `d` is 12, THEN THE Revenant SHALL treat it as January of the following year (inferred from 1 capture, `ichart.finance.yahoo.com/20121217014635-DP2RNCXQZKYOFXDUCUXCL34SYCHTKAKU`, which cannot tell rolling over from capping at December, since both give the same rows there).
 
 ### Requirement 4: Response format
 
@@ -101,7 +94,7 @@ This document specifies the revenant for the dead API `yahoo-finance-ichart`. It
 
 #### Acceptance Criteria
 
-1. IF the Donor has no rows for a request, THEN THE Revenant SHALL respond with status 404 with `Content-Type: text/html` (Evidence_Count 10: `ichart.finance.yahoo.com/20040906234958-5UMJH4AMNV5SR3NT3IUY4AM35NB4BDT3`, `ichart.finance.yahoo.com/20040912032218-ZLGX6IPHAJ4XLY2RL6EDZ5SMLUXXXD46`, `ichart.finance.yahoo.com/20040915034307-7XEDSZLS77ZUMFKG2VT2WLFXTLPK2W6K`).
+1. IF the Donor has no rows for a request, THEN THE Revenant SHALL respond with status 404 with `Content-Type: text/html` and a body modelled on the newest archived 404 page, `real-chart.finance.yahoo.com/20160719090815-E2OZ2DIDZWYGPF3QRTIT4AZCN6A46NBU` (Evidence_Count 10, newest first: `real-chart.finance.yahoo.com/20160719090815-E2OZ2DIDZWYGPF3QRTIT4AZCN6A46NBU`, `real-chart.finance.yahoo.com/20150207083509-C5N5SH6NPK6HKL6MCUGAXITAY24GDUCL`, `real-chart.finance.yahoo.com/20140729192006-MYLVM4L2JQF6HKOPYVCM2F4YCF6ZEVL5`).
 
 ## Informational Notes
 
@@ -119,6 +112,10 @@ These observations are not requirements. They record what the evidence shows.
 
 - `%Y-%m-%d`: 2007 to 2017 (Evidence_Count 97)
 - `%d-%b-%y`: 2005 to 2007 (Evidence_Count 51)
+
+### Header-Only 200 Responses
+
+- Header-only 200 responses (2004, Evidence_Count 2): a Header_Line with no Data_Row is a valid response (`ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7`, `ichart.yahoo.com/20041129204236-2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW`)
 
 ### Comment_Line
 

@@ -143,7 +143,7 @@ def _routes(contract: Contract) -> list[str]:
     return criteria
 
 
-def _parameter_criteria(parameter: Parameter) -> list[str]:
+def _parameter_criterion(parameter: Parameter) -> str:
     name = _code(parameter.name)
     status = "required" if parameter.required else "optional"
     article = "a" if parameter.required else "an"
@@ -154,39 +154,35 @@ def _parameter_criteria(parameter: Parameter) -> list[str]:
         evidence += f", {parameter.junk} with Template_Junk"
     kind = parameter.type
     if not parameter.documented:
-        head = (
+        # Unexplained: accept and ignore only, never a value range (Req 8.2).
+        return (
             f"WHEN a request carries the observed, unexplained parameter {name}, THE Revenant"
             f" SHALL accept it as {status} and ignore its value ({evidence})."
         )
-    elif kind.kind == "int":
-        head = (
-            f"WHEN a request carries parameter {name}, THE Revenant SHALL read it as {article} {status}"
-            f" `int` ({evidence})."
+    if kind.kind == "int":
+        # The observed range is the minimum to accept, never a limit (Req 8.2).
+        return (
+            f"WHEN a request carries {name}, THE Revenant SHALL parse it as {article} {status}"
+            f" int, SHALL accept at least every value from {kind.min} to {kind.max} (observed),"
+            " and SHALL NOT reject an integer only because it lies outside the observed range"
+            f" ({evidence})."
         )
-    elif kind.kind == "enum":
+    if kind.kind == "enum":
         values = ", ".join(f"{_code(v.value)} ({v.count})" for v in kind.values)
-        head = (
+        return (
             f"WHEN a request carries parameter {name}, THE Revenant SHALL read it as {article} {status}"
             f" `enum` and accept every observed value: {values} ({evidence})."
         )
-    else:
-        head = (
-            f"WHEN a request carries parameter {name}, THE Revenant SHALL read it as {article} {status}"
-            f" `string` ({kind.distinct} distinct values observed; {evidence})."
-        )
-    criteria = [head]
-    if kind.kind == "int":
-        criteria.append(
-            f"WHEN a request carries {name}, THE Revenant SHALL accept every value from"
-            f" {kind.min} to {kind.max} and SHALL never reject a value the dead API accepted."
-        )
-    return criteria
+    return (
+        f"WHEN a request carries parameter {name}, THE Revenant SHALL read it as {article} {status}"
+        f" `string` ({kind.distinct} distinct values observed; {evidence})."
+    )
 
 
 def _parameters(contract: Contract) -> list[str]:
     criteria: list[str] = []
     for parameter in contract.parameters:
-        criteria += _parameter_criteria(parameter)
+        criteria.append(_parameter_criterion(parameter))
     if contract.amp.count:
         criteria.append(
             "WHEN a request carries a stray `amp` name from double HTML escaping, THE Revenant"
@@ -212,7 +208,38 @@ def _months(contract: Contract) -> list[str]:
         f"WHEN a request carries `a` or `d`, THE Revenant SHALL {rule} ({months.indexing};"
         f" {counts}; e.g. {_keys(keys)})."
     )
-    return [text]
+    criteria = [text]
+    overflow = _overflow_criterion(contract)
+    if overflow:
+        criteria.append(overflow)
+    return criteria
+
+
+def _overflow_criterion(contract: Contract) -> str | None:
+    """F21: month value 12 under 0-indexing rolls over to January of the next year (Req 8.2)."""
+    if contract.months.indexing != "0-indexed":
+        return None
+    at_12 = [
+        p
+        for p in contract.parameters
+        if p.name in ("a", "d") and p.documented and p.type.kind == "int" and p.type.max == 12
+    ]
+    if not at_12:
+        return None
+    evidence = contract.months.overflow
+    if evidence.count:
+        noun = "capture" if evidence.count == 1 else "captures"
+        source = f"{evidence.count} {noun}, {_keys(evidence.keys)}"
+    else:
+        source = "; ".join(
+            f"the observed max 12 of {_code(p.name)}, Evidence_Count {p.present.count}"
+            for p in at_12
+        )
+    return (
+        "IF `a` or `d` is 12, THEN THE Revenant SHALL treat it as January of the following year"
+        f" (inferred from {source}, which cannot tell rolling over from capping at December,"
+        " since both give the same rows there)."
+    )
 
 
 def _format(contract: Contract) -> list[str]:
@@ -278,9 +305,15 @@ def _donor() -> list[str]:
 def _error(errors: list[ErrorStatus]) -> list[str]:
     top, media = top_error(errors)
     content = f" with `Content-Type: {media}`" if media else ""
+    body = ""
+    if top.evidence.keys:
+        body = (
+            f" and a body modelled on the newest archived {top.status} page,"
+            f" {_code(top.evidence.keys[0])}"
+        )
     text = (
         f"IF the Donor has no rows for a request, THEN THE Revenant SHALL respond with status"
-        f" {top.status}{content} (Evidence_Count {top.evidence.count}:"
+        f" {top.status}{content}{body} (Evidence_Count {top.evidence.count}, newest first:"
         f" {_keys(top.evidence.keys)})."
     )
     return [text]
@@ -312,6 +345,18 @@ def _informational(contract: Contract) -> list[str]:
         for f in contract.date_formats
     ]
     lines += formats or ["- none"]
+    lines += ["", "### Header-Only 200 Responses", ""]
+    header_only = contract.header_only
+    if header_only.count and header_only.first_year is not None:
+        years = str(header_only.first_year)
+        if header_only.last_year != header_only.first_year:
+            years += f"–{header_only.last_year}"
+        lines.append(
+            f"- Header-only 200 responses ({years}, Evidence_Count {header_only.count}):"
+            f" a Header_Line with no Data_Row is a valid response ({_keys(header_only.keys)})"
+        )
+    else:
+        lines.append("- none observed")
     comments = contract.comments
     lines += ["", "### Comment_Line", ""]
     if comments.example is None:

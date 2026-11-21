@@ -24,6 +24,15 @@ class Evidence(_Model):
     keys: list[str]
 
 
+class YearEvidence(_Model):
+    """Evidence with the first and last Capture_Year of its captures (null when count is 0)."""
+
+    count: int
+    keys: list[str]
+    first_year: int | None
+    last_year: int | None
+
+
 class Source(_Model):
     index_sha256: str
     entry_count: int
@@ -45,6 +54,7 @@ class Months(_Model):
     decisive_h1: Evidence
     ambiguous: Evidence
     unfit: Evidence
+    overflow: Evidence  # Data_Captures whose `a` or `d` is 12 (F21)
 
 
 class ValueCount(_Model):
@@ -169,7 +179,7 @@ class ErrorStatus(_Model):
     """Req 6.4: Error_Captures of one status code."""
 
     status: str
-    evidence: Evidence
+    evidence: Evidence  # keys newest first (Capture timestamp descending, then key)
     media_types: list[NameCount]  # sorted by name
     shapes: list[NameCount]  # sorted by name
 
@@ -184,7 +194,7 @@ class Contract(_Model):
     content_types: list[NameEvidence]  # sorted by name
     intervals: list[IntervalVariants]  # sorted by interval
     headers: list[Variant]  # sorted by header
-    header_only: Evidence
+    header_only: YearEvidence
     date_formats: list[FormatEvidence]  # sorted by format
     row_order: RowOrder
     precision: list[Precision]  # sorted by (interval, header, year)
