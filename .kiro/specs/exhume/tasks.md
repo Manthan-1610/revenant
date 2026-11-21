@@ -195,13 +195,26 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
 
-- [-] 12. Write the live smoke test (final)
+- [x] 12. Write the live smoke test (final)
   - [x] 12.1 Write `tests/exhume/test_live.py` with one `@pytest.mark.live` test
     - Run `revenant exhume yahoo-finance-ichart --max-captures 20` against the real Archive with a `tmp_path` Evidence_Root and the repo's `tombstones/`; assert exit 0, 20 `data` entries for `ichart.yahoo.com` in `index.json`, at least 2 distinct `g` values and at least 3 distinct capture years
     - Run the same command again with the same Evidence_Root; assert exit 0 and `downloaded` is 0 for every Host
     - Run `.venv\Scripts\python -m pytest -m live` once, then `.venv\Scripts\python -m pytest` and `ruff check .`; all pass
     - _Requirements: 10.5, 10.6_
 
+- [x] 13. Wrap-up: Run_Summary host column width
+  - [x] 13.1 Give the `host` column `no_wrap=True`, a `min_width` that fits `real-chart.finance.yahoo.com` (28 chars) and no ellipsis (`overflow="crop"`); add a CLI test rendering the table at 80 columns that asserts the full host name appears and no `…` character is printed
+    - _Requirements: 10.2_
+
+- [ ] 14. Wrap-up: `revenant verify <slug>` (post-MVP, no network)
+  - [ ] 14.1 Add a `verify` command (≤ 60 lines of code): re-hash every Index entry's file, report entries checked, SHA-256 failures (name each file; exit 1 if any) and `digest_verified` true/false counts; list each `digest_verified=false` entry with the hint "orig transfer-encoding may be chunked (F19)"
+  - [ ] 14.2 Tests with a temporary evidence directory: all good → exit 0 and counts; a tampered file → exit 1 naming it; a missing file → failure; false-digest entries listed with the F19 hint
+    - _Requirements: 9.2, 7.6_
+
+- [ ] 15. Wrap-up: Kiro hooks under `.kiro/hooks/`
+  - [ ] 15.1 "Test what you touched": on save of `revenant/<stage>/**/*.py`, run `.venv\Scripts\python -m pytest tests/<stage> -q` and report pass/fail in at most 3 lines; never edit code
+  - [ ] 15.2 "Evidence integrity": on save or create of `evidence/**` (excluding `cdx/`), run `revenant verify <slug>`; on a SHA-256 failure show `git diff --stat evidence/` and recommend `git checkout -- <file>`; never modify evidence
+  - [ ] 15.3 Trigger each hook once and record what it printed
 ## Notes
 
 - Property tests P1 to P5 are required sub-tasks placed next to their components (tasks 3, 4, 6, 7, 8); none are marked optional.

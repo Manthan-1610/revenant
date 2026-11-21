@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
+import io
 import json
 from collections.abc import Callable
 from pathlib import Path
 
 import httpx
 import pytest
+from rich.console import Console
 from typer.testing import CliRunner, Result
 
 from revenant import cli
 from revenant.exhume.archive import RateLimiter
 from revenant.exhume.content import wayback_digest
+from revenant.exhume.models import HostSummary, RunResult, Tombstone
 from tests.exhume.conftest import FakeClock
 
 GOOD = "ichart.yahoo.com"
@@ -123,6 +126,36 @@ def test_successful_run_exits_0(requests: list[httpx.Request], tmp_path: Path) -
     assert result.exit_code == 0, result.output
     assert "discovery failed" not in result.output
     assert "short" not in result.output
+
+
+def test_summary_table_fits_80_columns_without_ellipsis() -> None:
+    hosts = ["ichart.yahoo.com", "ichart.finance.yahoo.com", "real-chart.finance.yahoo.com"]
+    tombstone = Tombstone(
+        slug="yahoo-finance-ichart",
+        name="Yahoo Finance historical prices",
+        died="2017-05",
+        hosts=hosts,
+        paths=["table.csv"],
+        mimetypes=["text/csv"],
+    )
+    result = RunResult(
+        hosts=[
+            HostSummary(host=hosts[0], found=10620, downloaded=49, cached=1),
+            HostSummary(host=hosts[1], found=19317, downloaded=49, cached=1),
+            HostSummary(host=hosts[2], found=5015, downloaded=3),
+        ],
+        error_evidence=10,
+    )
+    console = Console(width=80, file=io.StringIO(), highlight=False)
+    console.print(cli._summary_table(result, tombstone, 50))
+    out = console.file.getvalue()  # type: ignore[attr-defined]
+    print(out)
+    assert "…" not in out
+    lines = out.splitlines()
+    for host in hosts:
+        assert any(line.strip().startswith(f"{host} ") for line in lines), host
+    short_line = next(line for line in lines if line.strip().startswith(hosts[2]))
+    assert "short 3/50" in short_line
 
 
 def test_max_captures_zero_is_rejected_without_request(requests: list[httpx.Request]) -> None:

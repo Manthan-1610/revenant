@@ -29,24 +29,25 @@ Exhume (Kiro Spec session, using the execution-rules prompt)
 - [x] **Must-have:** `pytest` is green and there are 4 commits named `exhume: task N` (45 tests; live CDX check passed on all 3 hosts)
 
 ### Sat Nov 21: first real capture (the vertical slice)
-- [ ] Task 5.1–5.4: store, naive run, CLI wiring, end-to-end mock test
-- [ ] Task 5.5: **live** `revenant exhume yahoo-finance-ichart --max-captures 1` writes a real CSV with `digest_verified: true` (paste the output to Claude to double-check)
-- [ ] Task 6: content checks + P2 (Offline detector)
-- [ ] Task 7: ethics filter + P5 (auth-parameter filter)
-- [ ] Donor scouting (30 min): pick the live source of daily price data. Test 2–3 free options with curl and note rate limits and whether each needs a key. Write the choice in `tech.md`.
-- [ ] **Must-have:** a real Yahoo capture is on disk and was fetched by our own code
+- [x] Task 5.1–5.4: store, naive run, CLI wiring, end-to-end mock test *(done Fri)*
+- [x] Task 5.5: **live** `revenant exhume yahoo-finance-ichart --max-captures 1` writes a real CSV with `digest_verified: true` *(3/3 verified; the substituted-capture rule was added)*
+- [x] Task 6: content checks + P2 (Offline detector) *(done Fri)*
+- [x] Task 7: ethics filter + P5 (auth-parameter filter) *(done Fri)*
+- [x] Donor scouting *(done Fri)*. **Decision: primary donor = Yahoo's own archived full-history captures** (25 AAPL captures after 2016-01-08 cover the demo range; 135–172 KB daily histories). Stooq is behind a JS bot wall (don't bypass it). Nasdaq has no 2016 data. Alpha Vantage works but needs a free key (25 requests/day, no Adj Close), so it's a stretch goal for dates after 2017.
+- [ ] Get a free Alpha Vantage key (optional, stretch only)
+- [x] **Must-have:** a real Yahoo capture is on disk and was fetched by our own code
 - [ ] *Cut rule:* if task 5.5 fails by tonight, skip task 10 (error pass) on Sunday
 
 ### Sun Nov 22: finish Exhume + write the Autopsy spec
-- [ ] Task 8: deterministic selection + P3 (selection) property test
-- [ ] Task 9: backfill, listing-cache reuse, idempotent reruns
-- [ ] Task 10: error pass
-- [ ] Task 11: Rich summary table + exit codes
-- [ ] Task 12: live smoke test (20 captures, ≥2 `g` values, ≥3 years, then 0 downloads on rerun)
-- [ ] Real run: `revenant exhume yahoo-finance-ichart` (N = 50), then **commit `evidence/`**
-- [ ] Screenshot the Rich summary table for the video and blog
-- [ ] Autopsy spec, **requirements only** (Spec session, with the same discipline: ≤10 requirements, ≤250 lines)
-- [ ] **Must-have:** Exhume is done, evidence is committed, and Autopsy requirements are approved
+- [x] Task 8: deterministic selection + P3 (selection) property test *(done Fri; P3 found a real tie-break bug)*
+- [x] Task 9: backfill, listing-cache reuse, idempotent reruns
+- [x] Task 10: error pass
+- [x] Task 11: Rich summary table + exit codes
+- [x] Task 12: live smoke test (20 captures, ≥2 `g` values, ≥3 years, then 0 downloads on rerun)
+- [x] Real run: `revenant exhume yahoo-finance-ichart` (N = 50), then **commit `evidence/`** *(160 entries, 10.1 MB; rerun takes 2.8 s with 0 downloads and a byte-identical index; verified by Claude)*
+- [ ] Screenshot the Rich summary table for the video and blog (take it in Windows Terminal, full width)
+- [x] Autopsy spec, **requirements only** *(8 requirements, 175 lines; the real evidence gives 53 captures that fit only 0-indexed months and 0 that fit only 1-indexed)*
+- [x] **Must-have:** Exhume is done, evidence is committed, and Autopsy requirements are approved *(done Fri, 2 days early)*
 - [ ] *Cut rule:* if Exhume isn't done tonight, drop task 10 and the parameter-shape groups (selection by interval only)
 
 ### Mon Nov 23: Autopsy, the part that works without AI
@@ -58,7 +59,7 @@ Exhume (Kiro Spec session, using the execution-rules prompt)
 - [ ] **Must-have:** `contract.json` exists and its facts match what `product.md` says
 
 ### Tue Nov 24: Autopsy, the generated spec + first Kiro hooks
-- [ ] Autopsy writes `.kiro/specs/revenant-yahoo-finance-ichart/requirements.md` (EARS) from `contract.json`, using **Kiro CLI headless** for the prose (no separate LLM key needed)
+- [ ] Autopsy writes `.kiro/specs/revenant-yahoo-finance-ichart/requirements.md` (EARS) from `contract.json` with a **deterministic template** (reproducible and testable; Kiro CLI headless is saved for Reanimate, where it builds the server)
 - [ ] Hook 1, **"Test what you touched"**: when a file in `revenant/<stage>/` is saved, run `pytest tests/<stage> -q`
 - [ ] Hook 2, **"Evidence is immutable"**: if a file under `evidence/` is edited, restore it from git and explain why (protects digest integrity)
 - [ ] Commit hooks under `.kiro/hooks/`

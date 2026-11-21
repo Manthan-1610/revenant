@@ -22,6 +22,9 @@ from revenant.exhume.store import EvidenceStore
 
 app = typer.Typer()
 
+# Fits the longest hero host (28 chars).
+HOST_MIN_WIDTH = len("real-chart.finance.yahoo.com")
+
 
 @app.callback()
 def callback() -> None:
@@ -60,11 +63,19 @@ def exhume(
 
 def _summary_table(result: RunResult, tombstone: Tombstone, n: int) -> Table:
     """Run_Summary: one row per Host in Tombstone order (Req 10.2, 10.3)."""
-    table = Table(title=f"Exhume: {tombstone.slug}", box=box.SIMPLE_HEAD)
-    table.add_column("host")
+    # Never let Rich truncate with "…": the Windows console cannot render it (Req 10.2).
+    # Tight padding, so the note column still fits "short 49/50" at 80 columns.
+    table = Table(
+        title=f"Exhume: {tombstone.slug}",
+        box=box.SIMPLE_HEAD,
+        show_edge=False,
+        pad_edge=False,
+        collapse_padding=True,
+    )
+    table.add_column("host", no_wrap=True, min_width=HOST_MIN_WIDTH, overflow="crop")
     for column in ("found", "downloaded", "cached", "rejected"):
-        table.add_column(column, justify="right")
-    table.add_column("note")
+        table.add_column(column, justify="right", no_wrap=True, overflow="crop")
+    table.add_column("note", overflow="fold")
     by_host = {summary.host: summary for summary in result.hosts}
     for host_name in tombstone.hosts:
         summary = by_host.get(host_name, HostSummary(host=host_name))

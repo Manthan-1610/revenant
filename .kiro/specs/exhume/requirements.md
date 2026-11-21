@@ -9,7 +9,7 @@ Machine CDX API, downloads a small deterministic sample of raw captures and stor
 
 This is the MVP scope for a 1.5 to 2 day build. It also covers the project scaffold, because
 Exhume is the first code in the repository. Exhume follows `tech.md`, `necromancy-ethics.md`
-and `structure.md`. References F1 to F18 point to the observed Archive facts in Appendix A.
+and `structure.md`. References F1 to F19 point to the observed Archive facts in Appendix A.
 
 ## Glossary
 
@@ -518,3 +518,14 @@ cover 2016-01-04 to 2016-01-08: they have no `c`, `c` < 2016, or `c=2016` with `
 Examples: `20160405081912` on ichart.finance.yahoo.com (135,932 bytes, `g=d`, `c=1984`) and
 `20160416023609` on real-chart.finance.yahoo.com (172,268 bytes, `g=d`, `c=1970`).
 Observation: Yahoo's own archived full-history captures can serve as the primary donor.
+
+### F19: Digest mismatches on chunked original responses (verified by the user on 2026-11-20)
+
+The 4 entries of the N=50 run with `digest_verified: false` (ichart.finance.yahoo.com
+`20120601181348`, `20120605013119`; real-chart.finance.yahoo.com `20141211083710`,
+`20141217022734`) are genuine captures served at their exact timestamps. Re-fetches of
+`20120601181348` (DPS) and `20141211083710` (YHOO) carry `x-archive-orig-transfer-encoding: chunked`;
+the verified DISH capture (F14) does not. Observation: the CDX digest apparently covers the chunk
+framing, which the Archive strips on replay. Re-framing the body as a single chunk did NOT
+reproduce the digest, so the exact original chunking is unknown. These captures stay stored with
+`digest_verified: false` (Requirement 7.6).
