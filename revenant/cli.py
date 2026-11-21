@@ -9,9 +9,10 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from revenant.autopsy.contract import CONTRACT_FILE, write_contract
+from revenant.autopsy.contract import CONTRACT_FILE, load_contract, write_contract
 from revenant.autopsy.evidence import AutopsyError, load_evidence
 from revenant.autopsy.infer import infer
+from revenant.autopsy.render import write_spec
 from revenant.exhume.archive import ArchiveClient, RateLimiter, SystemClock, make_client, user_agent
 from revenant.exhume.models import (
     HostSummary,
@@ -112,6 +113,9 @@ def autopsy(
     if months.indexing == "undetermined":
         typer.echo("error: month indexing undetermined; no spec rendered", err=True)
         raise typer.Exit(2)
+    # Req 8.1: the renderer reads only the contract.json just written, never the in-memory model.
+    spec = write_spec(load_contract(path), specs_dir)
+    typer.echo(f"wrote: {spec.as_posix()}")
 
 
 def _validation_message(exc: ValidationError) -> str:

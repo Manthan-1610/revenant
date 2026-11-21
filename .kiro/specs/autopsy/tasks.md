@@ -130,22 +130,22 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 4.4, 4.5, 4.6, 5.1, 5.2, 5.4, 5.5_
 
-- [-] 7. Add defaults, errors and Contract validation errors
-  - [ ] 7.1 Add `Default`, `ErrorStatus`, `NameCount` and the `defaults` and `errors` fields to `contract.py`
+- [x] 7. Add defaults, errors and Contract validation errors
+  - [x] 7.1 Add `Default`, `ErrorStatus`, `NameCount` and the `defaults` and `errors` fields to `contract.py`
     - _Requirements: 6.1, 6.4, 6.5_
-  - [ ] 7.2 Infer defaults and errors in `infer.py`
+  - [x] 7.2 Infer defaults and errors in `infer.py`
     - Per shape `s_only` and `empty_range` (≥ 1 Data_Row, no `unparsed_dates`): Evidence, earliest oldest and latest newest Row_Date (0 and null when none), `recent_within_7d` (Capture_Date minus newest Row_Date in 0..7), spacing from `statistics.median` of pooled absolute gaps (`d` ≤ 4, `w` 5..10, `m` 25..35, else `unknown`)
     - Errors per status from Error_Captures only: Evidence, media types, Capture_Shape counts; `None` when no Error_Capture exists
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
-  - [ ] 7.3 Handle Contract `ValidationError` in the CLI
+  - [x] 7.3 Handle Contract `ValidationError` in the CLI
     - Print `error: contract.json: <loc>: <message>`, keep any existing `contract.json` untouched, exit 1
     - _Requirements: 7.2_
-  - [ ] 7.4 Write example tests in `tests/autopsy/test_infer.py` and extend the P2 generator
+  - [x] 7.4 Write example tests in `tests/autopsy/test_infer.py` and extend the P2 generator
     - Default spacing `d`, `w`, `m` and `unknown` (including a 4.5 median and no gaps); `recent_within_7d` at 7 and 8 days; errors present with counts and `None` without Error_Captures; `error_page` entries ignored
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 1.4_
 
-- [ ] 8. Implement the Spec_Renderer (`render.py`) and wire it into the CLI
+- [-] 8. Implement the Spec_Renderer (`render.py`) and wire it into the CLI
   - [ ] 8.1 Write `render` and `write_spec`
     - Fixed section order, f-strings and `"\n".join`, one trailing newline; EARS requirements for routes (every host alias and path), each parameter with type and required/optional, for each `int` parameter a requirement to accept every value from the observed min to the observed max and never reject a value Yahoo accepted (`d` up to 12, F21), month indexing, the row-order class with the highest count, each shape's default range, the `X-Revenant-Donor` header
     - Served variant per Interval: latest last year, then higher Evidence, then lowest header; served precision: most frequent in the latest year, ties to more digits; error requirement for the top status (ties to lower code) with its top content type (ties to code-point order) when the donor has no rows
