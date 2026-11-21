@@ -166,8 +166,8 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 1.1, 1.3, 1.5, 3.5, 4.3, 7.2, 7.6_
 
-- [-] 10. Final run on the real evidence
-  - [ ] 10.1 Run `.venv\Scripts\revenant autopsy yahoo-finance-ichart` from the repo root and report
+- [x] 10. Final run on the real evidence
+  - [x] 10.1 Run `.venv\Scripts\revenant autopsy yahoo-finance-ichart` from the repo root and report
     - Confirm exit 0 and both `crypt/yahoo-finance-ichart/contract.json` and `.kiro/specs/revenant-yahoo-finance-ichart/requirements.md` exist; run it again and confirm both files are byte-identical
     - Show the key facts of the contract: endpoint and hosts, month indexing with the four counts, Header_Variants with year ranges, row-order counts, served variant per `g`, defaults per shape, errors
     - Show the first 40 lines of the rendered `requirements.md`
