@@ -32,87 +32,87 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
 
 ## Tasks
 
-- [ ] 1. Implement the Evidence_Reader (`evidence.py`) and the CLI stub
-  - [ ] 1.1 Write `AutopsyError`, `Capture`, `load_evidence`, `capture_year` and `capture_date`
+- [x] 1. Implement the Evidence_Reader (`evidence.py`) and the CLI stub
+  - [x] 1.1 Write `AutopsyError`, `Capture`, `load_evidence`, `capture_year` and `capture_date`
     - `AutopsyError(path: str, message: str)`: the single input-error type, `str()` gives `<path>: <message>` with a POSIX path
     - `@dataclass(frozen=True) Capture(key, entry, body)`
     - `load_evidence(evidence_dir, slug) -> tuple[bytes, list[Capture]]`: read `<evidence_dir>/<slug>/index.json` as bytes, validate with Exhume's `Index.model_validate_json`; raise `AutopsyError` for a missing file, bad JSON, validation failure or slug mismatch; read every body from `<evidence_dir>/<slug>/<entry.path>` in sorted key order; raise for a missing body or a SHA-256 mismatch; accept `digest_verified=false` entries unchanged
     - `capture_year(entry)` and `capture_date(entry)` from `served_timestamp`, else `requested_timestamp`
     - Create `tests/autopsy/__init__.py`
     - _Requirements: 1.2, 1.3, 1.4_
-  - [ ] 1.2 Add the `autopsy` command stub to `revenant/cli.py`
+  - [x] 1.2 Add the `autopsy` command stub to `revenant/cli.py`
     - `autopsy(slug, evidence_dir=Path("evidence"), crypt_dir=Path("crypt"), specs_dir=Path(".kiro/specs"))`, a sibling of `exhume`; for now it calls `load_evidence`, prints the capture count, and turns `AutopsyError` into `error: <file>: <message>` on stderr and exit 1
     - _Requirements: 1.1, 1.3_
-  - [ ] 1.3 Write example tests in `tests/autopsy/test_evidence.py`
+  - [x] 1.3 Write example tests in `tests/autopsy/test_evidence.py`
     - Valid evidence loads in sorted key order regardless of Index insertion order; each Req 1.3 failure (missing Index, bad JSON, invalid Index, slug mismatch, missing body, SHA-256 mismatch) raises `AutopsyError` naming the file; a `digest_verified=false` entry is accepted; `capture_year`/`capture_date` fall back to `requested_timestamp`; the committed evidence loads without error
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 1.2, 1.3, 1.4_
 
-- [ ] 2. Implement the Query_Normalizer (`normalize.py`) and the Body_Parser core (`body.py`)
-  - [ ] 2.1 Write `unescape_fixpoint` and `normalize_query`
+- [x] 2. Implement the Query_Normalizer (`normalize.py`) and the Body_Parser core (`body.py`)
+  - [x] 2.1 Write `unescape_fixpoint` and `normalize_query`
     - `unescape_fixpoint(text)`: `html.unescape` until unchanged
     - `normalize_query(original)`: `urlsplit(original).query` → `unescape_fixpoint` → Exhume's `parse_query("?" + query)`; Capture_Shape and Interval come from Exhume's `parameter_shape` and `interval` on these pairs
     - _Requirements: 2.1_
-  - [ ] 2.2 Write property test P3 in `tests/autopsy/test_normalize.py`
+  - [x] 2.2 Write property test P3 in `tests/autopsy/test_normalize.py`
     - **Property 3: Unescape fixpoint**: for any query over `[A-Za-z0-9^%.=&]` HTML-escaped 0 to 3 times, `normalize_query` returns the same pairs as Exhume's `parse_query` on the unescaped query; example `&amp;amp;d=0` yields `d=0` (F15)
     - **Validates: Requirements 2.1**
-  - [ ] 2.3 Write `ParsedBody`, `parse_body`, `parse_row_date` and `row_order`
+  - [x] 2.3 Write `ParsedBody`, `parse_body`, `parse_row_date` and `row_order`
     - `parse_body(body, path)`: strict UTF-8 decode (raise `AutopsyError` naming `path`), no newline conversion, split at `\n`, Header_Line, Comment_Lines by `^<!--.*-->\s*$`, Data_Rows (non-empty, non-comment), `comments_after_last_row` and `comments_before_last_row`
     - `parse_row_date(field, capture_year) -> tuple[date, str] | None`: `%Y-%m-%d` or `%d-%b-%y` with a fixed English month table (never the locale); two-digit year `yy` → `capture_year - ((capture_year - yy) % 100)`
     - `row_order(dates)`: `descending`, `ascending` or `unordered`; needs ≥ 2 dates
     - _Requirements: 4.2, 4.3, 5.2, 5.3_
-  - [ ] 2.4 Write property test P4 in `tests/autopsy/test_body.py`
+  - [x] 2.4 Write property test P4 in `tests/autopsy/test_body.py`
     - **Property 4: Parsed row order**: for any strictly descending date list of length ≥ 2 within the 100 years up to the Capture_Year, each row rendered in either Row_Date format, `row_order` of the parsed dates is `descending`; month and year boundaries (where string order fails) are included
     - **Validates: Requirements 5.2**
-  - [ ] 2.5 Write example tests in `tests/autopsy/test_body.py`
+  - [x] 2.5 Write example tests in `tests/autopsy/test_body.py`
     - F16 comment line after the last row; Header_Only_Body (F12); a non-UTF-8 body raises `AutopsyError` naming the file; both date formats including a two-digit year across a century; an unparseable Row_Date returns None
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 4.2, 4.3, 5.3_
 
-- [ ] 3. Implement the Month_Detector (`months.py`)
-  - [ ] 3.1 Write `MonthSample`, `fits`, `MonthResult` and `detect`
+- [x] 3. Implement the Month_Detector (`months.py`)
+  - [x] 3.1 Write `MonthSample`, `fits`, `MonthResult` and `detect`
     - `fits(sample, h)`: false for any non-integer `a` to `f` or an invalid start `date(c, a + 1 - h, b)` / end `date(f, d + 1 - h, e)`; true when start ≤ oldest ≤ newest ≤ end
     - `detect(samples)`: classify each sample as Decisive (per H), Ambiguous or Unfit; `0-indexed` or `1-indexed` when that offset has ≥ 3 Decisive and the other has none, else `undetermined`; return the four counts with up to 3 sorted keys each; Ambiguous and Unfit get no vote
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
-  - [ ] 3.2 Write property test P1 in `tests/autopsy/test_months.py`
+  - [x] 3.2 Write property test P1 in `tests/autopsy/test_months.py`
     - **Property 1: Month recovery**: for any H in {0, 1} and any sample set generated with H containing ≥ 3 Decisive_Captures plus Ambiguous or Unfit noise, `detect` returns H's indexing; adding one Decisive_Capture for the other offset returns `undetermined`
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.4**
-  - [ ] 3.3 Write example tests in `tests/autopsy/test_months.py`
+  - [x] 3.3 Write example tests in `tests/autopsy/test_months.py`
     - Non-integer and empty `a` values are Unfit; `b=31` with an invalid month is Unfit for that H; exactly 2 Decisive gives `undetermined`; counts and keys are stored as specified
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 3.1, 3.3, 3.4_
 
-- [ ] 4. Build the vertical slice: minimal Contract, inference, writer and CLI, verified on real evidence
-  - [ ] 4.1 Write the slice models and writer in `contract.py`
+- [x] 4. Build the vertical slice: minimal Contract, inference, writer and CLI, verified on real evidence
+  - [x] 4.1 Write the slice models and writer in `contract.py`
     - Models with `ConfigDict(extra="forbid", frozen=True)`: `Evidence`, `Source`, `HostEvidence`, `Endpoint`, `Months`, and `Contract` with `slug`, `source`, `endpoints`, `months` (later tasks add the other fields of the design's Data Models)
     - `dump_contract` (Exhume's `dump_index` recipe: sorted keys, indent 2, `ensure_ascii=False`, trailing `\n`, UTF-8), `write_contract` via `atomic_write` to `<crypt_dir>/<slug>/contract.json`, `load_contract` via `model_validate_json`
     - _Requirements: 7.1, 7.3, 7.4, 7.5_
-  - [ ] 4.2 Write the slice inference in `infer.py`
+  - [x] 4.2 Write the slice inference in `infer.py`
     - `infer(slug, index_bytes, captures) -> Contract`: re-sort captures by key; keep `data` for facts, ignore `error_page`; `Source` from the SHA-256 and entry count of `index_bytes`; endpoints per `urlsplit(original).path` with hosts and per-(host, path) Evidence; build `MonthSample`s from `full_range` Data_Captures with ≥ 1 Data_Row and all Row_Dates parsed, and call `detect`
     - One private helper per requirement group; no set or dict iteration without sorting; no time, path, locale or env value enters the Contract
     - _Requirements: 1.4, 2.2, 3.1, 7.3, 7.5_
-  - [ ] 4.3 Wire the CLI flow in `revenant/cli.py`
+  - [x] 4.3 Wire the CLI flow in `revenant/cli.py`
     - `load_evidence` → `infer` → `write_contract`; print the month indexing, the Decisive counts for H=0 and H=1 and the written path (POSIX); exit 2 when indexing is `undetermined` (contract written, no spec)
     - _Requirements: 1.5, 3.5, 7.1_
-  - [ ] 4.4 Write property test P2 in `tests/autopsy/test_contract.py`
+  - [x] 4.4 Write property test P2 in `tests/autopsy/test_contract.py`
     - **Property 2: Byte-identical contract**: for any synthetic evidence set and any permutation of its captures, `dump_contract(infer(...))` returns the same bytes; the generator is extended in tasks 5 to 7 as fields are added
     - **Validates: Requirements 7.4, 7.6**
-  - [ ] 4.5 Run the slice on the real evidence
+  - [x] 4.5 Run the slice on the real evidence
     - Write `tests/autopsy/test_infer.py::test_committed_evidence_is_0_indexed` (reads `evidence/yahoo-finance-ichart/` read-only, asserts `0-indexed` and Decisive H=1 is 0)
     - Run `.venv\Scripts\revenant autopsy yahoo-finance-ichart` from the repo root; confirm exit 0, `crypt/yahoo-finance-ichart/contract.json` exists with `months.indexing` and both Decisive counts printed; fix any failure before continuing
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 1.5, 3.2, 7.1_
 
-- [ ] 5. Add parameters and content types to the Contract
+- [-] 5. Add parameters and content types to the Contract
   - [ ] 5.1 Add `Parameter`, `IntType`, `EnumType`, `StringType`, `ValueCount`, `NameEvidence` and the `parameters`, `amp`, `content_types` fields to `contract.py`
     - Type union discriminated by `kind`; `parameters` sorted by name, `examples` by (count desc, value asc), enum `values` by value
     - _Requirements: 2.3, 2.4, 2.5, 4.1, 7.3_
   - [ ] 5.2 Infer parameters and content types in `infer.py`
-    - Per name except `amp`, using each capture's first value: presence Evidence, empty count, Template_Junk count (`{{`, `}}`, `{%`), `required` only when every Data_Capture has a non-empty value, up to 5 examples; type `int` (min, max) when all non-empty non-junk values are ASCII digits, else `enum` (≤ 10 distinct), else `string` (distinct count); `documented` false outside the Documented_Parameters ("observed, unexplained", optional); `amp` Evidence
+    - Per name except `amp`, using each capture's first value: presence Evidence, empty count, Template_Junk count (`{{`, `}}`, `{%`, or a non-digit `a` to `f` value such as `f=f6j1`), `required` only when every Data_Capture has a non-empty value, up to 5 examples; type `int` (min, max) when all non-empty non-junk values are ASCII digits, else `enum` (≤ 10 distinct), else `string` (distinct count); each `int` parameter records its observed min and max (Req 8.2 renders the full range); `documented` false outside the Documented_Parameters ("observed, unexplained", optional); `amp` Evidence
     - Content types: lowercased part before `;` of `content_type`, else `mimetype`, with Evidence per type
     - _Requirements: 2.3, 2.4, 2.5, 4.1_
   - [ ] 5.3 Write example tests in `tests/autopsy/test_infer.py` and extend the P2 generator
-    - `a` typed `int`, `g` typed `enum`, `s` typed `string`; `amp` counted and excluded; template junk counted; undocumented `x` optional; `text/csv; charset=...` reduces to `text/csv`
+    - `a` typed `int`, `g` typed `enum`, `s` typed `string`; `amp` counted and excluded; template junk counted; undocumented `x` optional; `text/csv; charset=...` reduces to `text/csv`; on the committed evidence `d` is `int` with max 12 (F21)
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 2.3, 2.4, 2.5, 4.1_
 
@@ -147,7 +147,7 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
 
 - [ ] 8. Implement the Spec_Renderer (`render.py`) and wire it into the CLI
   - [ ] 8.1 Write `render` and `write_spec`
-    - Fixed section order, f-strings and `"\n".join`, one trailing newline; EARS requirements for routes (every host alias and path), each parameter with type and required/optional, month indexing, the row-order class with the highest count, each shape's default range, the `X-Revenant-Donor` header
+    - Fixed section order, f-strings and `"\n".join`, one trailing newline; EARS requirements for routes (every host alias and path), each parameter with type and required/optional, for each `int` parameter a requirement to accept every value from the observed min to the observed max and never reject a value Yahoo accepted (`d` up to 12, F21), month indexing, the row-order class with the highest count, each shape's default range, the `X-Revenant-Donor` header
     - Served variant per Interval: latest last year, then higher Evidence, then lowest header; served precision: most frequent in the latest year, ties to more digits; error requirement for the top status (ties to lower code) with its top content type (ties to code-point order) when the donor has no rows
     - Informational section: unselected variants, every Row_Date format, the Comment_Line example, and that "observed, unexplained" parameters are ignored
     - `write_spec` via `atomic_write` to `<specs_dir>/revenant-<slug>/requirements.md`
@@ -156,7 +156,7 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
     - After `write_contract` and the `undetermined` check: `load_contract` from disk → `render` → `write_spec`; print the spec path
     - _Requirements: 1.5, 8.1_
   - [ ] 8.3 Write example tests in `tests/autopsy/test_render.py`
-    - Rendering a fixed contract twice gives identical bytes; each tie-break of Req 8.3, 8.4 and 8.6; no error requirement when `errors` is null; the informational section lists unselected variants
+    - Rendering a fixed contract twice gives identical bytes; each tie-break of Req 8.3, 8.4 and 8.6; no error requirement when `errors` is null; the informational section lists unselected variants; the rendered spec states the full observed range (min to max) of each `int` parameter
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 8.1, 8.3, 8.4, 8.5, 8.6_
 

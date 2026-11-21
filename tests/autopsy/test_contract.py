@@ -47,6 +47,7 @@ def captures(draw: st.DrawFn) -> list[Capture]:
             query = "s=AAPL&a=&b=&c=&d=&e=&f=&g=&ignore=.csv"
         else:
             query = "s=AAPL&a={{x}}&b=1&c=2016&d=0&e=1&f=2016&g=d"
+        query += draw(st.sampled_from(["", "&x=1", "&amp;y=", "&%61mp=1", f"&z=v{number}"]))
         path = draw(st.sampled_from(["/table.csv", "/table.csv", "/other.csv"]))
         body = ("Date,Close\n" + "".join(f"{day.isoformat()},1.5\n" for day in rows)).encode()
         stamp = f"{newest.year + 1}0101{number:06d}"
@@ -65,7 +66,7 @@ def captures(draw: st.DrawFn) -> list[Capture]:
             path=f"{host}/{stamp}-{digest}.csv",
             size=len(body),
             sha256=hashlib.sha256(body).hexdigest(),
-            content_type="text/csv",
+            content_type=draw(st.sampled_from(["text/csv", "text/csv; charset=UTF-8", None])),
             digest_verified=draw(st.booleans()),
             fetched_at="2026-11-15T00:00:00Z",
         )

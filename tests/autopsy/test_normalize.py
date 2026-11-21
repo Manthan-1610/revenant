@@ -23,7 +23,11 @@ def _escape(text: str, times: int) -> str:
 @settings(max_examples=100)
 @given(query=st.text(QUERY_CHARS, max_size=40), times=st.integers(min_value=0, max_value=3))
 def test_unescape_fixpoint_matches_parse_query(query: str, times: int) -> None:
-    """**Validates: Requirements 2.1**"""
+    """**Validates: Requirements 2.1**
+
+    Raw queries that already look like HTML entities (e.g. `&ampamp`) are skipped: there a single
+    unescape (Exhume's `parse_query`, the reference) and the fixpoint legitimately differ.
+    """
     # The unescaped query is one that Exhume's single unescape already settles: a query such as
     # `&ampamp` (legacy entities without `;`) needs two unescapes even before any escaping.
     assume(html.unescape(query) == unescape_fixpoint(query))

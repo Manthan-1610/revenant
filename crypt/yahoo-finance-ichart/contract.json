@@ -1,4 +1,21 @@
 {
+  "amp": {
+    "count": 0,
+    "keys": []
+  },
+  "content_types": [
+    {
+      "evidence": {
+        "count": 150,
+        "keys": [
+          "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7",
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20050427190628-XEPUQFNCYI3THTUYPDNJKMKHNHRMQV7Q"
+        ]
+      },
+      "name": "text/csv"
+    }
+  ],
   "endpoints": [
     {
       "hosts": [
@@ -70,6 +87,400 @@
       ]
     }
   },
+  "parameters": [
+    {
+      "documented": true,
+      "empty": 1,
+      "examples": [
+        "0",
+        "00",
+        "11",
+        "1",
+        "02"
+      ],
+      "junk": 0,
+      "name": "a",
+      "present": {
+        "count": 114,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+          "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "int",
+        "max": 11,
+        "min": 0
+      }
+    },
+    {
+      "documented": true,
+      "empty": 1,
+      "examples": [
+        "1",
+        "3",
+        "4",
+        "2",
+        "02"
+      ],
+      "junk": 0,
+      "name": "b",
+      "present": {
+        "count": 113,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+          "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "int",
+        "max": 31,
+        "min": 1
+      }
+    },
+    {
+      "documented": true,
+      "empty": 1,
+      "examples": [
+        "2000",
+        "2004",
+        "2005",
+        "1982",
+        "2002"
+      ],
+      "junk": 0,
+      "name": "c",
+      "present": {
+        "count": 110,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+          "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "int",
+        "max": 2015,
+        "min": 1888
+      }
+    },
+    {
+      "documented": true,
+      "empty": 1,
+      "examples": [
+        "9",
+        "11",
+        "8",
+        "03",
+        "01"
+      ],
+      "junk": 0,
+      "name": "d",
+      "present": {
+        "count": 108,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+          "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "int",
+        "max": 12,
+        "min": 0
+      }
+    },
+    {
+      "documented": true,
+      "empty": 1,
+      "examples": [
+        "6",
+        "31",
+        "02",
+        "1",
+        "22"
+      ],
+      "junk": 0,
+      "name": "e",
+      "present": {
+        "count": 108,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+          "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "int",
+        "max": 31,
+        "min": 1
+      }
+    },
+    {
+      "documented": true,
+      "empty": 1,
+      "examples": [
+        "2015",
+        "2005",
+        "2006",
+        "2014",
+        "2013"
+      ],
+      "junk": 1,
+      "name": "f",
+      "present": {
+        "count": 96,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+          "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "int",
+        "max": 2030,
+        "min": 1983
+      }
+    },
+    {
+      "documented": true,
+      "empty": 1,
+      "examples": [
+        "d",
+        "m",
+        "v",
+        "w"
+      ],
+      "junk": 0,
+      "name": "g",
+      "present": {
+        "count": 116,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+          "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "enum",
+        "values": [
+          {
+            "count": 62,
+            "value": "d"
+          },
+          {
+            "count": 19,
+            "value": "m"
+          },
+          {
+            "count": 18,
+            "value": "v"
+          },
+          {
+            "count": 16,
+            "value": "w"
+          }
+        ]
+      }
+    },
+    {
+      "documented": true,
+      "empty": 0,
+      "examples": [
+        ".csv",
+        ".csv\""
+      ],
+      "junk": 0,
+      "name": "ignore",
+      "present": {
+        "count": 107,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+          "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "enum",
+        "values": [
+          {
+            "count": 106,
+            "value": ".csv"
+          },
+          {
+            "count": 1,
+            "value": ".csv\""
+          }
+        ]
+      }
+    },
+    {
+      "documented": false,
+      "empty": 0,
+      "examples": [
+        "2013"
+      ],
+      "junk": 0,
+      "name": "j",
+      "present": {
+        "count": 1,
+        "keys": [
+          "ichart.finance.yahoo.com/20140512004959-V4U5OFAWALGLMUFN4YUJAPUK6EK4GZVZ"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "int",
+        "max": 2013,
+        "min": 2013
+      }
+    },
+    {
+      "documented": false,
+      "empty": 0,
+      "examples": [
+        "q"
+      ],
+      "junk": 0,
+      "name": "q",
+      "present": {
+        "count": 7,
+        "keys": [
+          "real-chart.finance.yahoo.com/20140819112705-2MF4LC4QTQDMRDDBKTRGJE6ZVYXFQ7GW",
+          "real-chart.finance.yahoo.com/20140819142444-AFQ2ZOTMWS345V4SORENJKOBEDAGLYPD",
+          "real-chart.finance.yahoo.com/20140819162424-UJLEI5VJGB42XZF23I3V4FPS2URCGKEP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "enum",
+        "values": [
+          {
+            "count": 7,
+            "value": "q"
+          }
+        ]
+      }
+    },
+    {
+      "documented": true,
+      "empty": 0,
+      "examples": [
+        "YHOO",
+        "DLLR",
+        "AAPL",
+        "GOOG",
+        "MSFT"
+      ],
+      "junk": 0,
+      "name": "s",
+      "present": {
+        "count": 150,
+        "keys": [
+          "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7",
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20050427190628-XEPUQFNCYI3THTUYPDNJKMKHNHRMQV7Q"
+        ]
+      },
+      "required": true,
+      "type": {
+        "distinct": 117,
+        "kind": "string"
+      }
+    },
+    {
+      "documented": false,
+      "empty": 0,
+      "examples": [
+        ".csv"
+      ],
+      "junk": 0,
+      "name": "x",
+      "present": {
+        "count": 7,
+        "keys": [
+          "real-chart.finance.yahoo.com/20140819112705-2MF4LC4QTQDMRDDBKTRGJE6ZVYXFQ7GW",
+          "real-chart.finance.yahoo.com/20140819142444-AFQ2ZOTMWS345V4SORENJKOBEDAGLYPD",
+          "real-chart.finance.yahoo.com/20140819162424-UJLEI5VJGB42XZF23I3V4FPS2URCGKEP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "enum",
+        "values": [
+          {
+            "count": 7,
+            "value": ".csv"
+          }
+        ]
+      }
+    },
+    {
+      "documented": false,
+      "empty": 0,
+      "examples": [
+        "0"
+      ],
+      "junk": 0,
+      "name": "y",
+      "present": {
+        "count": 7,
+        "keys": [
+          "real-chart.finance.yahoo.com/20140819112705-2MF4LC4QTQDMRDDBKTRGJE6ZVYXFQ7GW",
+          "real-chart.finance.yahoo.com/20140819142444-AFQ2ZOTMWS345V4SORENJKOBEDAGLYPD",
+          "real-chart.finance.yahoo.com/20140819162424-UJLEI5VJGB42XZF23I3V4FPS2URCGKEP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "int",
+        "max": 0,
+        "min": 0
+      }
+    },
+    {
+      "documented": false,
+      "empty": 0,
+      "examples": [
+        "DLLR",
+        "ACGL"
+      ],
+      "junk": 0,
+      "name": "z",
+      "present": {
+        "count": 7,
+        "keys": [
+          "real-chart.finance.yahoo.com/20140819112705-2MF4LC4QTQDMRDDBKTRGJE6ZVYXFQ7GW",
+          "real-chart.finance.yahoo.com/20140819142444-AFQ2ZOTMWS345V4SORENJKOBEDAGLYPD",
+          "real-chart.finance.yahoo.com/20140819162424-UJLEI5VJGB42XZF23I3V4FPS2URCGKEP"
+        ]
+      },
+      "required": false,
+      "type": {
+        "kind": "enum",
+        "values": [
+          {
+            "count": 1,
+            "value": "ACGL"
+          },
+          {
+            "count": 6,
+            "value": "DLLR"
+          }
+        ]
+      }
+    }
+  ],
   "slug": "yahoo-finance-ichart",
   "source": {
     "entry_count": 160,

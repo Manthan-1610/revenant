@@ -9,7 +9,7 @@ Machine CDX API, downloads a small deterministic sample of raw captures and stor
 
 This is the MVP scope for a 1.5 to 2 day build. It also covers the project scaffold, because
 Exhume is the first code in the repository. Exhume follows `tech.md`, `necromancy-ethics.md`
-and `structure.md`. References F1 to F19 point to the observed Archive facts in Appendix A.
+and `structure.md`. References F1 to F21 point to the observed Archive facts in Appendix A.
 
 ## Glossary
 
@@ -529,3 +529,15 @@ the verified DISH capture (F14) does not. Observation: the CDX digest apparently
 framing, which the Archive strips on replay. Re-framing the body as a single chunk did NOT
 reproduce the digest, so the exact original chunking is unknown. These captures stay stored with
 `digest_verified: false` (Requirement 7.6).
+
+### F20: Archived servers ignored the requested range before 2008 (verified by the user with an independent classifier on 2026-11-21)
+
+All 25 Unfit_Captures of the Autopsy month check except the one in F21 are from 2005 to 2007.
+Yahoo ignored the end date (`d`/`e`/`f`) and returned rows through the last trading day before
+the crawl; 3 of them also ignored the start date. No capture from 2014 on is Unfit, so the
+2016-era servers respected the requested range.
+
+### F21: Out-of-range month accepted (verified by the user with an independent classifier on 2026-11-21)
+
+`ichart.finance.yahoo.com/20121217014635-DP2RNCXQZKYOFXDUCUXCL34SYCHTKAKU` requested `d=12`
+(month 13 under 0-indexing) and got 61 monthly rows with no error.

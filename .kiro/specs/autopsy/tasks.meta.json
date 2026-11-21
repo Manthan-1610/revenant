@@ -1,0 +1,189 @@
+{
+  "pbtResults": {
+    "2.2 Write property test P3 in `tests/autopsy/test_normalize.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795226999227
+    },
+    "2.4 Write property test P4 in `tests/autopsy/test_body.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795227000231
+    },
+    "3.2 Write property test P1 in `tests/autopsy/test_months.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795227186017
+    },
+    "4.4 Write property test P2 in `tests/autopsy/test_contract.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795297708317
+    }
+  },
+  "executionHistory": {
+    "1. Implement the Evidence_Reader (`evidence.py`) and the CLI stub": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795225879295
+      },
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795226806284
+      }
+    ],
+    "1.1 Write `AutopsyError`, `Capture`, `load_evidence`, `capture_year` and `capture_date`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795226814477
+      }
+    ],
+    "1.2 Add the `autopsy` command stub to `revenant/cli.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795226814947
+      }
+    ],
+    "1.3 Write example tests in `tests/autopsy/test_evidence.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795226815670
+      }
+    ],
+    "2. Implement the Query_Normalizer (`normalize.py`) and the Body_Parser core (`body.py`)": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795226818851
+      },
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227016891
+      }
+    ],
+    "2.1 Write `unescape_fixpoint` and `normalize_query`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227013650
+      }
+    ],
+    "2.2 Write property test P3 in `tests/autopsy/test_normalize.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227014267
+      }
+    ],
+    "2.3 Write `ParsedBody`, `parse_body`, `parse_row_date` and `row_order`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227015291
+      }
+    ],
+    "2.4 Write property test P4 in `tests/autopsy/test_body.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227016257
+      }
+    ],
+    "2.5 Write example tests in `tests/autopsy/test_body.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227016784
+      }
+    ],
+    "3. Implement the Month_Detector (`months.py`)": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227019874
+      },
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227202257
+      }
+    ],
+    "3.1 Write `MonthSample`, `fits`, `MonthResult` and `detect`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227200826
+      }
+    ],
+    "3.2 Write property test P1 in `tests/autopsy/test_months.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227201820
+      }
+    ],
+    "3.3 Write example tests in `tests/autopsy/test_months.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227202137
+      }
+    ],
+    "4. Build the vertical slice: minimal Contract, inference, writer and CLI, verified on real evidence": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227205477
+      },
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227431674
+      }
+    ],
+    "4.1 Write the slice models and writer in `contract.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227430907
+      }
+    ],
+    "4.2 Write the slice inference in `infer.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227431075
+      }
+    ],
+    "4.3 Wire the CLI flow in `revenant/cli.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227431188
+      }
+    ],
+    "4.4 Write property test P2 in `tests/autopsy/test_contract.py`": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227431309
+      }
+    ],
+    "4.5 Run the slice on the real evidence": [
+      {
+        "executionId": "f4bf89b1-c2d5-4598-a88e-d0e01c074176",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795227431548
+      }
+    ],
+    "5. Add parameters and content types to the Contract": [
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795297537151
+      }
+    ]
+  }
+}

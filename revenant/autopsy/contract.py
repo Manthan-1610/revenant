@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from revenant.exhume.store import atomic_write
 
@@ -47,11 +47,56 @@ class Months(_Model):
     unfit: Evidence
 
 
+class ValueCount(_Model):
+    value: str
+    count: int
+
+
+class IntType(_Model):
+    kind: Literal["int"] = "int"
+    min: int
+    max: int
+
+
+class EnumType(_Model):
+    kind: Literal["enum"] = "enum"
+    values: list[ValueCount]  # sorted by value
+
+
+class StringType(_Model):
+    kind: Literal["string"] = "string"
+    distinct: int
+
+
+ParameterType = Annotated[IntType | EnumType | StringType, Field(discriminator="kind")]
+
+
+class Parameter(_Model):
+    """Req 2.3 to 2.5: one query parameter name observed in Data_Captures (`amp` excluded)."""
+
+    name: str
+    documented: bool
+    present: Evidence
+    empty: int
+    junk: int
+    required: bool
+    examples: list[str]  # sorted by (count desc, value asc), at most 5
+    type: ParameterType
+
+
+class NameEvidence(_Model):
+    name: str
+    evidence: Evidence
+
+
 class Contract(_Model):
     slug: str
     source: Source
     endpoints: list[Endpoint]  # sorted by path
+    parameters: list[Parameter]  # sorted by name; `amp` excluded
+    amp: Evidence
     months: Months
+    content_types: list[NameEvidence]  # sorted by name
 
 
 def dump_contract(contract: Contract) -> bytes:
