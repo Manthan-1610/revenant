@@ -160,13 +160,13 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 8.1, 8.3, 8.4, 8.5, 8.6_
 
-- [-] 9. Write the CLI tests
-  - [ ] 9.1 Write `tests/autopsy/test_cli.py` with `CliRunner` and `tmp_path` evidence
+- [x] 9. Write the CLI tests
+  - [x] 9.1 Write `tests/autopsy/test_cli.py` with `CliRunner` and `tmp_path` evidence
     - Exit 0 writes both files and prints the indexing, both Decisive counts and each path; exit 1 for each input error with no file written or modified; a non-UTF-8 body exits 1; `undetermined` exits 2 with `contract.json` only; a Contract `ValidationError` exits 1, prints `error: contract.json: ...` and leaves an existing `contract.json` untouched (monkeypatch to force it); two runs from two working directories (absolute `--evidence-dir` vs relative) give byte-identical `contract.json`; `--help` lists the three options
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 1.1, 1.3, 1.5, 3.5, 4.3, 7.2, 7.6_
 
-- [ ] 10. Final run on the real evidence
+- [-] 10. Final run on the real evidence
   - [ ] 10.1 Run `.venv\Scripts\revenant autopsy yahoo-finance-ichart` from the repo root and report
     - Confirm exit 0 and both `crypt/yahoo-finance-ichart/contract.json` and `.kiro/specs/revenant-yahoo-finance-ichart/requirements.md` exist; run it again and confirm both files are byte-identical
     - Show the key facts of the contract: endpoint and hosts, month indexing with the four counts, Header_Variants with year ranges, row-order counts, served variant per `g`, defaults per shape, errors

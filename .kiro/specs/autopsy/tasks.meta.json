@@ -329,6 +329,25 @@
         "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
         "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
         "timestamp": 1795298628961
+      },
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795298782144
+      }
+    ],
+    "9.1 Write `tests/autopsy/test_cli.py` with `CliRunner` and `tmp_path` evidence": [
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795298782054
+      }
+    ],
+    "10. Final run on the real evidence": [
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795298782494
       }
     ]
   }
