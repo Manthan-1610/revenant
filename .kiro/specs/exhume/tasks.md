@@ -206,9 +206,9 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
   - [x] 13.1 Give the `host` column `no_wrap=True`, a `min_width` that fits `real-chart.finance.yahoo.com` (28 chars) and no ellipsis (`overflow="crop"`); add a CLI test rendering the table at 80 columns that asserts the full host name appears and no `…` character is printed
     - _Requirements: 10.2_
 
-- [ ] 14. Wrap-up: `revenant verify <slug>` (post-MVP, no network)
-  - [ ] 14.1 Add a `verify` command (≤ 60 lines of code): re-hash every Index entry's file, report entries checked, SHA-256 failures (name each file; exit 1 if any) and `digest_verified` true/false counts; list each `digest_verified=false` entry with the hint "orig transfer-encoding may be chunked (F19)"
-  - [ ] 14.2 Tests with a temporary evidence directory: all good → exit 0 and counts; a tampered file → exit 1 naming it; a missing file → failure; false-digest entries listed with the F19 hint
+- [x] 14. Wrap-up: `revenant verify <slug>` (post-MVP, no network)
+  - [x] 14.1 Add a `verify` command (≤ 60 lines of code): re-hash every Index entry's file, report entries checked, SHA-256 failures (name each file; exit 1 if any) and `digest_verified` true/false counts; list each `digest_verified=false` entry with the hint "orig transfer-encoding may be chunked (F19)"
+  - [x] 14.2 Tests with a temporary evidence directory: all good → exit 0 and counts; a tampered file → exit 1 naming it; a missing file → failure; false-digest entries listed with the F19 hint
     - _Requirements: 9.2, 7.6_
 
 - [ ] 15. Wrap-up: Kiro hooks under `.kiro/hooks/`

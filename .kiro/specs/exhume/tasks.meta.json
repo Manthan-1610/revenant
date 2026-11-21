@@ -137,6 +137,13 @@
         "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
         "timestamp": 1795223007617
       }
+    ],
+    "14. Wrap-up: `revenant verify <slug>` (post-MVP, no network)": [
+      {
+        "executionId": "3b3f99fe-3abc-4b2b-9bc0-0b5d9801813e",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795223117424
+      }
     ]
   }
 }

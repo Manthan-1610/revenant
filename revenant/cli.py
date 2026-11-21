@@ -19,6 +19,8 @@ from revenant.exhume.models import (
 from revenant.exhume.run import ERROR_EVIDENCE_CAP
 from revenant.exhume.run import exhume as run_exhume
 from revenant.exhume.store import EvidenceStore
+from revenant.exhume.verify import F19_HINT
+from revenant.exhume.verify import verify as run_verify
 
 app = typer.Typer()
 
@@ -58,6 +60,25 @@ def exhume(
     for host_name, kind in failed:
         console.print(f"discovery failed: {host_name} ({kind} pass)")
     if failed:
+        raise typer.Exit(1)
+
+
+@app.command()
+def verify(slug: str, evidence_dir: Path = Path("evidence")) -> None:
+    """Re-hash stored captures against the Index (no network)."""
+    store = EvidenceStore(evidence_dir, slug)
+    if not store.index_path.is_file():
+        typer.echo(f"error: no index at {store.index_path.as_posix()}", err=True)
+        raise typer.Exit(1)
+    report = run_verify(store)
+    typer.echo(f"checked: {report.checked}")
+    typer.echo(f"sha256 failures: {len(report.failures)}")
+    for failure in report.failures:
+        typer.echo(f"  {failure}")
+    typer.echo(f"digest_verified: true={report.verified_true} false={len(report.verified_false)}")
+    for key in report.verified_false:
+        typer.echo(f"{key}  {F19_HINT}")
+    if report.failures:
         raise typer.Exit(1)
 
 
