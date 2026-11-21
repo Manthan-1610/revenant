@@ -3,6 +3,22 @@
     "count": 0,
     "keys": []
   },
+  "comments": {
+    "after_last_row": 2,
+    "before_last_row": 0,
+    "evidence": {
+      "count": 2,
+      "keys": [
+        "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7",
+        "ichart.yahoo.com/20041129204236-2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW"
+      ]
+    },
+    "example": "<!-- ichart8.finance.scd.yahoo.com uncompressed Thu Oct 21 10:22:17 PDT 2004 -->",
+    "total": 2,
+    "years": [
+      2004
+    ]
+  },
   "content_types": [
     {
       "evidence": {
@@ -14,6 +30,34 @@
         ]
       },
       "name": "text/csv"
+    }
+  ],
+  "date_formats": [
+    {
+      "evidence": {
+        "count": 97,
+        "keys": [
+          "ichart.finance.yahoo.com/20070308044625-K3QRSBUBIRTHW5ETF6WT3SQGJNT2Q526",
+          "ichart.finance.yahoo.com/20070308044729-N4ELMR7Y7NKVXE6CN5EBOSIYPAZGUNRR",
+          "ichart.finance.yahoo.com/20070308044802-P5ZIQRG5YNLNGLOF6KWHWK7DAARIUN5Q"
+        ]
+      },
+      "first_year": 2007,
+      "format": "%Y-%m-%d",
+      "last_year": 2017
+    },
+    {
+      "evidence": {
+        "count": 51,
+        "keys": [
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20050427190628-XEPUQFNCYI3THTUYPDNJKMKHNHRMQV7Q",
+          "ichart.finance.yahoo.com/20050516112007-AEC45PVM5B6RM46NBTWEPVYUI6LGS33G"
+        ]
+      },
+      "first_year": 2005,
+      "format": "%d-%b-%y",
+      "last_year": 2007
     }
   ],
   "endpoints": [
@@ -54,6 +98,315 @@
         }
       ],
       "path": "/table.csv"
+    }
+  ],
+  "header_only": {
+    "count": 2,
+    "keys": [
+      "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7",
+      "ichart.yahoo.com/20041129204236-2ADTBRSLGIS5YZLXF4LRCFLO363WOUXW"
+    ]
+  },
+  "headers": [
+    {
+      "columns": [
+        "Date",
+        "Dividends"
+      ],
+      "evidence": {
+        "count": 16,
+        "keys": [
+          "ichart.finance.yahoo.com/20100228082204-PEYSYIBB5AMDY55CHWEG7S4XN44STVTN",
+          "ichart.finance.yahoo.com/20100712060201-PDW3FT7DLMMCHPXUIMMM5E6FD3PTCJPJ",
+          "ichart.finance.yahoo.com/20110115115806-L4QU6FZENHUUFEPDBUMJQ7QCLOTT4IQE"
+        ]
+      },
+      "first_year": 2010,
+      "header": "Date,Dividends",
+      "last_year": 2016
+    },
+    {
+      "columns": [
+        "Date",
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+        "Adj Close"
+      ],
+      "evidence": {
+        "count": 81,
+        "keys": [
+          "ichart.finance.yahoo.com/20070308044625-K3QRSBUBIRTHW5ETF6WT3SQGJNT2Q526",
+          "ichart.finance.yahoo.com/20070308044729-N4ELMR7Y7NKVXE6CN5EBOSIYPAZGUNRR",
+          "ichart.finance.yahoo.com/20070308044802-P5ZIQRG5YNLNGLOF6KWHWK7DAARIUN5Q"
+        ]
+      },
+      "first_year": 2007,
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "last_year": 2017
+    },
+    {
+      "columns": [
+        "Date",
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+        "Adj. Close*"
+      ],
+      "evidence": {
+        "count": 53,
+        "keys": [
+          "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7",
+          "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+          "ichart.finance.yahoo.com/20050427190628-XEPUQFNCYI3THTUYPDNJKMKHNHRMQV7Q"
+        ]
+      },
+      "first_year": 2004,
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "last_year": 2007
+    }
+  ],
+  "intervals": [
+    {
+      "interval": "d",
+      "variants": [
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj Close"
+          ],
+          "evidence": {
+            "count": 40,
+            "keys": [
+              "ichart.finance.yahoo.com/20070308044625-K3QRSBUBIRTHW5ETF6WT3SQGJNT2Q526",
+              "ichart.finance.yahoo.com/20070308044729-N4ELMR7Y7NKVXE6CN5EBOSIYPAZGUNRR",
+              "ichart.finance.yahoo.com/20070308044802-P5ZIQRG5YNLNGLOF6KWHWK7DAARIUN5Q"
+            ]
+          },
+          "first_year": 2007,
+          "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+          "last_year": 2016
+        },
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj. Close*"
+          ],
+          "evidence": {
+            "count": 22,
+            "keys": [
+              "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+              "ichart.finance.yahoo.com/20051122005309-QA5PNI5PM7BFQRJFDVNSQ6WO2WCKI3OR",
+              "ichart.finance.yahoo.com/20060128021421-OMEH375W4FFXBV3IPGZXWL4EU65X7ZZU"
+            ]
+          },
+          "first_year": 2005,
+          "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+          "last_year": 2007
+        }
+      ]
+    },
+    {
+      "interval": "m",
+      "variants": [
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj Close"
+          ],
+          "evidence": {
+            "count": 17,
+            "keys": [
+              "ichart.finance.yahoo.com/20110107223405-UETFQDVHIB6ZKHQZNVZBYPBMAJZPNLQR",
+              "ichart.finance.yahoo.com/20120112132712-SID2V5RXWOFL4PV3JYGP5ULGEMH4AON5",
+              "ichart.finance.yahoo.com/20120914185503-NNCYQ235F4BZG4BDN3WXQP6QZYJIUH64"
+            ]
+          },
+          "first_year": 2011,
+          "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+          "last_year": 2017
+        },
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj. Close*"
+          ],
+          "evidence": {
+            "count": 2,
+            "keys": [
+              "ichart.finance.yahoo.com/20051129100920-FWAEWE7SIDI5EWZPO5TDRAPNLDYDO35B",
+              "ichart.yahoo.com/20060501050021-A2EOPRIMFNHXFXOFVS62USL76Q7KWJM2"
+            ]
+          },
+          "first_year": 2005,
+          "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+          "last_year": 2006
+        }
+      ]
+    },
+    {
+      "interval": "none",
+      "variants": [
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj Close"
+          ],
+          "evidence": {
+            "count": 10,
+            "keys": [
+              "ichart.finance.yahoo.com/20120601181348-OUOFOA5RUCW5AYDORHW7TTZVJUL6EL27",
+              "ichart.finance.yahoo.com/20150722040224-HIF7M5KERUP7NVB4WXUEUFRG6TFV2MWN",
+              "ichart.yahoo.com/20150615174243-VZTX4NP63EYDFDPVQX4VIRUIDAKME6UV"
+            ]
+          },
+          "first_year": 2012,
+          "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+          "last_year": 2017
+        },
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj. Close*"
+          ],
+          "evidence": {
+            "count": 25,
+            "keys": [
+              "ichart.finance.yahoo.com/20041021172219-RJ7IHOMXNHN7KMJEXPSXKWP2TSK6C7B7",
+              "ichart.finance.yahoo.com/20050427190628-XEPUQFNCYI3THTUYPDNJKMKHNHRMQV7Q",
+              "ichart.finance.yahoo.com/20050516112007-AEC45PVM5B6RM46NBTWEPVYUI6LGS33G"
+            ]
+          },
+          "first_year": 2004,
+          "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+          "last_year": 2005
+        }
+      ]
+    },
+    {
+      "interval": "v",
+      "variants": [
+        {
+          "columns": [
+            "Date",
+            "Dividends"
+          ],
+          "evidence": {
+            "count": 16,
+            "keys": [
+              "ichart.finance.yahoo.com/20100228082204-PEYSYIBB5AMDY55CHWEG7S4XN44STVTN",
+              "ichart.finance.yahoo.com/20100712060201-PDW3FT7DLMMCHPXUIMMM5E6FD3PTCJPJ",
+              "ichart.finance.yahoo.com/20110115115806-L4QU6FZENHUUFEPDBUMJQ7QCLOTT4IQE"
+            ]
+          },
+          "first_year": 2010,
+          "header": "Date,Dividends",
+          "last_year": 2016
+        },
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj. Close*"
+          ],
+          "evidence": {
+            "count": 2,
+            "keys": [
+              "ichart.finance.yahoo.com/20051107151349-IS7HMZ4LC6OIU2TBUJG3RVJMS2FGFQAP",
+              "ichart.finance.yahoo.com/20060523202829-EKQ56ABRRG7VSFPQNVTGLOU2OMYJEFP4"
+            ]
+          },
+          "first_year": 2005,
+          "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+          "last_year": 2006
+        }
+      ]
+    },
+    {
+      "interval": "w",
+      "variants": [
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj Close"
+          ],
+          "evidence": {
+            "count": 14,
+            "keys": [
+              "ichart.finance.yahoo.com/20120605013119-FY3YPFNYF73CSNV3F6DSCQWLTIM44WJF",
+              "ichart.finance.yahoo.com/20140102021052-JRFHOZPULHOWMHT477MU4JEBNBCOR7YU",
+              "ichart.finance.yahoo.com/20140410054238-XSQPOA63LKAMDZN3N5KRPGPT7KO2NIBZ"
+            ]
+          },
+          "first_year": 2012,
+          "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+          "last_year": 2016
+        },
+        {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Adj. Close*"
+          ],
+          "evidence": {
+            "count": 2,
+            "keys": [
+              "ichart.finance.yahoo.com/20051028072745-QGFJXSPGATXSS3IF3ANGZ6H53P26D5XC",
+              "ichart.finance.yahoo.com/20051121083735-SJ5MEXRC7C6FZ7T2VQSB2TUTGWDEBEWH"
+            ]
+          },
+          "first_year": 2005,
+          "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+          "last_year": 2005
+        }
+      ]
     }
   ],
   "months": {
@@ -481,6 +834,505 @@
       }
     }
   ],
+  "precision": [
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "d",
+      "values": [
+        {
+          "count": 15,
+          "digits": 2
+        }
+      ],
+      "year": 2007
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "d",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2008
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "d",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2011
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "d",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2012
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "d",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2013
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "d",
+      "values": [
+        {
+          "count": 8,
+          "digits": 2
+        }
+      ],
+      "year": 2014
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "d",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        },
+        {
+          "count": 3,
+          "digits": 5
+        },
+        {
+          "count": 3,
+          "digits": 6
+        }
+      ],
+      "year": 2015
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "d",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        },
+        {
+          "count": 2,
+          "digits": 5
+        },
+        {
+          "count": 3,
+          "digits": 6
+        }
+      ],
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "d",
+      "values": [
+        {
+          "count": 9,
+          "digits": 2
+        }
+      ],
+      "year": 2005
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "d",
+      "values": [
+        {
+          "count": 12,
+          "digits": 2
+        }
+      ],
+      "year": 2006
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "d",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2007
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "m",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2011
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "m",
+      "values": [
+        {
+          "count": 3,
+          "digits": 2
+        }
+      ],
+      "year": 2012
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "m",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2013
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "m",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2014
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "m",
+      "values": [
+        {
+          "count": 2,
+          "digits": 2
+        },
+        {
+          "count": 1,
+          "digits": 6
+        }
+      ],
+      "year": 2015
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "m",
+      "values": [
+        {
+          "count": 2,
+          "digits": 2
+        },
+        {
+          "count": 5,
+          "digits": 6
+        }
+      ],
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "m",
+      "values": [
+        {
+          "count": 1,
+          "digits": 6
+        }
+      ],
+      "year": 2017
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "m",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2005
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "m",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2006
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "none",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2012
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "none",
+      "values": [
+        {
+          "count": 3,
+          "digits": 2
+        }
+      ],
+      "year": 2014
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "none",
+      "values": [
+        {
+          "count": 2,
+          "digits": 6
+        }
+      ],
+      "year": 2015
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "none",
+      "values": [
+        {
+          "count": 3,
+          "digits": 6
+        }
+      ],
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "none",
+      "values": [
+        {
+          "count": 1,
+          "digits": 6
+        }
+      ],
+      "year": 2017
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "none",
+      "values": [
+        {
+          "count": 23,
+          "digits": 2
+        }
+      ],
+      "year": 2005
+    },
+    {
+      "header": "Date,Dividends",
+      "interval": "v",
+      "values": [
+        {
+          "count": 2,
+          "digits": 6
+        }
+      ],
+      "year": 2010
+    },
+    {
+      "header": "Date,Dividends",
+      "interval": "v",
+      "values": [
+        {
+          "count": 1,
+          "digits": 6
+        }
+      ],
+      "year": 2011
+    },
+    {
+      "header": "Date,Dividends",
+      "interval": "v",
+      "values": [
+        {
+          "count": 2,
+          "digits": 6
+        }
+      ],
+      "year": 2012
+    },
+    {
+      "header": "Date,Dividends",
+      "interval": "v",
+      "values": [
+        {
+          "count": 1,
+          "digits": 6
+        }
+      ],
+      "year": 2013
+    },
+    {
+      "header": "Date,Dividends",
+      "interval": "v",
+      "values": [
+        {
+          "count": 1,
+          "digits": 6
+        }
+      ],
+      "year": 2014
+    },
+    {
+      "header": "Date,Dividends",
+      "interval": "v",
+      "values": [
+        {
+          "count": 4,
+          "digits": 6
+        }
+      ],
+      "year": 2015
+    },
+    {
+      "header": "Date,Dividends",
+      "interval": "v",
+      "values": [
+        {
+          "count": 5,
+          "digits": 6
+        }
+      ],
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "v",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2005
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "v",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2006
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "w",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2012
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "w",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2013
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "w",
+      "values": [
+        {
+          "count": 10,
+          "digits": 2
+        }
+      ],
+      "year": 2014
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "w",
+      "values": [
+        {
+          "count": 1,
+          "digits": 2
+        }
+      ],
+      "year": 2015
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "interval": "w",
+      "values": [
+        {
+          "count": 1,
+          "digits": 6
+        }
+      ],
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "interval": "w",
+      "values": [
+        {
+          "count": 2,
+          "digits": 2
+        }
+      ],
+      "year": 2005
+    }
+  ],
+  "row_order": {
+    "ascending": {
+      "count": 0,
+      "keys": []
+    },
+    "descending": {
+      "count": 147,
+      "keys": [
+        "ichart.finance.yahoo.com/20050414212136-RPTFTIQVVQNRUUE7NY3MRG3IH3HIL6L2",
+        "ichart.finance.yahoo.com/20050427190628-XEPUQFNCYI3THTUYPDNJKMKHNHRMQV7Q",
+        "ichart.finance.yahoo.com/20050516112007-AEC45PVM5B6RM46NBTWEPVYUI6LGS33G"
+      ]
+    },
+    "unordered": {
+      "count": 0,
+      "keys": []
+    },
+    "unparsed_dates": {
+      "count": 0,
+      "keys": []
+    }
+  },
   "slug": "yahoo-finance-ichart",
   "source": {
     "entry_count": 160,

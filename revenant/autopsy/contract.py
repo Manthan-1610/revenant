@@ -89,6 +89,66 @@ class NameEvidence(_Model):
     evidence: Evidence
 
 
+class Variant(_Model):
+    """Req 4.4, 4.5: one Header_Variant, with its columns and Capture_Year range."""
+
+    header: str
+    columns: list[str]  # header order: the order is the fact
+    first_year: int
+    last_year: int
+    evidence: Evidence
+
+
+class IntervalVariants(_Model):
+    """Req 4.4: the Response_Variants of one Interval."""
+
+    interval: str
+    variants: list[Variant]  # sorted by header
+
+
+class FormatEvidence(_Model):
+    """Req 5.1: one Row_Date format with its Capture_Year range."""
+
+    format: str
+    first_year: int
+    last_year: int
+    evidence: Evidence
+
+
+class RowOrder(_Model):
+    """Req 5.2, 5.3: row-order classes and the bodies excluded for unparsed Row_Dates."""
+
+    descending: Evidence
+    ascending: Evidence
+    unordered: Evidence
+    unparsed_dates: Evidence
+
+
+class DigitsCount(_Model):
+    digits: int
+    count: int
+
+
+class Precision(_Model):
+    """Req 5.4: Body_Precision distribution per (Interval, Header_Variant, Capture_Year)."""
+
+    interval: str
+    header: str
+    year: int
+    values: list[DigitsCount]  # sorted by digits
+
+
+class Comments(_Model):
+    """Req 5.5: Comment_Lines over all Data_Captures (F16)."""
+
+    total: int
+    years: list[int]  # sorted
+    example: str | None
+    after_last_row: int
+    before_last_row: int
+    evidence: Evidence
+
+
 class Contract(_Model):
     slug: str
     source: Source
@@ -97,6 +157,13 @@ class Contract(_Model):
     amp: Evidence
     months: Months
     content_types: list[NameEvidence]  # sorted by name
+    intervals: list[IntervalVariants]  # sorted by interval
+    headers: list[Variant]  # sorted by header
+    header_only: Evidence
+    date_formats: list[FormatEvidence]  # sorted by format
+    row_order: RowOrder
+    precision: list[Precision]  # sorted by (interval, header, year)
+    comments: Comments
 
 
 def dump_contract(contract: Contract) -> bytes:

@@ -14,7 +14,7 @@
     },
     "4.4 Write property test P2 in `tests/autopsy/test_contract.py`": {
       "status": "passed",
-      "lastRunTimestamp": 1795297708317
+      "lastRunTimestamp": 1795298003527
     }
   },
   "executionHistory": {
@@ -183,6 +183,39 @@
         "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
         "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
         "timestamp": 1795297537151
+      },
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795297816754
+      }
+    ],
+    "5.1 Add `Parameter`, `IntType`, `EnumType`, `StringType`, `ValueCount`, `NameEvidence` and the `parameters`, `amp`, `content_types` fields to `contract.py`": [
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795297812856
+      }
+    ],
+    "5.2 Infer parameters and content types in `infer.py`": [
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795297813022
+      }
+    ],
+    "5.3 Write example tests in `tests/autopsy/test_infer.py` and extend the P2 generator": [
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795297816576
+      }
+    ],
+    "6. Add response variants and row format to the Contract": [
+      {
+        "executionId": "dbb38be1-2567-4685-ba3a-d981fe2c1a21",
+        "chatSessionId": "sess_e7a32093-4bcb-4aaa-9b46-4e17b22aaf5f",
+        "timestamp": 1795297816965
       }
     ]
   }

@@ -11,6 +11,7 @@ from hypothesis import strategies as st
 from revenant.autopsy.body import (
     ISO_FORMAT,
     SHORT_FORMAT,
+    body_precision,
     parse_body,
     parse_row_date,
     row_order,
@@ -108,6 +109,19 @@ def test_short_date_two_digit_year_across_century() -> None:
 @pytest.mark.parametrize("field", ["Date", "", "2016-13-01", "30-Feb-04", "1-Foo-04", "1/2/04"])
 def test_unparseable_row_date_is_none(field: str) -> None:
     assert parse_row_date(field, 2004) is None
+
+
+def test_body_precision_skips_date_and_volume() -> None:
+    header = "Date,Open,High,Low,Close,Volume,Adj Close"
+    rows = [
+        "2016-01-08,98.55,100.50,96.43,96.96,70798000,94.1213",
+        "2016-01-07,98.68,100.13,96.43,96.45,81094400.12345,93.62",
+    ]
+    # Volume's 5 digits are skipped; Adj Close's 4 digits win.
+    assert body_precision(header, rows) == 4
+    assert body_precision("Date,Dividends", ["2015-11-05,0.52"]) == 2
+    assert body_precision("Date,Close,Volume", ["2016-01-08,97,100"]) == 0
+    assert body_precision(header, []) == 0
 
 
 def test_row_order_classes() -> None:

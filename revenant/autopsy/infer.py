@@ -1,4 +1,4 @@
-"""Contract_Inferrer: derives Contract facts from loaded evidence (Req 1.4, 2.2, 3.1, 7.5).
+"""Contract_Inferrer: derives Contract facts from loaded evidence (Req 1.4, 2 to 5, 7.5).
 
 Pure: no time, path, locale or environment value enters the Contract, and no set or dict is
 iterated without sorting first.
@@ -7,28 +7,37 @@ iterated without sorting first.
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Hashable, Iterable, Sequence
+from dataclasses import dataclass
+from datetime import date
 from urllib.parse import urlsplit
 
-from revenant.autopsy.body import parse_body, parse_row_date
+from revenant.autopsy.body import ParsedBody, body_precision, parse_body, parse_row_date, row_order
 from revenant.autopsy.contract import (
+    Comments,
     Contract,
+    DigitsCount,
     Endpoint,
     EnumType,
     Evidence,
+    FormatEvidence,
     HostEvidence,
+    IntervalVariants,
     IntType,
     Months,
     NameEvidence,
     Parameter,
+    Precision,
+    RowOrder,
     Source,
     StringType,
     ValueCount,
+    Variant,
 )
 from revenant.autopsy.evidence import Capture, capture_year
 from revenant.autopsy.months import RANGE_PARAMS, MonthSample, Tally, detect
 from revenant.autopsy.normalize import normalize_query
-from revenant.exhume.select import parameter_shape
+from revenant.exhume.select import interval, parameter_shape
 
 MAX_KEYS = 3
 MAX_EXAMPLES = 5
@@ -138,28 +147,158 @@ def _content_types(data: Sequence[Capture]) -> list[NameEvidence]:
     return [NameEvidence(name=name, evidence=_evidence(by_type[name])) for name in sorted(by_type)]
 
 
-def _month_sample(capture: Capture) -> MonthSample | None:
+@dataclass(frozen=True)
+class _Body:
+    """One Data_Capture with its parsed body, Capture_Year, Interval and Row_Dates."""
+
+    capture: Capture
+    parsed: ParsedBody
+    year: int
+    interval: str
+    pairs: list[tuple[str, str]]
+    row_dates: tuple[tuple[date, str] | None, ...]
+
+    @property
+    def key(self) -> str:
+        return self.capture.key
+
+    @property
+    def unparsed(self) -> bool:
+        """Req 5.3: at least one Data_Row whose Row_Date parses with neither format."""
+        return any(item is None for item in self.row_dates)
+
+    def dates(self) -> list[date]:
+        return [item[0] for item in self.row_dates if item is not None]
+
+
+def _bodies(data: Sequence[Capture]) -> list[_Body]:
+    """Parse every Data_Capture body once; a non-UTF-8 body raises AutopsyError (Req 4.3)."""
+    bodies = []
+    for capture in data:
+        parsed = parse_body(capture.body, capture.entry.path)
+        year = capture_year(capture.entry)
+        pairs = normalize_query(capture.entry.original)
+        row_dates = tuple(parse_row_date(row.split(",", 1)[0], year) for row in parsed.rows)
+        bodies.append(_Body(capture, parsed, year, interval(pairs), pairs, row_dates))
+    return bodies
+
+
+def _month_sample(body: _Body) -> MonthSample | None:
     """Req 3.1: a `full_range` Data_Capture with >= 1 Data_Row whose Row_Dates all parse."""
-    pairs = normalize_query(capture.entry.original)
-    if parameter_shape(pairs) != "full_range":
+    if parameter_shape(body.pairs) != "full_range" or not body.parsed.rows or body.unparsed:
         return None
-    parsed = parse_body(capture.body, capture.entry.path)
-    if not parsed.rows:
-        return None
-    year = capture_year(capture.entry)
-    dates = []
-    for row in parsed.rows:
-        result = parse_row_date(row.split(",", 1)[0], year)
-        if result is None:
-            return None
-        dates.append(result[0])
-    first = _first_values(pairs)
+    dates = body.dates()
+    first = _first_values(body.pairs)
     params = {name: first[name] for name in RANGE_PARAMS if name in first}
-    return MonthSample(key=capture.key, params=params, oldest=min(dates), newest=max(dates))
+    return MonthSample(key=body.key, params=params, oldest=min(dates), newest=max(dates))
 
 
-def _months(data: Sequence[Capture]) -> Months:
-    samples = [sample for capture in data if (sample := _month_sample(capture)) is not None]
+def _variant(header: str, group: Sequence[_Body]) -> Variant:
+    years = [body.year for body in group]
+    return Variant(
+        header=header,
+        columns=header.split(","),
+        first_year=min(years),
+        last_year=max(years),
+        evidence=_evidence(body.key for body in group),
+    )
+
+
+def _group[K: Hashable](bodies: Iterable[_Body], key: Callable[[_Body], K]) -> dict[K, list[_Body]]:
+    groups: dict[K, list[_Body]] = {}
+    for body in bodies:
+        groups.setdefault(key(body), []).append(body)
+    return groups
+
+
+def _variants(bodies: Sequence[_Body]) -> tuple[list[IntervalVariants], list[Variant], Evidence]:
+    """Req 4.4 to 4.6: Response_Variants per Interval, Header_Variants, Header_Only_Body count.
+
+    Header_Only_Bodies count towards both variant tallies.
+    """
+    by_interval = _group(bodies, lambda body: body.interval)
+    intervals = []
+    for name in sorted(by_interval):
+        by_header = _group(by_interval[name], lambda body: body.parsed.header)
+        variants = [_variant(header, by_header[header]) for header in sorted(by_header)]
+        intervals.append(IntervalVariants(interval=name, variants=variants))
+    by_header = _group(bodies, lambda body: body.parsed.header)
+    headers = [_variant(header, by_header[header]) for header in sorted(by_header)]
+    header_only = _evidence(body.key for body in bodies if not body.parsed.rows)
+    return intervals, headers, header_only
+
+
+def _date_formats(bodies: Sequence[_Body]) -> list[FormatEvidence]:
+    """Req 5.1: each Row_Date format with the Capture_Years and bodies that use it."""
+    by_format: dict[str, list[_Body]] = {}
+    for body in bodies:
+        formats = sorted({item[1] for item in body.row_dates if item is not None})
+        for name in formats:
+            by_format.setdefault(name, []).append(body)
+    result = []
+    for name in sorted(by_format):
+        years = [body.year for body in by_format[name]]
+        result.append(
+            FormatEvidence(
+                format=name,
+                first_year=min(years),
+                last_year=max(years),
+                evidence=_evidence(body.key for body in by_format[name]),
+            )
+        )
+    return result
+
+
+def _row_order(bodies: Sequence[_Body]) -> RowOrder:
+    """Req 5.2, 5.3: classify bodies with >= 2 Data_Rows; `unparsed_dates` bodies are excluded."""
+    classes: dict[str, list[str]] = {"descending": [], "ascending": [], "unordered": []}
+    unparsed = []
+    for body in bodies:
+        if body.unparsed:
+            unparsed.append(body.key)
+        elif len(body.row_dates) >= 2:
+            classes[row_order(body.dates())].append(body.key)
+    return RowOrder(
+        descending=_evidence(classes["descending"]),
+        ascending=_evidence(classes["ascending"]),
+        unordered=_evidence(classes["unordered"]),
+        unparsed_dates=_evidence(unparsed),
+    )
+
+
+def _precision(bodies: Sequence[_Body]) -> list[Precision]:
+    """Req 5.4: Body_Precision counts per (Interval, Header_Variant, Capture_Year)."""
+    groups = _group(
+        (body for body in bodies if body.parsed.rows),
+        lambda body: (body.interval, body.parsed.header, body.year),
+    )
+    result = []
+    for group_key in sorted(groups):
+        counts: dict[int, int] = {}
+        for body in groups[group_key]:
+            digits = body_precision(body.parsed.header, body.parsed.rows)
+            counts[digits] = counts.get(digits, 0) + 1
+        name, header, year = group_key
+        values = [DigitsCount(digits=digits, count=counts[digits]) for digits in sorted(counts)]
+        result.append(Precision(interval=name, header=header, year=year, values=values))
+    return result
+
+
+def _comments(bodies: Sequence[_Body]) -> Comments:
+    """Req 5.5: Comment_Line totals, years, first example in key order, after/before (F16)."""
+    carrying = [body for body in bodies if body.parsed.comments]
+    return Comments(
+        total=sum(len(body.parsed.comments) for body in carrying),
+        years=sorted({body.year for body in carrying}),
+        example=carrying[0].parsed.comments[0] if carrying else None,
+        after_last_row=sum(body.parsed.comments_after_last_row for body in carrying),
+        before_last_row=sum(body.parsed.comments_before_last_row for body in carrying),
+        evidence=_evidence(body.key for body in carrying),
+    )
+
+
+def _months(bodies: Sequence[_Body]) -> Months:
+    samples = [sample for body in bodies if (sample := _month_sample(body)) is not None]
     result = detect(samples)
     return Months(
         indexing=result.indexing,
@@ -174,16 +313,22 @@ def infer(slug: str, index_bytes: bytes, captures: Sequence[Capture]) -> Contrac
     """Build the Contract; captures are re-sorted by key, `error_page` entries are ignored."""
     ordered = sorted(captures, key=lambda capture: capture.key)
     data = [capture for capture in ordered if capture.entry.kind == "data"]
-    # Every Data_Capture body must be UTF-8 (Req 4.3), even those outside the month check.
-    for capture in data:
-        parse_body(capture.body, capture.entry.path)
+    bodies = _bodies(data)  # sorted by key, like `data`
     parameters, amp = _parameters(data)
+    intervals, headers, header_only = _variants(bodies)
     return Contract(
         slug=slug,
         source=_source(index_bytes, ordered),
         endpoints=_endpoints(data),
         parameters=parameters,
         amp=amp,
-        months=_months(data),
+        months=_months(bodies),
         content_types=_content_types(data),
+        intervals=intervals,
+        headers=headers,
+        header_only=header_only,
+        date_formats=_date_formats(bodies),
+        row_order=_row_order(bodies),
+        precision=_precision(bodies),
+        comments=_comments(bodies),
     )

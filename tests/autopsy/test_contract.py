@@ -26,6 +26,40 @@ def _query(start: date, end: date, h: int, g: str) -> str:
     )
 
 
+HEADERS = (
+    "Date,Close",
+    "Date,Open,High,Low,Close,Volume,Adj. Close*",
+    "Date,Open,High,Low,Close,Volume,Adj Close",
+    "Date,Dividends",
+)
+MONTH_NAMES = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+COMMENT = "<!-- ichart9.finance.scd.yahoo.com uncompressed -->"
+
+
+def _body(draw: st.DrawFn, rows: list[date]) -> bytes:
+    """Header variants, both Row_Date formats, Comment_Lines, header-only and unparsed bodies."""
+    header = draw(st.sampled_from(HEADERS))
+    columns = len(header.split(","))
+    style = draw(st.sampled_from(["iso", "short", "bad"]))
+    if draw(st.booleans()):
+        rows = list(reversed(rows))
+    if draw(st.integers(0, 4)) == 0:
+        rows = []  # Header_Only_Body
+    lines = [header]
+    for day in rows:
+        if style == "iso":
+            field = day.isoformat()
+        elif style == "short":
+            field = f"{day.day}-{MONTH_NAMES[day.month - 1]}-{day.year % 100:02d}"
+        else:
+            field = "n/a"
+        value = draw(st.sampled_from(["1", "1.5", "1.25", "1.125"]))
+        lines.append(",".join([field] + [value] * (columns - 1)))
+    if draw(st.booleans()):
+        lines.insert(draw(st.integers(1, len(lines))), COMMENT)
+    return ("\n".join(lines) + "\n").encode()
+
+
 @st.composite
 def captures(draw: st.DrawFn) -> list[Capture]:
     """Synthetic evidence: data, error and error_page entries over several hosts and shapes."""
@@ -49,7 +83,7 @@ def captures(draw: st.DrawFn) -> list[Capture]:
             query = "s=AAPL&a={{x}}&b=1&c=2016&d=0&e=1&f=2016&g=d"
         query += draw(st.sampled_from(["", "&x=1", "&amp;y=", "&%61mp=1", f"&z=v{number}"]))
         path = draw(st.sampled_from(["/table.csv", "/table.csv", "/other.csv"]))
-        body = ("Date,Close\n" + "".join(f"{day.isoformat()},1.5\n" for day in rows)).encode()
+        body = _body(draw, rows)
         stamp = f"{newest.year + 1}0101{number:06d}"
         digest = f"D{number}"
         entry = IndexEntry(

@@ -103,20 +103,20 @@ httpx client or touches the network. Each property test uses `@settings(max_exam
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 1.5, 3.2, 7.1_
 
-- [-] 5. Add parameters and content types to the Contract
-  - [ ] 5.1 Add `Parameter`, `IntType`, `EnumType`, `StringType`, `ValueCount`, `NameEvidence` and the `parameters`, `amp`, `content_types` fields to `contract.py`
+- [x] 5. Add parameters and content types to the Contract
+  - [x] 5.1 Add `Parameter`, `IntType`, `EnumType`, `StringType`, `ValueCount`, `NameEvidence` and the `parameters`, `amp`, `content_types` fields to `contract.py`
     - Type union discriminated by `kind`; `parameters` sorted by name, `examples` by (count desc, value asc), enum `values` by value
     - _Requirements: 2.3, 2.4, 2.5, 4.1, 7.3_
-  - [ ] 5.2 Infer parameters and content types in `infer.py`
+  - [x] 5.2 Infer parameters and content types in `infer.py`
     - Per name except `amp`, using each capture's first value: presence Evidence, empty count, Template_Junk count (`{{`, `}}`, `{%`, or a non-digit `a` to `f` value such as `f=f6j1`), `required` only when every Data_Capture has a non-empty value, up to 5 examples; type `int` (min, max) when all non-empty non-junk values are ASCII digits, else `enum` (≤ 10 distinct), else `string` (distinct count); each `int` parameter records its observed min and max (Req 8.2 renders the full range); `documented` false outside the Documented_Parameters ("observed, unexplained", optional); `amp` Evidence
     - Content types: lowercased part before `;` of `content_type`, else `mimetype`, with Evidence per type
     - _Requirements: 2.3, 2.4, 2.5, 4.1_
-  - [ ] 5.3 Write example tests in `tests/autopsy/test_infer.py` and extend the P2 generator
+  - [x] 5.3 Write example tests in `tests/autopsy/test_infer.py` and extend the P2 generator
     - `a` typed `int`, `g` typed `enum`, `s` typed `string`; `amp` counted and excluded; template junk counted; undocumented `x` optional; `text/csv; charset=...` reduces to `text/csv`; on the committed evidence `d` is `int` with max 12 (F21)
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 2.3, 2.4, 2.5, 4.1_
 
-- [ ] 6. Add response variants and row format to the Contract
+- [-] 6. Add response variants and row format to the Contract
   - [ ] 6.1 Add `body_precision` to `body.py`
     - Maximum fractional digits over numeric fields of Data_Rows, skipping the `Date` and `Volume` columns
     - _Requirements: 5.4_

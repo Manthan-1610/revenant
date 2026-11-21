@@ -1,4 +1,4 @@
-"""Body_Parser and row helpers for Yahoo CSV bodies (Req 4.2, 4.3, 5.2, 5.3, F12, F16)."""
+"""Body_Parser and row helpers for Yahoo CSV bodies (Req 4.2, 4.3, 5.2 to 5.4, F12, F16)."""
 
 from __future__ import annotations
 
@@ -15,6 +15,8 @@ from revenant.autopsy.evidence import AutopsyError
 COMMENT_RE = re.compile(r"^<!--.*-->\s*$")
 ISO_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 SHORT_RE = re.compile(r"^(\d{1,2})-([A-Za-z]{3})-(\d{2})$")
+NUMBER_RE = re.compile(r"^-?\d+(?:\.(\d+))?$")
+PRECISION_SKIPPED = frozenset({"Date", "Volume"})
 
 ISO_FORMAT = "%Y-%m-%d"
 SHORT_FORMAT = "%d-%b-%y"
@@ -93,6 +95,25 @@ def parse_row_date(field: str, capture_year: int) -> tuple[date, str] | None:
         parsed = _valid_date(year, MONTHS.index(name) + 1, int(short[1]))
         return (parsed, SHORT_FORMAT) if parsed else None
     return None
+
+
+def body_precision(header: str, rows: Sequence[str]) -> int:
+    """Body_Precision: max fractional digits over numeric fields, skipping `Date` and `Volume`.
+
+    A field is numeric when it matches `-?digits[.digits]`; an integer has 0 fractional digits.
+    Returns 0 when no numeric field exists.
+    """
+    columns = [name.strip() for name in header.split(",")]
+    skipped = {index for index, name in enumerate(columns) if name in PRECISION_SKIPPED}
+    best = 0
+    for row in rows:
+        for index, field in enumerate(row.split(",")):
+            if index in skipped:
+                continue
+            number = NUMBER_RE.match(field.strip())
+            if number and number[1]:
+                best = max(best, len(number[1]))
+    return best
 
 
 def row_order(dates: Sequence[date]) -> RowOrder:
