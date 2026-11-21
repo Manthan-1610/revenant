@@ -11,7 +11,7 @@ from pathlib import Path
 
 import httpx
 
-from revenant.exhume.models import CdxRow, Index, IndexEntry, Kind, Listing
+from revenant.exhume.models import CdxRow, Index, IndexEntry, Kind, Listing, PassKind
 
 _EXTENSIONS = {
     "text/csv": "csv",
@@ -62,10 +62,34 @@ class EvidenceStore:
         self.slug = slug
         self.slug_dir = root / slug
         self.index_path = self.slug_dir / "index.json"
+        self._index_cache: Index | None = None  # read-only view for is_cached, kept in sync
 
     def _listing_path(self, host: str, kind: str) -> Path:
         name = f"{host}.json" if kind == "data" else f"{host}.errors.json"
         return self.slug_dir / "cdx" / name
+
+    def load_listing(self, host: str, kind: PassKind) -> Listing | None:
+        """The stored Listing for a Host and pass, or None if missing, unparseable or not it."""
+        try:
+            raw = self._listing_path(host, kind).read_bytes()
+            listing = Listing.model_validate_json(raw)
+        except (OSError, ValueError):
+            return None
+        if listing.host != host or listing.kind != kind:
+            return None
+        return listing
+
+    def is_cached(self, host: str, row: CdxRow) -> bool:
+        """Index entry exists for the row and its file exists with the recorded size."""
+        if self._index_cache is None:
+            self._index_cache = self.load_index()
+        entry = self._index_cache.entries.get(entry_key(host, row.timestamp, row.digest))
+        if entry is None:
+            return False
+        try:
+            return (self.slug_dir / entry.path).stat().st_size == entry.size
+        except OSError:
+            return False
 
     def save_listing(self, listing: Listing) -> None:
         """Write the Listing as compact JSON with an Atomic write."""
@@ -114,6 +138,7 @@ class EvidenceStore:
         index = self.load_index()
         index.entries[entry_key(host, row.timestamp, row.digest)] = entry
         atomic_write(self.index_path, dump_index(index))
+        self._index_cache = index
         return entry
 
     def error_evidence_count(self) -> int:

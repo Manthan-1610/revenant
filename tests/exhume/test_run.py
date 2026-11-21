@@ -12,7 +12,7 @@ from typer.testing import CliRunner
 from revenant import cli
 from revenant.exhume.archive import DEFAULT_USER_AGENT, ArchiveClient, RateLimiter, make_client
 from revenant.exhume.content import wayback_digest
-from revenant.exhume.models import HostSummary, Tombstone
+from revenant.exhume.models import CdxRow, HostSummary, Listing, Tombstone
 from revenant.exhume.run import exhume, served_timestamp, wayback_url
 from revenant.exhume.store import EvidenceStore
 from tests.exhume.conftest import FakeClock
@@ -300,10 +300,12 @@ class ScriptedArchive:
         self.rows = rows
         self.replies = {ts: list(script) for ts, script in replies.items()}
         self.capture_fetches: dict[str, int] = {}
+        self.cdx_requests = 0
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         path = request.url.path
         if path == "/cdx/search/cdx":
+            self.cdx_requests += 1
             page = [["timestamp", "original", "mimetype", "statuscode", "digest", "length"]]
             page += [
                 [ts, original, "text/csv", "200", digest, "1"] for ts, original, digest in self.rows
@@ -314,6 +316,8 @@ class ScriptedArchive:
         step = self.replies[ts].pop(0)
         if step == "offline":
             return httpx.Response(200, content=F9_OFFLINE, headers={"Content-Type": "text/html"})
+        if step == "notfound":
+            return httpx.Response(404, content=b"<html>not archived</html>")
         if step == "yahoo404":
             # An archived Yahoo HTML error page served under a text/csv CDX row.
             return httpx.Response(
@@ -323,12 +327,12 @@ class ScriptedArchive:
 
 
 def _run_scripted(
-    tmp_path: Path, fake: ScriptedArchive, n: int
+    tmp_path: Path, fake: ScriptedArchive, n: int, refresh: bool = False
 ) -> tuple[FakeClock, EvidenceStore, HostSummary, int]:
     clock = FakeClock()
     client = make_client(RateLimiter(clock), DEFAULT_USER_AGENT, httpx.MockTransport(fake))
     store = EvidenceStore(tmp_path, "yahoo-finance-ichart")
-    result = exhume(_tombstone(), store, ArchiveClient(client, clock), n, False)
+    result = exhume(_tombstone(), store, ArchiveClient(client, clock), n, refresh)
     [summary] = result.hosts
     return clock, store, summary, result.error_evidence
 
@@ -406,3 +410,121 @@ def test_crumb_url_is_dropped_everywhere(tmp_path: Path) -> None:
         assert b"SeCrEtCrUmB42" not in data, path
         assert b"crumb" not in data.lower(), path
         assert CRUMB_TS.encode() not in data, path
+
+
+# ---- task 9: backfill, Listing cache reuse and idempotent reruns -------------------------
+
+
+def _s_only_rows(count: int) -> list[tuple[str, str, str]]:
+    """Rows in one Group (Interval `none`, shape `s_only`), in timestamp order."""
+    return [
+        (f"20{10 + i:02d}0101000000", f"http://ichart.yahoo.com:80/table.csv?s=R{i}", f"R{i:031d}")
+        for i in range(count)
+    ]
+
+
+def test_4xx_and_offline_exhausted_are_backfilled_to_n(tmp_path: Path) -> None:
+    rows = _s_only_rows(4)
+    # One Group of 4 with N=2 selects indices 0 and 2; backfill then takes 1 and 3.
+    replies = {
+        rows[0][0]: ["notfound"],
+        rows[1][0]: ["csv"],
+        rows[2][0]: ["offline"] * 5,
+        rows[3][0]: ["csv"],
+    }
+    fake = ScriptedArchive(rows, replies)
+    _, store, summary, _ = _run_scripted(tmp_path, fake, 2)
+
+    assert fake.capture_fetches == {rows[0][0]: 1, rows[1][0]: 1, rows[2][0]: 5, rows[3][0]: 1}
+    assert (summary.found, summary.downloaded, summary.cached, summary.rejected) == (4, 2, 0, 2)
+    entries = store.load_index().entries
+    assert set(entries) == {f"{HOST}/{r[0]}-{r[2]}" for r in (rows[1], rows[3])}
+    assert all(entry.kind == "data" for entry in entries.values())
+
+
+def test_backfill_stops_when_candidates_run_out(tmp_path: Path) -> None:
+    rows = _s_only_rows(2)
+    fake = ScriptedArchive(rows, {rows[0][0]: ["notfound"], rows[1][0]: ["csv"]})
+    _, _, summary, _ = _run_scripted(tmp_path, fake, 5)
+    assert fake.capture_fetches == {rows[0][0]: 1, rows[1][0]: 1}
+    assert (summary.downloaded, summary.rejected) == (1, 1)
+
+
+def test_rerun_sends_no_request_and_keeps_index_bytes(tmp_path: Path) -> None:
+    rows = _s_only_rows(3)
+    fake = ScriptedArchive(rows, {ts: ["csv"] for ts, _, _ in rows})
+    _, store, first, _ = _run_scripted(tmp_path, fake, 2)
+    assert (first.downloaded, first.cached) == (2, 0)
+    assert fake.cdx_requests == 1
+    fetches_after_first = dict(fake.capture_fetches)
+    index_bytes = store.index_path.read_bytes()
+    listing_bytes = (store.slug_dir / "cdx" / f"{HOST}.json").read_bytes()
+
+    _, _, second, _ = _run_scripted(tmp_path, fake, 2)
+    assert fake.cdx_requests == 1  # the stored Listing was reused
+    assert fake.capture_fetches == fetches_after_first
+    assert (second.found, second.downloaded, second.cached, second.rejected) == (3, 0, 2, 0)
+    assert store.index_path.read_bytes() == index_bytes
+    assert (store.slug_dir / "cdx" / f"{HOST}.json").read_bytes() == listing_bytes
+
+    _, _, refreshed, _ = _run_scripted(tmp_path, fake, 2, refresh=True)
+    assert fake.cdx_requests == 2  # --refresh lists the CDX again
+    assert fake.capture_fetches == fetches_after_first  # cached captures are still not fetched
+    assert (refreshed.downloaded, refreshed.cached) == (0, 2)
+    assert store.index_path.read_bytes() == index_bytes
+
+
+def test_cached_capture_with_wrong_size_is_refetched(tmp_path: Path) -> None:
+    rows = _s_only_rows(1)
+    fake = ScriptedArchive(rows, {rows[0][0]: ["csv", "csv"]})
+    _, store, _, _ = _run_scripted(tmp_path, fake, 1)
+    [entry] = store.load_index().entries.values()
+    (store.slug_dir / entry.path).write_bytes(b"truncated")
+
+    _, _, summary, _ = _run_scripted(tmp_path, fake, 1)
+    assert fake.capture_fetches == {rows[0][0]: 2}
+    assert (summary.downloaded, summary.cached) == (1, 0)
+    assert (store.slug_dir / entry.path).read_bytes() == F5_BODY
+
+
+def test_cached_listing_with_crumb_row_is_filtered_on_load(tmp_path: Path) -> None:
+    clean = CdxRow(
+        timestamp=ROW_GOOG[0],
+        original=ROW_GOOG[1],
+        mimetype="text/csv",
+        statuscode="200",
+        digest=wayback_digest(F5_BODY),
+        length="1",
+    )
+    crumb = clean.model_copy(
+        update={"timestamp": CRUMB_TS, "original": CRUMB_ORIGINAL, "digest": "C" * 32}
+    )
+    store = EvidenceStore(tmp_path, "yahoo-finance-ichart")
+    # A Listing cached before the Ethics_Filter existed: the crumb row is still in it.
+    store.save_listing(
+        Listing(host=HOST, kind="data", params=[], rows=[clean, crumb], ethics_dropped=0)
+    )
+
+    fake = ScriptedArchive([], {clean.timestamp: ["csv"]})
+    _, _, summary, _ = _run_scripted(tmp_path, fake, 5)
+
+    assert fake.cdx_requests == 0
+    assert fake.capture_fetches == {clean.timestamp: 1}
+    assert (summary.found, summary.downloaded, summary.rejected) == (2, 1, 1)
+    reloaded = store.load_listing(HOST, "data")
+    assert reloaded is not None
+    assert reloaded.rows == [clean]
+    assert reloaded.ethics_dropped == 1
+    for path in (p for p in tmp_path.rglob("*") if p.is_file()):
+        assert b"SeCrEtCrUmB42" not in path.read_bytes(), path
+
+
+def test_load_listing_returns_none_for_missing_or_invalid(tmp_path: Path) -> None:
+    store = EvidenceStore(tmp_path, "yahoo-finance-ichart")
+    assert store.load_listing(HOST, "data") is None
+    path = store.slug_dir / "cdx" / f"{HOST}.json"
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"{not json")
+    assert store.load_listing(HOST, "data") is None
+    path.write_bytes(b'{"host": "x"}')
+    assert store.load_listing(HOST, "data") is None

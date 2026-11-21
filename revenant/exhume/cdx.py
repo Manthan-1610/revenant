@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from revenant.exhume.archive import ArchiveClient, ArchiveError
 from revenant.exhume.ethics import has_auth_param
 from revenant.exhume.models import CdxRow, Listing, PassKind, Tombstone
+from revenant.exhume.store import EvidenceStore
 
 CDX_URL = "https://web.archive.org/cdx/search/cdx"
 PAGE_SIZE = 1000
@@ -153,3 +154,34 @@ def fetch_listing(
         rows=rows,
         ethics_dropped=len(dropped_digests),
     )
+
+
+def get_listing(
+    archive: ArchiveClient,
+    store: EvidenceStore,
+    tombstone: Tombstone,
+    host: str,
+    kind: PassKind,
+    refresh: bool,
+) -> Listing:
+    """The stored Listing unless `refresh` or none is stored; else fetch and save (Req 9.5).
+
+    A stored Listing is re-filtered on load, because Listings cached before the Ethics_Filter
+    existed may still hold Auth-like URLs. If any row is dropped, the clean Listing is re-saved.
+    Raises `DiscoveryError` when a fresh fetch fails.
+    """
+    if not refresh:
+        cached = store.load_listing(host, kind)
+        if cached is not None:
+            clean = [row for row in cached.rows if not has_auth_param(row.original)]
+            dropped = len(cached.rows) - len(clean)
+            if dropped == 0:
+                return cached
+            listing = cached.model_copy(
+                update={"rows": clean, "ethics_dropped": cached.ethics_dropped + dropped}
+            )
+            store.save_listing(listing)
+            return listing
+    listing = fetch_listing(archive, tombstone, host, kind)
+    store.save_listing(listing)
+    return listing

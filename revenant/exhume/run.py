@@ -9,11 +9,11 @@ from email.utils import parsedate_to_datetime
 import httpx
 
 from revenant.exhume.archive import ArchiveClient, ArchiveError
-from revenant.exhume.cdx import DiscoveryError, fetch_listing
+from revenant.exhume.cdx import DiscoveryError, get_listing
 from revenant.exhume.content import classify, wayback_digest
 from revenant.exhume.models import CdxRow, HostSummary, RunResult, Tombstone
-from revenant.exhume.select import select
-from revenant.exhume.store import EvidenceStore
+from revenant.exhume.select import backfill_order, select
+from revenant.exhume.store import EvidenceStore, entry_key
 
 WAYBACK_PREFIX = "https://web.archive.org/web/"
 ERROR_EVIDENCE_CAP = 10
@@ -67,6 +67,78 @@ def _fetch_capture(archive: ArchiveClient, row: CdxRow) -> httpx.Response | None
     return None
 
 
+def _download(
+    store: EvidenceStore, archive: ArchiveClient, host: str, row: CdxRow, summary: HostSummary
+) -> bool:
+    """Fetch and store one Data capture; True only when it was stored with kind `data`."""
+    try:
+        response = _fetch_capture(archive, row)
+    except ArchiveError:
+        summary.rejected += 1
+        return False
+    if response is None:
+        summary.rejected += 1
+        return False
+    kind = classify(response.content, response.headers.get("content-type"), row.mimetype)
+    if kind == "error_page":
+        # Req 7.5: keep it as Error_Evidence while the Slug cap allows; never as data.
+        summary.rejected += 1
+        if store.error_evidence_count() >= ERROR_EVIDENCE_CAP:
+            return False
+    store.save_capture(
+        host,
+        row,
+        kind,
+        response,
+        served_timestamp(response),
+        wayback_digest(response.content) == row.digest,
+    )
+    if kind == "error_page":
+        summary.error_evidence += 1
+        return False
+    summary.downloaded += 1
+    return True
+
+
+def _data_pass(
+    store: EvidenceStore,
+    archive: ArchiveClient,
+    host: str,
+    candidates: list[CdxRow],
+    max_captures: int,
+    summary: HostSummary,
+) -> None:
+    """Selected Candidates first, then backfill, until N `data` captures exist (Req 5.5, 9.4)."""
+    entries = store.load_index().entries
+
+    def cached_kind(row: CdxRow) -> str | None:
+        if not store.is_cached(host, row):
+            return None
+        return entries[entry_key(host, row.timestamp, row.digest)].kind
+
+    # Rerun short-cut: enough cached `data` captures already, so send no request at all.
+    cached_data = sum(1 for row in candidates if cached_kind(row) == "data")
+    if cached_data >= max_captures:
+        summary.cached = max_captures
+        return
+
+    selected = select(candidates, max_captures)
+    stored = 0
+    # `select` and `backfill_order` are disjoint and deduplicated: each Capture is tried once.
+    for row in [*selected, *backfill_order(candidates, selected)]:
+        if stored >= max_captures:
+            return
+        kind = cached_kind(row)
+        if kind == "data":
+            summary.cached += 1
+            stored += 1
+        elif kind is not None:
+            # A cached Error page: no request, and it never counts as data.
+            summary.rejected += 1
+        elif _download(store, archive, host, row, summary):
+            stored += 1
+
+
 def exhume(
     tombstone: Tombstone,
     store: EvidenceStore,
@@ -74,50 +146,21 @@ def exhume(
     max_captures: int,
     refresh: bool,
 ) -> RunResult:
-    """Run the data pass for every Host, downloading the deterministic `select` sample.
+    """Run the data pass for every Host: cached Listing or fresh CDX, then select and backfill.
 
-    Backfill after rejections arrives in task 9.
-
-    `refresh` is accepted now; Listing cache reuse arrives in task 9.
+    The error pass arrives in task 10.
     """
     summaries: list[HostSummary] = []
     for host in tombstone.hosts:
         summary = HostSummary(host=host)
         summaries.append(summary)
         try:
-            listing = fetch_listing(archive, tombstone, host, "data")
+            listing = get_listing(archive, store, tombstone, host, "data", refresh)
         except DiscoveryError:
             summary.discovery_failed.append("data")
             continue
-        store.save_listing(listing)
         # Req 10.3: Ethics_Filter drops count as found and as rejected.
         summary.found = len(listing.rows) + listing.ethics_dropped
         summary.rejected += listing.ethics_dropped
-        for row in select(listing.rows, max_captures):
-            try:
-                response = _fetch_capture(archive, row)
-            except ArchiveError:
-                summary.rejected += 1
-                continue
-            if response is None:
-                summary.rejected += 1
-                continue
-            kind = classify(response.content, response.headers.get("content-type"), row.mimetype)
-            if kind == "error_page":
-                # Req 7.5: keep it as Error_Evidence while the Slug cap allows; never as data.
-                summary.rejected += 1
-                if store.error_evidence_count() >= ERROR_EVIDENCE_CAP:
-                    continue
-            store.save_capture(
-                host,
-                row,
-                kind,
-                response,
-                served_timestamp(response),
-                wayback_digest(response.content) == row.digest,
-            )
-            if kind == "error_page":
-                summary.error_evidence += 1
-            else:
-                summary.downloaded += 1
+        _data_pass(store, archive, host, listing.rows, max_captures, summary)
     return RunResult(hosts=summaries, error_evidence=store.error_evidence_count())

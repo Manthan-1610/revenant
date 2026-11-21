@@ -161,15 +161,15 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.6_
 
-- [ ] 9. Add backfill, Listing cache reuse and idempotent reruns
-  - [ ] 9.1 Write the backfill loop in `run.py`
+- [x] 9. Add backfill, Listing cache reuse and idempotent reruns
+  - [x] 9.1 Write the backfill loop in `run.py`
     - After a rejection, exhausted retries or an Error page, fetch the next Candidate in `backfill_order` until N `data` captures are stored for the Host or no Candidate remains
     - _Requirements: 5.5_
-  - [ ] 9.2 Write Listing cache reuse, `--refresh` and cached-capture detection
+  - [x] 9.2 Write Listing cache reuse, `--refresh` and cached-capture detection
     - `EvidenceStore.load_listing(host, kind)` and `is_cached(host, row)` (Index entry exists and file has the recorded size); `cdx.get_listing(...)` reuses a stored Listing unless `refresh`, else fetches and saves
     - In `run.py`, skip requests for Cached captures and count them as `cached`; apply the rerun short-cut (≥ N cached `data` entries among a Host's Candidates counts N cached, no requests); rewrite `index.json` only when an entry is added so reruns leave it byte-identical
     - _Requirements: 3.4, 9.3, 9.4, 9.5, 9.6_
-  - [ ] 9.3 Write example tests in `tests/exhume/test_run.py`
+  - [x] 9.3 Write example tests in `tests/exhume/test_run.py`
     - 4xx and Offline-exhausted captures are backfilled to N; two runs against the same MockTransport: the second sends no CDX and no capture request, reports 0 downloads and leaves `index.json` byte-identical; `--refresh` sends CDX requests again
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 5.5, 9.4, 9.5, 9.6_
