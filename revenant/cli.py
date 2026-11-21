@@ -8,6 +8,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
+from revenant.autopsy.evidence import AutopsyError, load_evidence
 from revenant.exhume.archive import ArchiveClient, RateLimiter, SystemClock, make_client, user_agent
 from revenant.exhume.models import (
     HostSummary,
@@ -80,6 +81,22 @@ def verify(slug: str, evidence_dir: Path = Path("evidence")) -> None:
         typer.echo(f"{key}  {F19_HINT}")
     if report.failures:
         raise typer.Exit(1)
+
+
+@app.command()
+def autopsy(
+    slug: str,
+    evidence_dir: Path = Path("evidence"),
+    crypt_dir: Path = Path("crypt"),
+    specs_dir: Path = Path(".kiro/specs"),
+) -> None:
+    """Infer the dead API's contract from stored evidence (no network)."""
+    try:
+        _index_bytes, captures = load_evidence(evidence_dir, slug)
+    except AutopsyError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"captures: {len(captures)}")
 
 
 def _summary_table(result: RunResult, tombstone: Tombstone, n: int) -> Table:
