@@ -51,18 +51,20 @@ Exhume (Kiro Spec session, using the execution-rules prompt)
 - [ ] *Cut rule:* if Exhume isn't done tonight, drop task 10 and the parameter-shape groups (selection by interval only)
 
 ### Mon Nov 23: Autopsy, the part that works without AI
-- [ ] Autopsy design + tasks (max 1 review round each)
-- [ ] Infer the parameter list from archived URLs (names, value ranges, defaults)
-- [ ] **Infer that months are 0-indexed from evidence**: compare the requested `a/b/c` with the first date in each response body (this is a demo moment)
-- [ ] Detect header variants by year (`Adj. Close*` vs `Adj Close`), row order (newest first), and content type
-- [ ] Write `crypt/yahoo-finance-ichart/contract.json`
-- [ ] **Must-have:** `contract.json` exists and its facts match what `product.md` says
+- [x] Autopsy design + tasks *(done Fri: 10 tasks, 198-line design)*
+- [x] Infer the parameter list from archived URLs (names, value ranges, defaults) *(done Fri, task 5)*
+- [x] **Infer that months are 0-indexed from evidence** *(done Fri: 58 decisive for 0-indexed, 0 for 1-indexed, 9 ambiguous, 25 unfit; Claude reproduced the exact counts independently)*
+- [x] Detect header variants by year (`Adj. Close*` vs `Adj Close`), row order (newest first), and content type *(done Fri, task 6)*
+- [x] Write `crypt/yahoo-finance-ichart/contract.json` *(vertical slice: months + source; byte-identical across runs)*
+- [x] **Must-have:** `contract.json` exists and its facts match what `product.md` says *(done Fri; 197 tests pass)*
 
 ### Tue Nov 24: Autopsy, the generated spec + first Kiro hooks
-- [ ] Autopsy writes `.kiro/specs/revenant-yahoo-finance-ichart/requirements.md` (EARS) from `contract.json` with a **deterministic template** (reproducible and testable; Kiro CLI headless is saved for Reanimate, where it builds the server)
-- [ ] Hook 1, **"Test what you touched"**: when a file in `revenant/<stage>/` is saved, run `pytest tests/<stage> -q`
-- [ ] Hook 2, **"Evidence is immutable"**: if a file under `evidence/` is edited, restore it from git and explain why (protects digest integrity)
-- [ ] Commit hooks under `.kiro/hooks/`
+- [x] Autopsy writes `.kiro/specs/revenant-yahoo-finance-ichart/requirements.md` (EARS) *(done Fri: 7 requirements, 129 lines; a renderer fix for value ranges is pending)* from `contract.json` with a **deterministic template** (reproducible and testable; Kiro CLI headless is saved for Reanimate, where it builds the server)
+- [x] Hook 1, **"Test what you touched"**: when a file in `revenant/<stage>/` is saved, run `pytest tests/<stage> -q` *(committed Fri)*
+- [x] Hook 2, **"Evidence integrity"**: on save or create under `evidence/`, run `revenant verify` and recommend `git checkout` on failure (it never restores files itself) *(committed Fri, plus the `revenant verify` command)*
+- [x] Commit hooks under `.kiro/hooks/`
+- [x] Fire both hooks once from a real IDE save (a shell can't trigger them) *(done Sat)*
+- [ ] **Install Kiro CLI + headless smoke test** (Reanimate on Wed depends on it; it isn't installed yet)
 - [ ] Social post #2 (the 0-indexed-month discovery)
 - [ ] **Must-have:** the generated spec exists, and 2 hooks are committed and have fired at least once
 
