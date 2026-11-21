@@ -211,10 +211,10 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
   - [x] 14.2 Tests with a temporary evidence directory: all good → exit 0 and counts; a tampered file → exit 1 naming it; a missing file → failure; false-digest entries listed with the F19 hint
     - _Requirements: 9.2, 7.6_
 
-- [ ] 15. Wrap-up: Kiro hooks under `.kiro/hooks/`
-  - [ ] 15.1 "Test what you touched": on save of `revenant/<stage>/**/*.py`, run `.venv\Scripts\python -m pytest tests/<stage> -q` and report pass/fail in at most 3 lines; never edit code
-  - [ ] 15.2 "Evidence integrity": on save or create of `evidence/**` (excluding `cdx/`), run `revenant verify <slug>`; on a SHA-256 failure show `git diff --stat evidence/` and recommend `git checkout -- <file>`; never modify evidence
-  - [ ] 15.3 Trigger each hook once and record what it printed
+- [x] 15. Wrap-up: Kiro hooks under `.kiro/hooks/`
+  - [x] 15.1 "Test what you touched": on save of `revenant/<stage>/**/*.py`, run `.venv\Scripts\python -m pytest tests/<stage> -q` and report pass/fail in at most 3 lines; never edit code
+  - [x] 15.2 "Evidence integrity": on save or create of `evidence/**` (excluding `cdx/`), run `revenant verify <slug>`; on a SHA-256 failure show `git diff --stat evidence/` and recommend `git checkout -- <file>`; never modify evidence
+  - [x] 15.3 Trigger each hook once and record what it printed
 ## Notes
 
 - Property tests P1 to P5 are required sub-tasks placed next to their components (tasks 3, 4, 6, 7, 8); none are marked optional.

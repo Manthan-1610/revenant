@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Test what you touched",
+  "description": "On save of a revenant/ Python file, run the pytest folder of that stage and report PASS/FAIL in at most 3 lines.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["revenant/**/*.py"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A Python file under revenant/ was saved. Run the tests for its stage and report. NEVER edit, create or delete any file from this hook; only run the command and report.\n\n1. Determine the stage from the saved path, relative to the repo root:\n   - revenant/<stage>/... -> stage = <stage> (e.g. revenant/exhume/select.py -> exhume).\n   - revenant/cli.py -> stage = exhume.\n   - any other top-level file directly under revenant/ (e.g. revenant/__init__.py) -> reply exactly \"top-level file: skipped\" and stop.\n2. If the folder tests/<stage> does not exist, reply \"no tests/<stage> folder: skipped\" and stop.\n3. Run from the repo root (Windows PowerShell): .venv\\Scripts\\python -m pytest tests/<stage> -q\n4. Report in at most 3 lines: PASS or FAIL, the pytest summary line (e.g. \"120 passed in 4.2s\"), and on FAIL the failing test ids (first 3 only). Do not try to fix anything."
+  }
+}

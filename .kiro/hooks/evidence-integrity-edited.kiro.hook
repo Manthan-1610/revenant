@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Evidence integrity",
+  "description": "On save of a file under evidence/, re-hash the slug's captures with revenant verify and flag any SHA-256 failure.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["evidence/**"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A file under evidence/ was saved. Check the evidence store's integrity. NEVER modify, restore, checkout or delete any evidence file from this hook; only run the commands below and recommend.\n\n1. If the path is under evidence/<slug>/cdx/ (the CDX Listing cache), reply exactly \"cdx cache: skipped\" and stop.\n2. Take <slug> = the first path segment after evidence/ (e.g. evidence/yahoo-finance-ichart/ichart.yahoo.com/x.csv -> yahoo-finance-ichart).\n3. Run from the repo root (Windows PowerShell): .venv\\Scripts\\revenant verify <slug>\n4. On exit code 0: report in at most 3 lines: entries checked, SHA-256 failures 0, and the digest_verified true/false counts.\n5. On any SHA-256 failure (exit code 1): run git diff --stat evidence/ and show its output, then list each failing file and recommend the user run git checkout -- <file> for it. Do not run git checkout yourself."
+  }
+}
