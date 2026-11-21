@@ -12,6 +12,7 @@ from revenant.exhume.archive import ArchiveClient, ArchiveError
 from revenant.exhume.cdx import DiscoveryError, fetch_listing
 from revenant.exhume.content import classify, wayback_digest
 from revenant.exhume.models import CdxRow, HostSummary, RunResult, Tombstone
+from revenant.exhume.select import select
 from revenant.exhume.store import EvidenceStore
 
 WAYBACK_PREFIX = "https://web.archive.org/web/"
@@ -73,7 +74,9 @@ def exhume(
     max_captures: int,
     refresh: bool,
 ) -> RunResult:
-    """Run the data pass for every Host. Naive pick: the first N merged rows (task 8 replaces it).
+    """Run the data pass for every Host, downloading the deterministic `select` sample.
+
+    Backfill after rejections arrives in task 9.
 
     `refresh` is accepted now; Listing cache reuse arrives in task 9.
     """
@@ -90,7 +93,7 @@ def exhume(
         # Req 10.3: Ethics_Filter drops count as found and as rejected.
         summary.found = len(listing.rows) + listing.ethics_dropped
         summary.rejected += listing.ethics_dropped
-        for row in listing.rows[:max_captures]:
+        for row in select(listing.rows, max_captures):
             try:
                 response = _fetch_capture(archive, row)
             except ArchiveError:

@@ -9,7 +9,7 @@ Machine CDX API, downloads a small deterministic sample of raw captures and stor
 
 This is the MVP scope for a 1.5 to 2 day build. It also covers the project scaffold, because
 Exhume is the first code in the repository. Exhume follows `tech.md`, `necromancy-ethics.md`
-and `structure.md`. References F1 to F16 point to the observed Archive facts in Appendix A.
+and `structure.md`. References F1 to F18 point to the observed Archive facts in Appendix A.
 
 ## Glossary
 
@@ -503,3 +503,18 @@ The 2004-11-29 DISH body (F14) ends with the server comment line:
 ```
 <!-- ichart9.finance.scd.yahoo.com uncompressed Mon Nov 29 12:42:31 PST 2004 -->
 ```
+
+### F17: Unrendered template junk in parameter values (verified by the user on 2026-11-20)
+
+Source: the cached CDX listings under `evidence/yahoo-finance-ichart/cdx/` (no network).
+2 rows carry unrendered template expressions in parameter values, for example
+`c={{(-1 month).year}}`. Observation: selection must classify a non-numeric `a`–`f` value as
+Parameter shape `other` and must never crash on `int()`.
+
+### F18: Archived AAPL captures covering the demo range (verified by the user on 2026-11-20)
+
+Source: the cached CDX listings (no network). 25 AAPL captures with timestamp >= `20160109`
+cover 2016-01-04 to 2016-01-08: they have no `c`, `c` < 2016, or `c=2016` with `a=0`.
+Examples: `20160405081912` on ichart.finance.yahoo.com (135,932 bytes, `g=d`, `c=1984`) and
+`20160416023609` on real-chart.finance.yahoo.com (172,268 bytes, `g=d`, `c=1970`).
+Observation: Yahoo's own archived full-history captures can serve as the primary donor.

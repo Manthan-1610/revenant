@@ -15,6 +15,10 @@
     "7.3 Write property test P5 in `tests/exhume/test_ethics.py`": {
       "status": "passed",
       "lastRunTimestamp": 1795217809107
+    },
+    "8.4 Write property test P3 in `tests/exhume/test_select.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795219961636
     }
   },
   "executionHistory": {
@@ -80,6 +84,13 @@
         "executionId": "4f0211f5-2b5a-453b-b9a1-9e6f3236e9d0",
         "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
         "timestamp": 1795217664197
+      }
+    ],
+    "8. Implement deterministic selection (`select.py`) and replace the naive pick": [
+      {
+        "executionId": "444e1f3d-ef44-4ab8-89a5-8e16076821aa",
+        "chatSessionId": "sess_ec8c94aa-b0d5-4f0d-835b-0ef65b7afee5",
+        "timestamp": 1795219768558
       }
     ]
   }

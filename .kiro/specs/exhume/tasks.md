@@ -143,20 +143,20 @@ advances time without waiting, and `tmp_path` as Evidence_Root. Fixtures live in
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 8.1, 8.4, 8.5, 10.3_
 
-- [ ] 8. Implement deterministic selection (`select.py`) and replace the naive pick
-  - [ ] 8.1 Write query parsing, Parameter shape and Interval
+- [x] 8. Implement deterministic selection (`select.py`) and replace the naive pick
+  - [x] 8.1 Write query parsing, Parameter shape and Interval
     - `parse_query(original)` with `urlsplit` + `html.unescape(query)` + `parse_qsl(keep_blank_values=True)` (handles `:80`, any order, `s=^DJI` equals `s=%5EDJI`, `&amp` artifacts per F15); fetching still uses `original` unchanged; `parameter_shape(pairs)` returning `s_only`, `empty_range`, `full_range` or `other`; `interval(pairs)` returning `g` or `none`
     - _Requirements: 4.1_
-  - [ ] 8.2 Write `select` and `backfill_order`
+  - [x] 8.2 Write `select` and `backfill_order`
     - Dedup by digest (earliest wins), group by (Interval, Parameter shape), sort groups and members by (timestamp, digest), allocate picks round-robin while `k_g < m_g`, take indices `floor(i*m/k)`, output in (group, timestamp, digest) order; no RNG
     - `backfill_order`: unselected Candidates round-robin over sorted groups, each in (timestamp, digest) order
     - _Requirements: 4.2, 4.3, 4.4, 4.5, 4.6_
-  - [ ] 8.3 Replace the naive first-N pick in `run.py` with `select`
+  - [x] 8.3 Replace the naive first-N pick in `run.py` with `select`
     - _Requirements: 4.4_
-  - [ ] 8.4 Write property test P3 in `tests/exhume/test_select.py`
+  - [x] 8.4 Write property test P3 in `tests/exhume/test_select.py`
     - **Property 3: Selection determinism**: for any generated Candidate set (seeded from F1 `original` URLs with varied `g` values, shapes, timestamps and digests), any permutation of it and any N ≥ 1, `select` returns the same rows, at most N, with unique digests
     - **Validates: Requirements 4.3, 4.4, 4.5**
-  - [ ] 8.5 Write example tests for selection in `tests/exhume/test_select.py`
+  - [x] 8.5 Write example tests for selection in `tests/exhume/test_select.py`
     - `parse_query` on F1 URLs and `%5E` symbols; F15 forms: `s=DISH&amp` → `s_only`, `s=%5EVIX&amp;g=d&amp;ignore=.csv` → Interval `d`; shape classification of each kind; every Group gets one pick when N ≥ number of Groups; `floor(i*m/k)` indices on a known Group; backfill order on a known set
     - Checkpoint: run pytest; all non-live tests pass
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.6_

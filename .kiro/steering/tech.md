@@ -31,6 +31,13 @@ inclusion: always
 - Cache every capture under `evidence/<slug>/<host>/` and list it in
   `evidence/<slug>/index.json`, so you never fetch the same capture twice.
 
+## Donor (living data source for the revenant)
+- **Primary donor**: Yahoo's own archived full-history captures (requirements F18: 25 AAPL
+  captures from 2016 cover 2016-01-04..08).
+- **Stooq**: rejected. It sits behind a JavaScript bot wall; never bypass it.
+- **Nasdaq**: rejected, it has no 2016 data.
+- **Alpha Vantage** (free key, 25 requests/day, no Adj Close): stretch goal for dates after 2017.
+
 ## Kiro CLI headless (Reanimate stage)
 See `kiro-headless.md`, which loads when you work on Reanimate files.
 
