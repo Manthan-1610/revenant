@@ -8,6 +8,8 @@ body shaped like Yahoo's 2016 captures; the archived 404 page is the real one fr
 
 from __future__ import annotations
 
+import dataclasses
+import hashlib
 import json
 import shutil
 import sys
@@ -25,6 +27,7 @@ from revenant.reanimate import build, runner
 from revenant.reanimate.donor import load_donor_index
 from revenant.reanimate.kiro import KiroCli
 from revenant.reanimate.record import BuildRecord
+from revenant.reanimate.redact import Redactor
 
 REPO = Path(__file__).resolve().parents[2]
 SLUG = "yahoo-finance-ichart"
@@ -257,7 +260,7 @@ def test_missing_contract_exits_2_before_any_request(
 
     assert result.exit_code == 2, result.output
     assert "error: preflight:" in result.stderr
-    assert contract.as_posix() in result.stderr
+    assert deps.redactor(contract.as_posix()) in result.stderr  # Req 7.2: Home_Path shown as ~
     assert stages == ["preflight"]
     assert archive.requests == []
     assert not argv_file.exists()  # kiro-cli never ran
@@ -366,3 +369,37 @@ def test_audit_violation_exits_1_with_no_check(
     assert record.import_violations and all(str(repo) not in v for v in record.import_violations)
     assert any("requests" in v for v in record.import_violations)
     assert record.checks["demo"] is None
+
+
+FAKE_KEY = "fake-kiro-key-0123456789abcdef"
+FAKE_EMAIL = "ghost@example.invalid"
+FAKE_HOME_NAME = "ghostuser"
+
+
+def test_secrets_never_reach_write_scope_or_console(
+    repo: Path, deps: runner.Deps, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Req 7.2: a stub printing a key, an email and the Home_Path in every spelling leaks none."""
+    home = f"C:\\Users\\{FAKE_HOME_NAME}" if sys.platform == "win32" else f"/home/{FAKE_HOME_NAME}"
+    monkeypatch.setenv("KIRO_API_KEY", FAKE_KEY)
+    monkeypatch.setenv("FAKE_KIRO_MODE", "leak")
+    monkeypatch.setenv("FAKE_KIRO_HOME", home)
+    leaky = dataclasses.replace(deps, redactor=Redactor(FAKE_KEY, home))
+
+    result = _invoke(monkeypatch, leaky)
+
+    assert result.exit_code == 0, result.output
+    slug_dir = repo / "crypt" / SLUG
+    texts = {path: data.decode("utf-8", "replace") for path, data in _tree(slug_dir).items()}
+    texts["<stdout>"] = result.stdout
+    texts["<stderr>"] = result.stderr
+    for name, text in texts.items():
+        for secret in (FAKE_KEY, FAKE_EMAIL):
+            assert secret not in text, (name, secret)
+        assert FAKE_HOME_NAME not in text.lower(), name
+    log = texts["reanimate.log"]
+    assert log.count("[REDACTED]") >= 2 and "~" in log  # the stub really printed the secrets
+    record = BuildRecord.model_validate_json((slug_dir / "reanimate.json").read_bytes())
+    assert record.kiro_version is not None and "[REDACTED]" in record.kiro_version
+    prompt_bytes = (slug_dir / "reanimate-prompt.md").read_bytes()
+    assert record.prompt_sha256 == hashlib.sha256(prompt_bytes).hexdigest()

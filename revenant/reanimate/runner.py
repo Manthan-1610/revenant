@@ -33,6 +33,7 @@ from revenant.reanimate.record import (
     ScopeChange,
     dump_model,
 )
+from revenant.reanimate.redact import Redactor
 
 HEADLESS: BuildPath = "kiro-cli-headless"
 IDE_CHAT: BuildPath = "kiro-ide-chat"
@@ -54,6 +55,7 @@ class Deps:
     clock: Clock = field(default_factory=SystemClock)
     repo_root: Path = Path(".")
     chat_timeout: float = CHAT_TIMEOUT
+    redactor: Redactor = field(default_factory=Redactor.from_env)  # Req 7.2
 
 
 @dataclass
@@ -212,21 +214,24 @@ def _write_record(
     scope_changes: list[ScopeChange] | None = None,
     import_violations: list[str] | None = None,
 ) -> None:
+    red = deps.redactor  # Req 7.2: redact each string before JSON encoding, then the whole text
     record = BuildRecord(
         scope_changes=scope_changes or [],
-        import_violations=import_violations or [],
+        import_violations=[red(violation) for violation in import_violations or []],
         build_path=HEADLESS,
         prompt_sha256=hashlib.sha256(prompt_bytes).hexdigest(),
-        kiro_version=version,
+        kiro_version=red(version) if version is not None else None,
         kiro_exit_code=chat.exit_code if chat else None,
         timed_out=chat.timed_out if chat else False,
-        note=note,
-        model=chat.model if chat else None,
+        note=red(note) if note is not None else None,
+        model=red(chat.model) if chat and chat.model else None,
         started_at=started,
         ended_at=_now(deps.clock),
         checks={"demo": demo, "unknown_symbol": None, "weekly": None},
     )
-    atomic_write(slug_dir / RECORD_NAME, dump_model(record))
+    # Req 7.2: the redacted spellings keep the JSON valid (JSON-escaped Home_Path included).
+    text = deps.redactor(dump_model(record).decode("utf-8"))
+    atomic_write(slug_dir / RECORD_NAME, text.encode("utf-8"))
 
 
 def reanimate(slug: str, prompt_only: bool, built_by: str, deps: Deps) -> Summary:
@@ -242,14 +247,16 @@ def reanimate(slug: str, prompt_only: bool, built_by: str, deps: Deps) -> Summar
     report = _donors(inputs, deps, slug_dir)
 
     entries = load_donor_index(slug_dir, slug).entries.values()
-    prompt = write_prompt(slug_dir, render_prompt(slug, entries))
+    prompt = write_prompt(slug_dir, deps.redactor(render_prompt(slug, entries)))  # Req 7.2
     prompt_bytes = prompt.read_bytes()
 
     started = _now(deps.clock)
     workspace = build.make_workspace(slug_dir, inputs.spec)
     log_rel = f"crypt/{slug}/{LOG_NAME}"
     before = scope.snapshot(root.resolve(), exclude=(log_rel,))  # Req 7.1
-    chat = deps.kiro.chat(workspace, slug_dir / LOG_NAME, timeout=deps.chat_timeout)
+    chat = deps.kiro.chat(
+        workspace, slug_dir / LOG_NAME, timeout=deps.chat_timeout, redactor=deps.redactor
+    )
     changes = scope.diff(before, scope.snapshot(root.resolve(), exclude=(log_rel,)))
     if changes:
         listed = ", ".join(f"{change.path} ({change.change})" for change in changes)

@@ -132,13 +132,15 @@ def reanimate(
     ] = HEADLESS,
 ) -> None:
     """Build and check a revenant server from the generated spec."""
+    deps = Deps()
+    redact = deps.redactor  # Req 7.2: every console line is redacted
     try:
-        summary = run_reanimate(slug, prompt_only, built_by, Deps())
+        summary = run_reanimate(slug, prompt_only, built_by, deps)
     except ReanimateError as exc:
-        typer.echo(f"error: {exc.stage}: {exc.message}", err=True)
+        typer.echo(redact(f"error: {exc.stage}: {exc.message}"), err=True)
         raise typer.Exit(exc.code) from exc
     for line in summary.lines():
-        typer.echo(line)
+        typer.echo(redact(line))
 
 
 def _validation_message(exc: ValidationError) -> str:
