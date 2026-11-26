@@ -30,10 +30,14 @@ def free_port() -> int:
 
 
 def serve(slug_dir: Path, port: int, repo_root: Path) -> subprocess.Popen[bytes]:
-    """Start `server:app` from `slug_dir` with cwd = repo root, so a cwd-dependent server fails."""
+    """Start `server:app` from `slug_dir` with cwd = repo root, so a cwd-dependent server fails.
+
+    `-B` keeps uvicorn from writing `__pycache__/` into the Write_Scope (Req 1.5).
+    """
     return subprocess.Popen(
         [
             sys.executable,
+            "-B",
             "-m",
             "uvicorn",
             "server:app",
