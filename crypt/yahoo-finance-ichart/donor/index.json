@@ -1,0 +1,16 @@
+{
+  "entries": {
+    "AAPL": {
+      "file": "AAPL.csv",
+      "first_date": "1980-12-12",
+      "host": "ichart.finance.yahoo.com",
+      "last_date": "2016-12-21",
+      "rows": 9086,
+      "served_timestamp": "20161222215700",
+      "sha256": "6a41a369c4f8c7cd2c4cbf71b10e18cf3be8560f9269f1295cacfab19dc8b4ed",
+      "source_url": "https://web.archive.org/web/20161222215700id_/http://ichart.finance.yahoo.com/table.csv?s=AAPL&g=d&ignore=.csv",
+      "symbol": "AAPL"
+    }
+  },
+  "slug": "yahoo-finance-ichart"
+}

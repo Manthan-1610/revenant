@@ -1,0 +1,21 @@
+{
+  "build_path": "kiro-cli-headless",
+  "checks": {
+    "demo": {
+      "expected": null,
+      "name": "demo",
+      "observed": null,
+      "result": "pass"
+    },
+    "unknown_symbol": null,
+    "weekly": null
+  },
+  "ended_at": "2026-11-26T22:47:25Z",
+  "kiro_exit_code": 0,
+  "kiro_version": "kiro-cli 3.5.0",
+  "model": null,
+  "note": null,
+  "prompt_sha256": "184cbe7cb6696e0fbe9cb3e478267f48407623171cf24a496c39edb6496055b3",
+  "started_at": "2026-11-26T22:46:39Z",
+  "timed_out": false
+}

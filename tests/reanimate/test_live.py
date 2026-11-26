@@ -11,11 +11,15 @@ ArchiveClient (>= 1 s spacing, backoff, Revenant User-Agent). Donor files go to 
 from __future__ import annotations
 
 import hashlib
+import shutil
 from datetime import date
 from pathlib import Path
 
+import httpx
 import pytest
 
+from revenant.autopsy.contract import contract_path, load_contract
+from revenant.autopsy.render import spec_path
 from revenant.exhume.archive import (
     ArchiveClient,
     RateLimiter,
@@ -25,7 +29,10 @@ from revenant.exhume.archive import (
 )
 from revenant.exhume.models import load_tombstone
 from revenant.exhume.store import EvidenceStore
+from revenant.reanimate import runner
 from revenant.reanimate.donor import CUTOFF, HEADER_LINE, fetch_donors, load_donor_index
+from revenant.reanimate.kiro import KiroCli
+from revenant.reanimate.record import BuildRecord
 
 SLUG = "yahoo-finance-ichart"
 REPO = Path(__file__).resolve().parents[2]
@@ -70,3 +77,49 @@ def test_live_aapl_donor(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     assert demo == DEMO_DATES  # F18: five trading days, newest first
     assert capture_urls[-1] == entry.source_url  # the accepted capture was the last fetch
     print("donor bytes:", len(body))
+
+
+@pytest.mark.live
+def test_live_build(tmp_path: Path) -> None:
+    """Req 3.2, 3.6, 4.4, 4.5, 6.2: a real `kiro-cli chat --v3` headless build passes the demo Check.
+
+    Runs in a `tmp_path` repo copy, so the committed `crypt/<slug>/` is untouched. The committed
+    AAPL donor is copied in, so the Donor_Fetcher reuses it (Req 2.5) and makes no Archive request.
+    Needs a stored kiro-cli login (`kiro-cli whoami` exits 0).
+    """
+    kiro = KiroCli()
+    if not kiro.available() or kiro.whoami() != 0:
+        pytest.skip("kiro-cli is not installed or not logged in")
+    error_page, _ = runner._error_capture(
+        REPO, SLUG, load_contract(contract_path(REPO / "crypt", SLUG))
+    )
+    donor_dir = REPO / "crypt" / SLUG / "donor"
+    for path in (
+        REPO / "tombstones" / f"{SLUG}.toml",
+        contract_path(REPO / "crypt", SLUG),
+        spec_path(REPO / ".kiro" / "specs", SLUG),
+        REPO / "evidence" / SLUG / "index.json",
+        error_page,
+        *sorted(p for p in donor_dir.iterdir() if p.is_file()),
+    ):
+        target = tmp_path / path.relative_to(REPO)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+
+    def no_network(request: httpx.Request) -> httpx.Response:
+        raise AssertionError(f"unexpected Archive request: {request.url}")
+
+    deps = runner.Deps(kiro=kiro, transport=httpx.MockTransport(no_network), repo_root=tmp_path)
+    summary = runner.reanimate(SLUG, prompt_only=False, built_by=runner.HEADLESS, deps=deps)
+
+    slug_dir = tmp_path / "crypt" / SLUG
+    assert summary.stored == ["AAPL"]
+    assert summary.checks["demo"] is not None and summary.checks["demo"].result == "pass"
+    assert (slug_dir / "server.py").is_file()
+    record = BuildRecord.model_validate_json((slug_dir / runner.RECORD_NAME).read_bytes())
+    assert record.build_path == "kiro-cli-headless"
+    assert record.kiro_exit_code == 0 and not record.timed_out
+    assert record.kiro_version and record.kiro_version.startswith("kiro-cli")
+    assert record.model is None or record.model.strip()
+    assert (slug_dir / runner.LOG_NAME).read_text(encoding="utf-8").startswith("stdout: ")
+    print(record.model_dump_json(indent=2))
