@@ -12,6 +12,8 @@ dependencies = [
     "pydantic>=2,<3",
     "typer",
     "rich",
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.optional-dependencies]
