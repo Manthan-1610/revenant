@@ -14,8 +14,8 @@ rule. Don't just push everything back.
 
 ### Fri Nov 20: admin + Exhume tasks 1–4
 Admin (≈1 h)
-- [ ] Create the public GitHub repo **`Manthan-1610/revenant`** (the User-Agent already points there)
-- [ ] Add a `LICENSE` file (MIT or Apache-2.0), push `main`, and check that the license shows in the repo's About box
+- [x] Create the public GitHub repo **`Manthan-1610/revenant`** (the User-Agent already points there) *(done Sat)*
+- [x] Add a `LICENSE` file (MIT or Apache-2.0), push `main`, and check that the license shows in the repo's About box *(MIT, pushed `074558b`)*
 - [ ] Devpost: confirm you're registered for Kiroween 2026 and start a **draft** submission (title + one-liner)
 - [ ] Have proof of student status ready (for the Best Student Project prize)
 - [ ] Screen-record `victims/ystockquote` failing (the video's opening shot), if you haven't already
@@ -64,12 +64,13 @@ Exhume (Kiro Spec session, using the execution-rules prompt)
 - [x] Hook 2, **"Evidence integrity"**: on save or create under `evidence/`, run `revenant verify` and recommend `git checkout` on failure (it never restores files itself) *(committed Fri, plus the `revenant verify` command)*
 - [x] Commit hooks under `.kiro/hooks/`
 - [x] Fire both hooks once from a real IDE save (a shell can't trigger them) *(done Sat)*
-- [ ] **Install Kiro CLI + headless smoke test** (Reanimate on Wed depends on it; it isn't installed yet)
+- [x] **Install Kiro CLI + headless smoke test** *(kiro-cli 3.5.0, Google login, `--v3 --no-interactive` returned PULSE)*
 - [ ] Social post #2 (the 0-indexed-month discovery)
 - [ ] **Must-have:** the generated spec exists, and 2 hooks are committed and have fired at least once
 
 ### Wed Nov 25: Reanimate
-- [ ] Reanimate spec (requirements + design + tasks, lean)
+- [x] Reanimate spec (requirements + design + tasks, lean) *(done Thu: 7 requirements, 200-line design, 10 tasks; approved with 5 amendments)*
+- [x] Autopsy precision fix: Yahoo_Number (F23) and `000` volume (F24) *(708,285 of 708,285 values; dividends use a fixed 6 decimals)*
 - [ ] Runner: `kiro-cli chat --v3 --no-interactive --trust-tools=<narrow list>` builds `crypt/<slug>/server.py` from the generated spec + `contract.json`
 - [ ] Donor adapter (the live source from Saturday) + **offline replay fallback** (serve archived evidence when the donor fails, so the judges' demo never dies)
 - [ ] **Must-have:** `curl "http://127.0.0.1:8000/table.csv?s=AAPL&a=0&b=4&c=2016&d=0&e=8&f=2016&g=d&ignore=.csv"` returns CSV in the old format
