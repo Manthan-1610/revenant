@@ -19,6 +19,7 @@ from revenant.autopsy.contract import (
 )
 from revenant.autopsy.evidence import Capture, load_evidence
 from revenant.autopsy.infer import infer
+from revenant.autopsy.render import served_number_format, served_variant
 from revenant.exhume.models import IndexEntry, Kind
 
 SLUG = "yahoo-finance-ichart"
@@ -213,12 +214,32 @@ def test_date_formats_and_precision() -> None:
         f.format: (f.first_year, f.last_year, f.evidence.count) for f in contract.date_formats
     }
     assert formats == {"%Y-%m-%d": (2016, 2016, 3), "%d-%b-%y": (2004, 2005, 2)}
-    precision = {(p.interval, p.header, p.year): p.values for p in contract.precision}
-    # Count 1: the Header_Only_Body of the same group adds no precision value.
-    assert [(v.digits, v.count) for v in precision[("d", NEW_HEADER, 2016)]] == [(4, 1)]
-    assert [(v.digits, v.count) for v in precision[("d", OLD_HEADER, 2004)]] == [(2, 1)]
-    keys = [(p.interval, p.header, p.year) for p in contract.precision]
+    numbers = {(n.interval, n.header, n.year): n for n in contract.numbers}
+    # The Header_Only_Body of the same group adds no value.
+    new = numbers[("d", NEW_HEADER, 2016)]
+    support = {h.name: h.supported for h in new.hypotheses}
+    assert [h.name for h in new.hypotheses] == sorted(support)
+    assert (new.total, support["yahoo"], support["fixed2"], support["fixed4"]) == (10, 10, 9, 1)
+    old = numbers[("d", OLD_HEADER, 2004)]
+    old_support = {h.name: h.supported for h in old.hypotheses}
+    assert (old.total, old_support["yahoo"], old_support["fixed2"]) == (10, 10, 10)
+    assert (old.volume_zero_000, old.volume_zero_other) == (0, 0)
+    keys = [(n.interval, n.header, n.year) for n in contract.numbers]
     assert keys == sorted(keys)
+
+
+def test_committed_evidence_served_adj_close_selects_yahoo() -> None:
+    """F23: every served `Adj Close` variant selects the Yahoo_Number format."""
+    index_bytes, captures = load_evidence(REPO_EVIDENCE, SLUG)
+    contract = infer(SLUG, index_bytes, captures)
+    checked = 0
+    for group in contract.intervals:
+        served = served_variant(group)
+        if served.header.endswith(",Adj Close"):
+            choice = served_number_format(contract, group.interval, served.header)
+            assert choice is not None and choice.hypothesis == "yahoo", group.interval
+            checked += 1
+    assert checked >= 3
 
 
 def test_committed_evidence_header_variants() -> None:

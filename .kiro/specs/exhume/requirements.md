@@ -9,7 +9,7 @@ Machine CDX API, downloads a small deterministic sample of raw captures and stor
 
 This is the MVP scope for a 1.5 to 2 day build. It also covers the project scaffold, because
 Exhume is the first code in the repository. Exhume follows `tech.md`, `necromancy-ethics.md`
-and `structure.md`. References F1 to F22 point to the observed Archive facts in Appendix A.
+and `structure.md`. References F1 to F24 point to the observed Archive facts in Appendix A.
 
 ## Glossary
 
@@ -545,3 +545,14 @@ the crawl; 3 of them also ignored the start date. No capture from 2014 on is Unf
 ### F22: Early `g=v` returned prices
 
 2 `g=v` captures from 2005–2006 returned the price header (`Date,Open,High,Low,Close,Volume,Adj. Close*`), not `Date,Dividends`.
+
+### F23: Yahoo_Number format (verified by the user on 2026-11-20 with an independent check)
+
+Yahoo_Number: format the value with 6 decimals, strip trailing zeros, keep at least 2 decimals
+(for example `60.860001`, `61.18`, `52.00`, `2105.22998`, `0.00001`). The rule holds for
+708,285 of 708,285 Open, High, Low, Close and Adj Close values in `Adj Close`-header bodies from
+2007–2017. The 2007–2014 bodies happen to have exactly 2 decimals in every value, which also fits.
+
+### F24: Zero volume is `000` (verified by the user on 2026-11-20 with an independent check)
+
+A zero Volume is written `000` (10,712 rows); other volumes are plain integers.

@@ -53,7 +53,8 @@ def _body(draw: st.DrawFn, rows: list[date]) -> bytes:
             field = f"{day.day}-{MONTH_NAMES[day.month - 1]}-{day.year % 100:02d}"
         else:
             field = "n/a"
-        value = draw(st.sampled_from(["1", "1.5", "1.25", "1.125"]))
+        # Number_Hypothesis inputs: integers, Yahoo_Numbers, a zero Volume `000`/`0`, junk.
+        value = draw(st.sampled_from(["1", "1.5", "1.25", "60.860001", "52.00", "000", "0", "x"]))
         lines.append(",".join([field] + [value] * (columns - 1)))
     if draw(st.booleans()):
         lines.insert(draw(st.integers(1, len(lines))), COMMENT)

@@ -134,18 +134,26 @@ class RowOrder(_Model):
     unparsed_dates: Evidence
 
 
-class DigitsCount(_Model):
-    digits: int
-    count: int
+class HypothesisCount(_Model):
+    """Values one Number_Hypothesis reproduces exactly: `fixed0` to `fixed6` or `yahoo`."""
+
+    name: str
+    supported: int
 
 
-class Precision(_Model):
-    """Req 5.4: Body_Precision distribution per (Interval, Header_Variant, Capture_Year)."""
+class NumberFormat(_Model):
+    """Req 5.4: Number_Hypothesis support per (Interval, Header_Variant, Capture_Year).
+
+    Sums body NumberSupport over bodies with >= 1 Data_Row; zero Volume spellings per F24.
+    """
 
     interval: str
     header: str
     year: int
-    values: list[DigitsCount]  # sorted by digits
+    hypotheses: list[HypothesisCount]  # sorted by name
+    total: int
+    volume_zero_000: int
+    volume_zero_other: int
 
 
 class Comments(_Model):
@@ -197,7 +205,7 @@ class Contract(_Model):
     header_only: YearEvidence
     date_formats: list[FormatEvidence]  # sorted by format
     row_order: RowOrder
-    precision: list[Precision]  # sorted by (interval, header, year)
+    numbers: list[NumberFormat]  # sorted by (interval, header, year)
     comments: Comments
     defaults: list[Default]  # sorted by shape
     errors: list[ErrorStatus] | None  # sorted by status; null without Error_Captures

@@ -1,4 +1,4 @@
-"""Body_Parser and row helpers for Yahoo CSV bodies (Req 4.2, 4.3, 5.2 to 5.4, F12, F16)."""
+"""Body_Parser and row helpers for Yahoo CSV bodies (Req 4.2, 4.3, 5.2 to 5.4, F12, F16, F23, F24)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 from itertools import pairwise
 from pathlib import Path
 from typing import Literal
@@ -15,8 +16,12 @@ from revenant.autopsy.evidence import AutopsyError
 COMMENT_RE = re.compile(r"^<!--.*-->\s*$")
 ISO_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 SHORT_RE = re.compile(r"^(\d{1,2})-([A-Za-z]{3})-(\d{2})$")
-NUMBER_RE = re.compile(r"^-?\d+(?:\.(\d+))?$")
-PRECISION_SKIPPED = frozenset({"Date", "Volume"})
+NUMBER_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
+YAHOO_DECIMALS = 6  # F23
+MIN_YAHOO_DECIMALS = 2
+MAX_FIXED = 6
+# Number_Hypothesis names in code-point order: `fixed0` to `fixed6`, then `yahoo`.
+HYPOTHESES = tuple(sorted([f"fixed{n}" for n in range(MAX_FIXED + 1)] + ["yahoo"]))
 
 ISO_FORMAT = "%Y-%m-%d"
 SHORT_FORMAT = "%d-%b-%y"
@@ -97,23 +102,82 @@ def parse_row_date(field: str, capture_year: int) -> tuple[date, str] | None:
     return None
 
 
-def body_precision(header: str, rows: Sequence[str]) -> int:
-    """Body_Precision: max fractional digits over numeric fields, skipping `Date` and `Volume`.
+def fixed(value: Decimal, n: int) -> str:
+    """`value` with exactly `n` decimals (Decimal formatting, never float)."""
+    return f"{value:.{n}f}"
 
-    A field is numeric when it matches `-?digits[.digits]`; an integer has 0 fractional digits.
-    Returns 0 when no numeric field exists.
+
+def yahoo_number(value: Decimal) -> str:
+    """Yahoo_Number (F23): 6 decimals, trailing zeros stripped, at least 2 decimals kept."""
+    whole, fraction = fixed(value, YAHOO_DECIMALS).split(".")
+    return f"{whole}.{fraction.rstrip('0').ljust(MIN_YAHOO_DECIMALS, '0')}"
+
+
+@dataclass(frozen=True)
+class NumberSupport:
+    """Number_Hypothesis support over the values of some bodies (Req 5.4, F23, F24).
+
+    `hypotheses` holds `(name, supported)` pairs sorted by name, like `NumberFormat`.
+    """
+
+    hypotheses: tuple[tuple[str, int], ...]
+    total: int
+    volume_zero_000: int
+    volume_zero_other: int
+
+    def __add__(self, other: NumberSupport) -> NumberSupport:
+        mine, theirs = dict(self.hypotheses), dict(other.hypotheses)
+        return NumberSupport(
+            hypotheses=tuple(
+                (name, mine.get(name, 0) + theirs.get(name, 0)) for name in HYPOTHESES
+            ),
+            total=self.total + other.total,
+            volume_zero_000=self.volume_zero_000 + other.volume_zero_000,
+            volume_zero_other=self.volume_zero_other + other.volume_zero_other,
+        )
+
+
+def _supporting(field: str) -> list[str]:
+    """Names of the hypotheses that reproduce `field` exactly; none for a non-numeric field."""
+    if not NUMBER_RE.match(field):
+        return []
+    value = Decimal(field)
+    names = [f"fixed{n}" for n in range(MAX_FIXED + 1) if fixed(value, n) == field]
+    if yahoo_number(value) == field:
+        names.append("yahoo")
+    return names
+
+
+def number_support(header: str, rows: Sequence[str]) -> NumberSupport:
+    """Per Number_Hypothesis, the values outside `Date` and `Volume` it reproduces exactly.
+
+    Every such field counts in `total`; a non-numeric field (not `-?digits[.digits]`) is
+    supported by no hypothesis. Zero Volume values are split into `000` and any other spelling.
     """
     columns = [name.strip() for name in header.split(",")]
-    skipped = {index for index, name in enumerate(columns) if name in PRECISION_SKIPPED}
-    best = 0
+    counts = dict.fromkeys(HYPOTHESES, 0)
+    total = zero_000 = zero_other = 0
     for row in rows:
         for index, field in enumerate(row.split(",")):
-            if index in skipped:
+            name = columns[index] if index < len(columns) else ""
+            if name == "Volume":
+                if NUMBER_RE.match(field) and Decimal(field) == 0:
+                    if field == "000":
+                        zero_000 += 1
+                    else:
+                        zero_other += 1
                 continue
-            number = NUMBER_RE.match(field.strip())
-            if number and number[1]:
-                best = max(best, len(number[1]))
-    return best
+            if name == "Date":
+                continue
+            total += 1
+            for hypothesis in _supporting(field):
+                counts[hypothesis] += 1
+    return NumberSupport(
+        hypotheses=tuple((name, counts[name]) for name in HYPOTHESES),
+        total=total,
+        volume_zero_000=zero_000,
+        volume_zero_other=zero_other,
+    )
 
 
 def row_order(dates: Sequence[date]) -> RowOrder:

@@ -6,6 +6,7 @@ choice follows a fixed tie-break (Req 8.3, 8.4, 8.6), never dict or set order.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from revenant.autopsy.contract import (
@@ -51,15 +52,103 @@ def served_variant(group: IntervalVariants) -> Variant:
     return min(group.variants, key=lambda v: (-v.last_year, -v.evidence.count, v.header))
 
 
-def served_precision(contract: Contract, interval: str, header: str) -> int | None:
-    """Most frequent Body_Precision in the latest year, ties to more digits (Req 8.4)."""
-    rows = [p for p in contract.precision if p.interval == interval and p.header == header]
+@dataclass(frozen=True)
+class NumberChoice:
+    """The Number_Hypothesis selected for one served Response_Variant (Req 8.4).
+
+    `hypothesis` is None when no hypothesis supports 100% of the latest year's values.
+    `latest` and `overall` map each hypothesis name to its supported count.
+    """
+
+    hypothesis: str | None
+    year: int
+    latest: dict[str, int]
+    latest_total: int
+    overall: dict[str, int]
+    overall_total: int
+    volume_zero_000: int
+    volume_zero_other: int
+
+
+def _fixed_n(name: str) -> int:
+    return int(name.removeprefix("fixed")) if name.startswith("fixed") else 0
+
+
+def served_number_format(contract: Contract, interval: str, header: str) -> NumberChoice | None:
+    """Req 8.4: the hypothesis at 100% in the latest year; ties to most supported over all
+    years, then `yahoo`, then the smaller N. None when the variant has no Data_Row."""
+    rows = [n for n in contract.numbers if n.interval == interval and n.header == header]
     if not rows:
         return None
-    latest = max(rows, key=lambda p: p.year)
-    if not latest.values:
-        return None
-    return max(latest.values, key=lambda v: (v.count, v.digits)).digits
+    latest_row = max(rows, key=lambda n: n.year)
+    latest = {h.name: h.supported for h in latest_row.hypotheses}
+    overall: dict[str, int] = {}
+    for row in rows:
+        for h in row.hypotheses:
+            overall[h.name] = overall.get(h.name, 0) + h.supported
+    full = [
+        name for name in sorted(latest) if latest_row.total and latest[name] == latest_row.total
+    ]
+    chosen = min(
+        full,
+        key=lambda name: (-overall[name], name != "yahoo", _fixed_n(name)),
+        default=None,
+    )
+    return NumberChoice(
+        hypothesis=chosen,
+        year=latest_row.year,
+        latest=latest,
+        latest_total=latest_row.total,
+        overall=overall,
+        overall_total=sum(row.total for row in rows),
+        volume_zero_000=sum(row.volume_zero_000 for row in rows),
+        volume_zero_other=sum(row.volume_zero_other for row in rows),
+    )
+
+
+def _hypothesis_text(name: str) -> str:
+    return "Yahoo_Number" if name == "yahoo" else f"fixed {_fixed_n(name)} decimals"
+
+
+def _number_text(choice: NumberChoice) -> str:
+    """The number-format and zero-Volume clauses of a Response format criterion (Req 8.4)."""
+    if choice.hypothesis is None:
+        fixed_names = [name for name in sorted(choice.latest) if name.startswith("fixed")]
+        best = min(
+            fixed_names,
+            key=lambda n: (-choice.latest[n], -choice.overall.get(n, 0), _fixed_n(n)),
+        )
+        cited = [name for name in ("yahoo", best) if name in choice.latest]
+        newest = ", ".join(
+            f"{_hypothesis_text(n)} {choice.latest[n]} of {choice.latest_total}" for n in cited
+        )
+        every = ", ".join(
+            f"{_hypothesis_text(n)} {choice.overall.get(n, 0)} of {choice.overall_total}"
+            for n in cited
+        )
+        text = (
+            f", with its number format undetermined ({choice.year}: {newest}; all years: {every})"
+        )
+    else:
+        name = choice.hypothesis
+        how = "as a Yahoo_Number" if name == "yahoo" else f"with exactly {_fixed_n(name)} decimals"
+        text = (
+            f", SHALL write every value outside `Date` and `Volume` {how} ({choice.year}:"
+            f" {choice.latest[name]} of {choice.latest_total} values; all years:"
+            f" {choice.overall[name]} of {choice.overall_total})"
+        )
+    zeros = choice.volume_zero_000 + choice.volume_zero_other
+    if choice.volume_zero_000 and not choice.volume_zero_other:
+        text += (
+            f" and SHALL write a zero Volume as `000` ({choice.volume_zero_000} of {zeros} zero"
+            " Volumes)"
+        )
+    elif choice.volume_zero_other:
+        text += (
+            f", with the zero Volume spelling undetermined (`000` {choice.volume_zero_000} of"
+            f" {zeros} zero Volumes)"
+        )
+    return text
 
 
 def _status_key(status: str) -> tuple[int, str]:
@@ -112,6 +201,10 @@ def _intro(contract: Contract) -> list[str]:
         "- **Row_Date**: the first field of a Data_Row.",
         "- **Comment_Line**: a line of the form `<!-- ... -->` inside a body.",
         "- **Evidence_Count**: the number of archived captures that support a fact.",
+        (
+            "- **Yahoo_Number**: a value formatted with 6 decimals, trailing zeros stripped,"
+            " keeping at least 2 decimals, so `60.860001`, `61.18`, `52.00`."
+        ),
         "",
         "## Requirements",
     ]
@@ -260,12 +353,9 @@ def _format(contract: Contract) -> list[str]:
         text = (
             f"WHEN a request {when}, THE Revenant SHALL send the Header_Line {_code(served.header)}"
         )
-        digits = served_precision(contract, group.interval, served.header)
-        if digits is not None:
-            text += (
-                f" and write every numeric field except `Date` and `Volume` with {digits}"
-                " fractional digits"
-            )
+        choice = served_number_format(contract, group.interval, served.header)
+        if choice is not None:
+            text += _number_text(choice)
         text += (
             f" (served {served.first_year} to {served.last_year}, Evidence_Count"
             f" {served.evidence.count})."
@@ -386,7 +476,7 @@ STORIES = {
     " no request the dead API served is rejected.",
     "months": "As an unmodified old client, I want months read the way the dead API read them,"
     " so that my date ranges select the same rows.",
-    "format": "As an old CSV parser, I want the same header, precision and row order, so that my"
+    "format": "As an old CSV parser, I want the same header, number format and row order, so that my"
     " parsing code keeps working.",
     "defaults": "As an old client that sends no date range, I want the same default range, so"
     " that my under-specified requests still return data.",

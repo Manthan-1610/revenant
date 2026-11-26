@@ -46,7 +46,12 @@ in `evidence.py` is the single input-error type; the CLI turns it into exit code
   English month abbreviations come from a fixed table, never the locale. A two-digit year `yy` resolves to
   `capture_year - ((capture_year - yy) % 100)`.
 - `row_order(dates: Sequence[date]) -> Literal["descending", "ascending", "unordered"]`: needs ≥ 2 dates.
-- `body_precision(header: str, rows: Sequence[str]) -> int`: skips the `Date` and `Volume` columns.
+- `yahoo_number(value: Decimal) -> str`: 6 decimals, trailing zeros stripped, at least 2 kept (F23).
+  `fixed(value: Decimal, n: int) -> str`: exactly `n` decimals. Values parse with `Decimal`, never float.
+- `number_support(header: str, rows: Sequence[str]) -> NumberSupport`: per hypothesis name (`fixed0` to
+  `fixed6`, `yahoo`), the count of values outside `Date` and `Volume` whose exact string it reproduces;
+  plus `total` and the zero-Volume counts `volume_zero_000` and `volume_zero_other` (F24). A frozen
+  dataclass with the same count fields as `NumberFormat`.
 
 **months.py**: Month_Detector.
 - `@dataclass(frozen=True) class MonthSample`: `key`, `params` (`a` to `f`), `oldest`, `newest`.
@@ -75,6 +80,10 @@ in `evidence.py` is the single input-error type; the CLI turns it into exit code
 - F21 rollover ("IF `a` or `d` is 12, THEN … January of the following year"): only when 0-indexed and a documented
   `a` or `d` has int max 12. Cites `months.overflow` count and keys (else the max-12 `present` counts), noting that
   the captures cannot tell rolling over from capping at December.
+- Req 8.4: per served variant, the hypotheses at 100% in its latest year; ties go to most supported over
+  all years, then `yahoo`, then smaller N. Emits "writes numbers in the Yahoo_Number format and a zero
+  Volume as `000`" (or the fixed-N wording) with counts, else "undetermined" with counts. The generated
+  Glossary defines Yahoo_Number. Generated requirement and criterion numbers never change (e.g. Gen 4.2).
 - The "Header-only 200 responses (<years>, Evidence_Count N)" note reads `header_only` (YearEvidence).
 
 **revenant/cli.py**: `@app.command() autopsy(slug: str, evidence_dir: Path = Path("evidence"), crypt_dir:
@@ -101,7 +110,9 @@ class Months:     indexing: Literal["0-indexed", "1-indexed", "undetermined"]
                   overflow: Evidence    # Data_Captures whose first `a` or `d` is 12 (F21) [key asc]
 class Variant:    header: str; columns: list[str]; first_year: int; last_year: int; evidence: Evidence
 class IntervalVariants: interval: str; variants: list[Variant]      # variants [header]
-class Precision:  interval: str; header: str; year: int; values: list[DigitsCount]  # values [digits]
+class HypothesisCount: name: str; supported: int                    # name "fixed0".."fixed6" or "yahoo"
+class NumberFormat: interval: str; header: str; year: int; hypotheses: list[HypothesisCount]  # [name]
+                  total: int; volume_zero_000: int; volume_zero_other: int  # summed body NumberSupport
 class Comments:   total: int; years: list[int]; example: str | None; after_last_row: int
                   before_last_row: int; evidence: Evidence          # years [year]
 class Default:    shape: Literal["s_only", "empty_range"]; evidence: Evidence; earliest: str | None
@@ -120,7 +131,7 @@ class Contract(BaseModel):
     header_only: YearEvidence
     date_formats: list[FormatEvidence]         # [format]
     row_order: RowOrder                        # descending, ascending, unordered, unparsed_dates: Evidence
-    precision: list[Precision]                 # [interval, header, year]
+    numbers: list[NumberFormat]                # [interval, header, year]
     comments: Comments
     defaults: list[Default]                    # [shape]
     errors: list[ErrorStatus] | None           # [status]; media_types and shapes [name]
@@ -198,8 +209,11 @@ Tests build evidence in `tmp_path` from synthetic bodies; some examples read the
 
 Example-based tests:
 - `test_evidence.py`: each Req 1.3 failure, sorted key order, a `digest_verified=false` entry is accepted.
-- `test_body.py`: F16 comment line, Header_Only_Body, non-UTF-8 body, both date formats, precision.
+- `test_body.py`: F16 comment line, Header_Only_Body, non-UTF-8 body, both date formats, F24 zero
+  Volume. An extra Hypothesis test (not P1–P4): for any string `s` built by the F23 rule,
+  `yahoo_number(Decimal(s)) == s`.
 - `test_infer.py`: typing and `amp`, `g=v` → `Date,Dividends`, `Adj. Close*` vs `Adj Close`, defaults,
   errors present and null, `error_page` ignored; committed evidence gives `0-indexed`.
-- `test_render.py`: rendering a fixed contract twice gives identical bytes; tie-breaks of Req 8.3, 8.4, 8.6.
+- `test_render.py`: rendering a fixed contract twice gives identical bytes; tie-breaks of Req 8.3, 8.4, 8.6;
+  the text "6 fractional digits" never appears.
 - `test_cli.py`: `CliRunner` for exit codes 0/1/2, no writes on exit 1, summary, two working directories.

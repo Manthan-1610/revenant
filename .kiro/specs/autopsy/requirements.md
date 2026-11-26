@@ -8,7 +8,7 @@ evidence that Exhume stored (`evidence/<slug>/index.json` and the capture files 
 contract deterministically, with no LLM. Autopsy writes `crypt/<slug>/contract.json` and renders
 `.kiro/specs/revenant-<slug>/requirements.md` from that contract with a fixed template. Reanimate
 hands the rendered file to Kiro CLI headless. The inference rules target the Yahoo CSV family
-(`yahoo-finance-ichart`); other slugs are deferred. F1 to F22 refer to Appendix A of
+(`yahoo-finance-ichart`); other slugs are deferred. F1 to F24 refer to Appendix A of
 `.kiro/specs/exhume/requirements.md`. Unit tests never touch the network.
 
 ## Glossary
@@ -38,8 +38,10 @@ hands the rendered file to Kiro CLI headless. The inference rules target the Yah
 - **Row_Date**: the first field of a Data_Row, parsed with `%Y-%m-%d` or `%d-%b-%y`; a two-digit
   year resolves to the latest year not after the Capture_Year.
 - **Header_Only_Body**: a body with a Header_Line and no Data_Row (F12).
-- **Body_Precision**: the maximum count of fractional digits over all numeric fields of a body's
-  Data_Rows, excluding the Date and Volume columns.
+- **Yahoo_Number**: a value formatted with 6 decimals, trailing zeros stripped, keeping at least
+  2 decimals, so `60.860001`, `61.18`, `52.00` (F23).
+- **Number_Hypothesis**: "fixed N decimals" (N = 0 to 6) or Yahoo_Number. A hypothesis supports
+  a value when formatting the value's Decimal by the hypothesis reproduces the exact string.
 - **Response_Variant**: the pair (Interval, Header_Variant).
 - **Fit**: under month offset H (0 for 0-indexed, 1 for 1-indexed), a capture fits when the
   requested start `date(c, a + 1 - H, b)` and end `date(f, d + 1 - H, e)` are valid dates and
@@ -109,7 +111,7 @@ hands the rendered file to Kiro CLI headless. The inference rules target the Yah
 1. THE Contract_Inferrer SHALL record each Row_Date format with its first and last Capture_Year and Evidence_Count.
 2. THE Contract_Inferrer SHALL classify each body with at least 2 Data_Rows as `descending` when every Row_Date is strictly earlier than the one before it, `ascending` when every Row_Date is strictly later, else `unordered`, and SHALL record the count per class.
 3. IF a Data_Row's Row_Date parses with neither format, THEN THE Contract_Inferrer SHALL count the body as `unparsed_dates` and exclude the body from row-order, month and default checks.
-4. THE Contract_Inferrer SHALL record, per Response_Variant and Capture_Year, the distribution of Body_Precision values over bodies with at least 1 Data_Row, with a count per value.
+4. THE Contract_Inferrer SHALL record, per Response_Variant and Capture_Year, for each Number_Hypothesis the count of numeric values (every column except Date and Volume, over bodies with at least 1 Data_Row) that the Number_Hypothesis supports and the total count of numeric values, and SHALL record the count of zero Volume values written `000` and the count of zero Volume values written otherwise (F24).
 5. THE Contract_Inferrer SHALL record the total Comment_Line count over all Data_Captures, the Capture_Years of bodies carrying Comment_Lines, the first Comment_Line in sorted Index key order as the example, and the counts of Comment_Lines found after and before the last Data_Row (F16).
 
 ### Requirement 6: Defaults and error behaviour
@@ -146,7 +148,7 @@ hands the rendered file to Kiro CLI headless. The inference rules target the Yah
 1. THE Spec_Renderer SHALL read only `contract.json` and write `<specs-dir>/revenant-<slug>/requirements.md` with an atomic write, giving byte-identical output for the same contract.
 2. THE Spec_Renderer SHALL emit EARS requirements for the routes (every host alias and path), every parameter with type and requirement status (for every `int` Documented_Parameter, one requirement that the revenant accepts at least every value from the observed minimum to the observed maximum, a minimum to accept and never a limit, and never rejects an integer only because it lies outside that range; for every "observed, unexplained" parameter, only a requirement to accept and ignore it), the month indexing (WHERE months are `0-indexed` and the observed maximum of `a` or `d` is 12, a requirement that the value 12 means January of the following year, F21), the row-order class with the highest count from 5.2, the row-order class with the highest count from 5.2, the default range of each shape from 6.1 and an `X-Revenant-Donor` response header.
 3. THE Spec_Renderer SHALL select, per Interval, the served Response_Variant with the latest last Capture_Year, breaking ties by higher Evidence_Count, then by the lowest Header_Variant in code-point order.
-4. THE Spec_Renderer SHALL take the served precision as the most frequent Body_Precision of the served Response_Variant in the latest Capture_Year of its precision distribution, breaking ties toward more digits.
+4. THE Spec_Renderer SHALL select, for each served Response_Variant, the Number_Hypothesis that supports 100% of the numeric values in the latest Capture_Year of its distribution, preferring among several such hypotheses the one with the most supported values over all Capture_Years, then Yahoo_Number, then the smaller N, and SHALL emit a requirement that the revenant writes numeric values in that format and a zero Volume as `000`, citing the support counts; IF no Number_Hypothesis supports 100% of those values, THEN THE Spec_Renderer SHALL state the number format as undetermined with the support counts.
 5. THE Spec_Renderer SHALL list every Response_Variant not selected by 8.3, every Row_Date format and the Comment_Line example in an informational section, and SHALL state that the revenant ignores "observed, unexplained" parameters.
 6. WHERE the Contract's `errors` field is not null, THE Spec_Renderer SHALL emit a requirement that returns the error status with the highest Evidence_Count (ties to the lower code), with that status's most frequent content type (ties to code-point order), when the donor has no rows for the request.
 
@@ -174,4 +176,4 @@ Each property is a Hypothesis test that names its id, using a temporary evidence
 - Error trigger inference beyond "no donor rows", and use of `error_page` entries.
 - Writing `.config.kiro`, `design.md` or `tasks.md` for the rendered revenant spec.
 - Victim `urls_called` as request evidence; LLM-assisted inference.
-- Other properties: renderer round-trip, Body_Precision, Header_Variant year ranges.
+- Other properties: renderer round-trip, Header_Variant year ranges.

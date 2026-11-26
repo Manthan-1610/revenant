@@ -14,6 +14,7 @@ This document specifies the revenant for the dead API `yahoo-finance-ichart`. It
 - **Row_Date**: the first field of a Data_Row.
 - **Comment_Line**: a line of the form `<!-- ... -->` inside a body.
 - **Evidence_Count**: the number of archived captures that support a fact.
+- **Yahoo_Number**: a value formatted with 6 decimals, trailing zeros stripped, keeping at least 2 decimals, so `60.860001`, `61.18`, `52.00`.
 
 ## Requirements
 
@@ -59,16 +60,16 @@ This document specifies the revenant for the dead API `yahoo-finance-ichart`. It
 
 ### Requirement 4: Response format
 
-**User Story:** As an old CSV parser, I want the same header, precision and row order, so that my parsing code keeps working.
+**User Story:** As an old CSV parser, I want the same header, number format and row order, so that my parsing code keeps working.
 
 #### Acceptance Criteria
 
 1. WHEN the Revenant returns rows, THE Revenant SHALL send `Content-Type: text/csv` (Evidence_Count 150).
-2. WHEN a request carries `g=d`, THE Revenant SHALL send the Header_Line `Date,Open,High,Low,Close,Volume,Adj Close` and write every numeric field except `Date` and `Volume` with 6 fractional digits (served 2007 to 2016, Evidence_Count 40).
-3. WHEN a request carries `g=m`, THE Revenant SHALL send the Header_Line `Date,Open,High,Low,Close,Volume,Adj Close` and write every numeric field except `Date` and `Volume` with 6 fractional digits (served 2011 to 2017, Evidence_Count 17).
-4. WHEN a request has no `g` or an empty `g`, THE Revenant SHALL send the Header_Line `Date,Open,High,Low,Close,Volume,Adj Close` and write every numeric field except `Date` and `Volume` with 6 fractional digits (served 2012 to 2017, Evidence_Count 10).
-5. WHEN a request carries `g=v`, THE Revenant SHALL send the Header_Line `Date,Dividends` and write every numeric field except `Date` and `Volume` with 6 fractional digits (served 2010 to 2016, Evidence_Count 16).
-6. WHEN a request carries `g=w`, THE Revenant SHALL send the Header_Line `Date,Open,High,Low,Close,Volume,Adj Close` and write every numeric field except `Date` and `Volume` with 6 fractional digits (served 2012 to 2016, Evidence_Count 14).
+2. WHEN a request carries `g=d`, THE Revenant SHALL send the Header_Line `Date,Open,High,Low,Close,Volume,Adj Close`, SHALL write every value outside `Date` and `Volume` as a Yahoo_Number (2016: 108310 of 108310 values; all years: 529180 of 529180) and SHALL write a zero Volume as `000` (10244 of 10244 zero Volumes) (served 2007 to 2016, Evidence_Count 40).
+3. WHEN a request carries `g=m`, THE Revenant SHALL send the Header_Line `Date,Open,High,Low,Close,Volume,Adj Close`, SHALL write every value outside `Date` and `Volume` as a Yahoo_Number (2017: 1865 of 1865 values; all years: 21285 of 21285) and SHALL write a zero Volume as `000` (232 of 232 zero Volumes) (served 2011 to 2017, Evidence_Count 17).
+4. WHEN a request has no `g` or an empty `g`, THE Revenant SHALL send the Header_Line `Date,Open,High,Low,Close,Volume,Adj Close`, SHALL write every value outside `Date` and `Volume` as a Yahoo_Number (2017: 320 of 320 values; all years: 135470 of 135470) and SHALL write a zero Volume as `000` (168 of 168 zero Volumes) (served 2012 to 2017, Evidence_Count 10).
+5. WHEN a request carries `g=v`, THE Revenant SHALL send the Header_Line `Date,Dividends`, SHALL write every value outside `Date` and `Volume` with exactly 6 decimals (2016: 315 of 315 values; all years: 1272 of 1272) (served 2010 to 2016, Evidence_Count 16).
+6. WHEN a request carries `g=w`, THE Revenant SHALL send the Header_Line `Date,Open,High,Low,Close,Volume,Adj Close`, SHALL write every value outside `Date` and `Volume` as a Yahoo_Number (2016: 2370 of 2370 values; all years: 22350 of 22350) and SHALL write a zero Volume as `000` (68 of 68 zero Volumes) (served 2012 to 2016, Evidence_Count 14).
 7. WHEN the Revenant returns Data_Rows, THE Revenant SHALL order them newest first (each Row_Date strictly earlier than the one before it) (`descending` in 147 bodies).
 
 ### Requirement 5: Default ranges

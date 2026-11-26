@@ -6,8 +6,10 @@ iterated without sorting first.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import itertools
+import operator
 import statistics
 from collections.abc import Callable, Hashable, Iterable, Sequence
 from dataclasses import dataclass
@@ -15,25 +17,25 @@ from datetime import date
 from typing import Literal
 from urllib.parse import urlsplit
 
-from revenant.autopsy.body import ParsedBody, body_precision, parse_body, parse_row_date, row_order
+from revenant.autopsy.body import ParsedBody, number_support, parse_body, parse_row_date, row_order
 from revenant.autopsy.contract import (
     Comments,
     Contract,
     Default,
-    DigitsCount,
     Endpoint,
     EnumType,
     ErrorStatus,
     Evidence,
     FormatEvidence,
     HostEvidence,
+    HypothesisCount,
     IntervalVariants,
     IntType,
     Months,
     NameCount,
     NameEvidence,
+    NumberFormat,
     Parameter,
-    Precision,
     RowOrder,
     Source,
     StringType,
@@ -292,21 +294,33 @@ def _row_order(bodies: Sequence[_Body]) -> RowOrder:
     )
 
 
-def _precision(bodies: Sequence[_Body]) -> list[Precision]:
-    """Req 5.4: Body_Precision counts per (Interval, Header_Variant, Capture_Year)."""
+def _numbers(bodies: Sequence[_Body]) -> list[NumberFormat]:
+    """Req 5.4: summed NumberSupport per (Interval, Header_Variant, Capture_Year), F23, F24."""
     groups = _group(
         (body for body in bodies if body.parsed.rows),
         lambda body: (body.interval, body.parsed.header, body.year),
     )
     result = []
     for group_key in sorted(groups):
-        counts: dict[int, int] = {}
-        for body in groups[group_key]:
-            digits = body_precision(body.parsed.header, body.parsed.rows)
-            counts[digits] = counts.get(digits, 0) + 1
+        support = functools.reduce(
+            operator.add,
+            (number_support(body.parsed.header, body.parsed.rows) for body in groups[group_key]),
+        )
         name, header, year = group_key
-        values = [DigitsCount(digits=digits, count=counts[digits]) for digits in sorted(counts)]
-        result.append(Precision(interval=name, header=header, year=year, values=values))
+        result.append(
+            NumberFormat(
+                interval=name,
+                header=header,
+                year=year,
+                hypotheses=[
+                    HypothesisCount(name=hypothesis, supported=count)
+                    for hypothesis, count in sorted(support.hypotheses)
+                ],
+                total=support.total,
+                volume_zero_000=support.volume_zero_000,
+                volume_zero_other=support.volume_zero_other,
+            )
+        )
     return result
 
 
@@ -445,7 +459,7 @@ def infer(slug: str, index_bytes: bytes, captures: Sequence[Capture]) -> Contrac
         header_only=header_only,
         date_formats=_date_formats(bodies),
         row_order=_row_order(bodies),
-        precision=_precision(bodies),
+        numbers=_numbers(bodies),
         comments=_comments(bodies),
         defaults=_defaults(bodies),
         errors=_errors([capture for capture in ordered if capture.entry.kind == "error"]),

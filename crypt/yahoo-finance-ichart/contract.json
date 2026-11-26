@@ -503,6 +503,1730 @@
       ]
     }
   },
+  "numbers": [
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 52290
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 52290
+        }
+      ],
+      "interval": "d",
+      "total": 52290,
+      "volume_zero_000": 2284,
+      "volume_zero_other": 0,
+      "year": 2007
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 2610
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 2610
+        }
+      ],
+      "interval": "d",
+      "total": 2610,
+      "volume_zero_000": 1,
+      "volume_zero_other": 0,
+      "year": 2008
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 11865
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 11865
+        }
+      ],
+      "interval": "d",
+      "total": 11865,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2011
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 1180
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 1180
+        }
+      ],
+      "interval": "d",
+      "total": 1180,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2012
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 17130
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 17130
+        }
+      ],
+      "interval": "d",
+      "total": 17130,
+      "volume_zero_000": 22,
+      "volume_zero_other": 0,
+      "year": 2013
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 185145
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 185145
+        }
+      ],
+      "interval": "d",
+      "total": 185145,
+      "volume_zero_000": 595,
+      "volume_zero_other": 0,
+      "year": 2014
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 89260
+        },
+        {
+          "name": "fixed3",
+          "supported": 7892
+        },
+        {
+          "name": "fixed4",
+          "supported": 4537
+        },
+        {
+          "name": "fixed5",
+          "supported": 13240
+        },
+        {
+          "name": "fixed6",
+          "supported": 35721
+        },
+        {
+          "name": "yahoo",
+          "supported": 150650
+        }
+      ],
+      "interval": "d",
+      "total": 150650,
+      "volume_zero_000": 288,
+      "volume_zero_other": 0,
+      "year": 2015
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 55015
+        },
+        {
+          "name": "fixed3",
+          "supported": 1714
+        },
+        {
+          "name": "fixed4",
+          "supported": 1661
+        },
+        {
+          "name": "fixed5",
+          "supported": 17241
+        },
+        {
+          "name": "fixed6",
+          "supported": 32679
+        },
+        {
+          "name": "yahoo",
+          "supported": 108310
+        }
+      ],
+      "interval": "d",
+      "total": 108310,
+      "volume_zero_000": 7054,
+      "volume_zero_other": 0,
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 84585
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 84585
+        }
+      ],
+      "interval": "d",
+      "total": 84585,
+      "volume_zero_000": 0,
+      "volume_zero_other": 200,
+      "year": 2005
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 100205
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 100205
+        }
+      ],
+      "interval": "d",
+      "total": 100205,
+      "volume_zero_000": 0,
+      "volume_zero_other": 32,
+      "year": 2006
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 20725
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 20725
+        }
+      ],
+      "interval": "d",
+      "total": 20725,
+      "volume_zero_000": 0,
+      "volume_zero_other": 7,
+      "year": 2007
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 285
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 285
+        }
+      ],
+      "interval": "m",
+      "total": 285,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2011
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 4070
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 4070
+        }
+      ],
+      "interval": "m",
+      "total": 4070,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2012
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 295
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 295
+        }
+      ],
+      "interval": "m",
+      "total": 295,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2013
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 3685
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 3685
+        }
+      ],
+      "interval": "m",
+      "total": 3685,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2014
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 1538
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 47
+        },
+        {
+          "name": "yahoo",
+          "supported": 1585
+        }
+      ],
+      "interval": "m",
+      "total": 1585,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2015
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 4184
+        },
+        {
+          "name": "fixed3",
+          "supported": 297
+        },
+        {
+          "name": "fixed4",
+          "supported": 110
+        },
+        {
+          "name": "fixed5",
+          "supported": 424
+        },
+        {
+          "name": "fixed6",
+          "supported": 4485
+        },
+        {
+          "name": "yahoo",
+          "supported": 9500
+        }
+      ],
+      "interval": "m",
+      "total": 9500,
+      "volume_zero_000": 232,
+      "volume_zero_other": 0,
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 836
+        },
+        {
+          "name": "fixed3",
+          "supported": 160
+        },
+        {
+          "name": "fixed4",
+          "supported": 65
+        },
+        {
+          "name": "fixed5",
+          "supported": 30
+        },
+        {
+          "name": "fixed6",
+          "supported": 774
+        },
+        {
+          "name": "yahoo",
+          "supported": 1865
+        }
+      ],
+      "interval": "m",
+      "total": 1865,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2017
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 9550
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 9550
+        }
+      ],
+      "interval": "m",
+      "total": 9550,
+      "volume_zero_000": 0,
+      "volume_zero_other": 27,
+      "year": 2005
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 10
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 10
+        }
+      ],
+      "interval": "m",
+      "total": 10,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2006
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 105
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 105
+        }
+      ],
+      "interval": "none",
+      "total": 105,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2012
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 47960
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 47960
+        }
+      ],
+      "interval": "none",
+      "total": 47960,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2014
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 2942
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 28
+        },
+        {
+          "name": "fixed5",
+          "supported": 294
+        },
+        {
+          "name": "fixed6",
+          "supported": 7061
+        },
+        {
+          "name": "yahoo",
+          "supported": 10325
+        }
+      ],
+      "interval": "none",
+      "total": 10325,
+      "volume_zero_000": 168,
+      "volume_zero_other": 0,
+      "year": 2015
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 39340
+        },
+        {
+          "name": "fixed3",
+          "supported": 4204
+        },
+        {
+          "name": "fixed4",
+          "supported": 2432
+        },
+        {
+          "name": "fixed5",
+          "supported": 1795
+        },
+        {
+          "name": "fixed6",
+          "supported": 28989
+        },
+        {
+          "name": "yahoo",
+          "supported": 76760
+        }
+      ],
+      "interval": "none",
+      "total": 76760,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 79
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 3
+        },
+        {
+          "name": "fixed6",
+          "supported": 238
+        },
+        {
+          "name": "yahoo",
+          "supported": 320
+        }
+      ],
+      "interval": "none",
+      "total": 320,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2017
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 88110
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 88110
+        }
+      ],
+      "interval": "none",
+      "total": 88110,
+      "volume_zero_000": 0,
+      "volume_zero_other": 5856,
+      "year": 2005
+    },
+    {
+      "header": "Date,Dividends",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 0
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 198
+        },
+        {
+          "name": "yahoo",
+          "supported": 1
+        }
+      ],
+      "interval": "v",
+      "total": 198,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2010
+    },
+    {
+      "header": "Date,Dividends",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 0
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 41
+        },
+        {
+          "name": "yahoo",
+          "supported": 0
+        }
+      ],
+      "interval": "v",
+      "total": 41,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2011
+    },
+    {
+      "header": "Date,Dividends",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 0
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 164
+        },
+        {
+          "name": "yahoo",
+          "supported": 0
+        }
+      ],
+      "interval": "v",
+      "total": 164,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2012
+    },
+    {
+      "header": "Date,Dividends",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 0
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 38
+        },
+        {
+          "name": "yahoo",
+          "supported": 0
+        }
+      ],
+      "interval": "v",
+      "total": 38,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2013
+    },
+    {
+      "header": "Date,Dividends",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 0
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 75
+        },
+        {
+          "name": "yahoo",
+          "supported": 0
+        }
+      ],
+      "interval": "v",
+      "total": 75,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2014
+    },
+    {
+      "header": "Date,Dividends",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 0
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 441
+        },
+        {
+          "name": "yahoo",
+          "supported": 0
+        }
+      ],
+      "interval": "v",
+      "total": 441,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2015
+    },
+    {
+      "header": "Date,Dividends",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 0
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 315
+        },
+        {
+          "name": "yahoo",
+          "supported": 0
+        }
+      ],
+      "interval": "v",
+      "total": 315,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 9840
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 9840
+        }
+      ],
+      "interval": "v",
+      "total": 9840,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2005
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 7070
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 7070
+        }
+      ],
+      "interval": "v",
+      "total": 7070,
+      "volume_zero_000": 0,
+      "volume_zero_other": 5,
+      "year": 2006
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 405
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 405
+        }
+      ],
+      "interval": "w",
+      "total": 405,
+      "volume_zero_000": 68,
+      "volume_zero_other": 0,
+      "year": 2012
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 1425
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 1425
+        }
+      ],
+      "interval": "w",
+      "total": 1425,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2013
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 16845
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 16845
+        }
+      ],
+      "interval": "w",
+      "total": 16845,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2014
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 1305
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 1305
+        }
+      ],
+      "interval": "w",
+      "total": 1305,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2015
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 765
+        },
+        {
+          "name": "fixed3",
+          "supported": 48
+        },
+        {
+          "name": "fixed4",
+          "supported": 79
+        },
+        {
+          "name": "fixed5",
+          "supported": 149
+        },
+        {
+          "name": "fixed6",
+          "supported": 1329
+        },
+        {
+          "name": "yahoo",
+          "supported": 2370
+        }
+      ],
+      "interval": "w",
+      "total": 2370,
+      "volume_zero_000": 0,
+      "volume_zero_other": 0,
+      "year": 2016
+    },
+    {
+      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
+      "hypotheses": [
+        {
+          "name": "fixed0",
+          "supported": 0
+        },
+        {
+          "name": "fixed1",
+          "supported": 0
+        },
+        {
+          "name": "fixed2",
+          "supported": 10330
+        },
+        {
+          "name": "fixed3",
+          "supported": 0
+        },
+        {
+          "name": "fixed4",
+          "supported": 0
+        },
+        {
+          "name": "fixed5",
+          "supported": 0
+        },
+        {
+          "name": "fixed6",
+          "supported": 0
+        },
+        {
+          "name": "yahoo",
+          "supported": 10330
+        }
+      ],
+      "interval": "w",
+      "total": 10330,
+      "volume_zero_000": 0,
+      "volume_zero_other": 6,
+      "year": 2005
+    }
+  ],
   "parameters": [
     {
       "documented": true,
@@ -895,483 +2619,6 @@
           }
         ]
       }
-    }
-  ],
-  "precision": [
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "d",
-      "values": [
-        {
-          "count": 15,
-          "digits": 2
-        }
-      ],
-      "year": 2007
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "d",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2008
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "d",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2011
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "d",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2012
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "d",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2013
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "d",
-      "values": [
-        {
-          "count": 8,
-          "digits": 2
-        }
-      ],
-      "year": 2014
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "d",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        },
-        {
-          "count": 3,
-          "digits": 5
-        },
-        {
-          "count": 3,
-          "digits": 6
-        }
-      ],
-      "year": 2015
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "d",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        },
-        {
-          "count": 2,
-          "digits": 5
-        },
-        {
-          "count": 3,
-          "digits": 6
-        }
-      ],
-      "year": 2016
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "d",
-      "values": [
-        {
-          "count": 9,
-          "digits": 2
-        }
-      ],
-      "year": 2005
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "d",
-      "values": [
-        {
-          "count": 12,
-          "digits": 2
-        }
-      ],
-      "year": 2006
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "d",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2007
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "m",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2011
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "m",
-      "values": [
-        {
-          "count": 3,
-          "digits": 2
-        }
-      ],
-      "year": 2012
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "m",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2013
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "m",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2014
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "m",
-      "values": [
-        {
-          "count": 2,
-          "digits": 2
-        },
-        {
-          "count": 1,
-          "digits": 6
-        }
-      ],
-      "year": 2015
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "m",
-      "values": [
-        {
-          "count": 2,
-          "digits": 2
-        },
-        {
-          "count": 5,
-          "digits": 6
-        }
-      ],
-      "year": 2016
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "m",
-      "values": [
-        {
-          "count": 1,
-          "digits": 6
-        }
-      ],
-      "year": 2017
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "m",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2005
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "m",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2006
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "none",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2012
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "none",
-      "values": [
-        {
-          "count": 3,
-          "digits": 2
-        }
-      ],
-      "year": 2014
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "none",
-      "values": [
-        {
-          "count": 2,
-          "digits": 6
-        }
-      ],
-      "year": 2015
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "none",
-      "values": [
-        {
-          "count": 3,
-          "digits": 6
-        }
-      ],
-      "year": 2016
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "none",
-      "values": [
-        {
-          "count": 1,
-          "digits": 6
-        }
-      ],
-      "year": 2017
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "none",
-      "values": [
-        {
-          "count": 23,
-          "digits": 2
-        }
-      ],
-      "year": 2005
-    },
-    {
-      "header": "Date,Dividends",
-      "interval": "v",
-      "values": [
-        {
-          "count": 2,
-          "digits": 6
-        }
-      ],
-      "year": 2010
-    },
-    {
-      "header": "Date,Dividends",
-      "interval": "v",
-      "values": [
-        {
-          "count": 1,
-          "digits": 6
-        }
-      ],
-      "year": 2011
-    },
-    {
-      "header": "Date,Dividends",
-      "interval": "v",
-      "values": [
-        {
-          "count": 2,
-          "digits": 6
-        }
-      ],
-      "year": 2012
-    },
-    {
-      "header": "Date,Dividends",
-      "interval": "v",
-      "values": [
-        {
-          "count": 1,
-          "digits": 6
-        }
-      ],
-      "year": 2013
-    },
-    {
-      "header": "Date,Dividends",
-      "interval": "v",
-      "values": [
-        {
-          "count": 1,
-          "digits": 6
-        }
-      ],
-      "year": 2014
-    },
-    {
-      "header": "Date,Dividends",
-      "interval": "v",
-      "values": [
-        {
-          "count": 4,
-          "digits": 6
-        }
-      ],
-      "year": 2015
-    },
-    {
-      "header": "Date,Dividends",
-      "interval": "v",
-      "values": [
-        {
-          "count": 5,
-          "digits": 6
-        }
-      ],
-      "year": 2016
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "v",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2005
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "v",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2006
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "w",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2012
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "w",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2013
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "w",
-      "values": [
-        {
-          "count": 10,
-          "digits": 2
-        }
-      ],
-      "year": 2014
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "w",
-      "values": [
-        {
-          "count": 1,
-          "digits": 2
-        }
-      ],
-      "year": 2015
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj Close",
-      "interval": "w",
-      "values": [
-        {
-          "count": 1,
-          "digits": 6
-        }
-      ],
-      "year": 2016
-    },
-    {
-      "header": "Date,Open,High,Low,Close,Volume,Adj. Close*",
-      "interval": "w",
-      "values": [
-        {
-          "count": 2,
-          "digits": 2
-        }
-      ],
-      "year": 2005
     }
   ],
   "row_order": {

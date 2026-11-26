@@ -7,12 +7,12 @@ from typing import Any
 
 from revenant.autopsy.contract import (
     Contract,
-    DigitsCount,
     ErrorStatus,
     Evidence,
+    HypothesisCount,
     IntervalVariants,
     NameCount,
-    Precision,
+    NumberFormat,
     Variant,
     load_contract,
     write_contract,
@@ -21,7 +21,7 @@ from revenant.autopsy.evidence import load_evidence
 from revenant.autopsy.infer import infer
 from revenant.autopsy.render import (
     render,
-    served_precision,
+    served_number_format,
     served_variant,
     top_error,
     write_spec,
@@ -58,6 +58,30 @@ def _int_param(name: str, low: int, high: int) -> dict[str, Any]:
         "examples": [str(low)],
         "type": {"kind": "int", "min": low, "max": high},
     }
+
+
+HYPOTHESES = [f"fixed{n}" for n in range(7)] + ["yahoo"]
+
+
+def _numbers(
+    header: str,
+    year: int,
+    total: int,
+    supported: dict[str, int],
+    zero_000: int = 0,
+    zero_other: int = 0,
+) -> dict[str, Any]:
+    return NumberFormat(
+        interval="d",
+        header=header,
+        year=year,
+        hypotheses=[
+            HypothesisCount(name=name, supported=supported.get(name, 0)) for name in HYPOTHESES
+        ],
+        total=total,
+        volume_zero_000=zero_000,
+        volume_zero_other=zero_other,
+    ).model_dump()
 
 
 def _contract(**update: Any) -> Contract:
@@ -128,8 +152,8 @@ def _contract(**update: Any) -> Contract:
             "unordered": _ev(0),
             "unparsed_dates": _ev(0),
         },
-        "precision": [
-            {"interval": "d", "header": NEW, "year": 2016, "values": [{"digits": 6, "count": 2}]},
+        "numbers": [
+            _numbers(NEW, 2016, 10, {"yahoo": 10, "fixed2": 8, "fixed6": 2}, zero_000=3),
         ],
         "comments": {
             "total": 1,
@@ -212,23 +236,53 @@ def test_served_variant_ties_to_higher_evidence_then_lowest_header() -> None:
     assert served_variant(_group(many, low)) == low
 
 
-def test_served_precision_uses_latest_year_and_ties_to_more_digits() -> None:
-    rows = [
-        Precision(interval="d", header=NEW, year=2015, values=[DigitsCount(digits=2, count=9)]),
-        Precision(
-            interval="d",
-            header=NEW,
-            year=2016,
-            values=[
-                DigitsCount(digits=2, count=1),
-                DigitsCount(digits=5, count=3),
-                DigitsCount(digits=6, count=3),
-            ],
-        ),
-    ]
-    contract = _contract(precision=[row.model_dump() for row in rows])
-    assert served_precision(contract, "d", NEW) == 6
-    assert served_precision(contract, "d", OLD) is None
+def _choice(*rows: dict[str, Any]) -> str | None:
+    choice = served_number_format(_contract(numbers=list(rows)), "d", NEW)
+    assert choice is not None
+    return choice.hypothesis
+
+
+def test_number_format_uses_latest_year_and_most_supported_over_all_years() -> None:
+    # 2016: fixed2, fixed3 and yahoo all at 100%; over all years fixed3 supports the most.
+    latest = _numbers(NEW, 2016, 4, {"fixed2": 4, "fixed3": 4, "yahoo": 4})
+    assert _choice(_numbers(NEW, 2015, 5, {"fixed3": 5, "yahoo": 2}), latest) == "fixed3"
+    # An older year where only fixed2 is at 100% does not matter.
+    older = _numbers(NEW, 2015, 5, {"fixed2": 5})
+    assert _choice(older, _numbers(NEW, 2016, 3, {"yahoo": 3})) == "yahoo"
+    assert served_number_format(_contract(), "d", OLD) is None
+
+
+def test_number_format_ties_to_yahoo_then_smaller_n() -> None:
+    assert _choice(_numbers(NEW, 2016, 4, {"fixed2": 4, "yahoo": 4})) == "yahoo"
+    assert _choice(_numbers(NEW, 2016, 4, {"fixed3": 4, "fixed2": 4, "yahoo": 3})) == "fixed2"
+
+
+def test_number_format_undetermined_cites_counts() -> None:
+    contract = _contract(numbers=[_numbers(NEW, 2016, 10, {"yahoo": 9, "fixed2": 7})])
+    choice = served_number_format(contract, "d", NEW)
+    assert choice is not None and choice.hypothesis is None
+    text = render(contract)
+    assert (
+        "with its number format undetermined (2016: Yahoo_Number 9 of 10, fixed 2 decimals 7 of"
+        " 10; all years: Yahoo_Number 9 of 10, fixed 2 decimals 7 of 10)"
+    ) in text
+    assert "zero Volume" not in text
+
+
+def test_render_number_format_and_glossary() -> None:
+    text = render(_contract())
+    assert (
+        "SHALL write every value outside `Date` and `Volume` as a Yahoo_Number (2016: 10 of 10"
+        " values; all years: 10 of 10) and SHALL write a zero Volume as `000` (3 of 3 zero"
+        " Volumes)"
+    ) in text
+    glossary = text.split("## Glossary", 1)[1].split("## Requirements", 1)[0]
+    assert "- **Yahoo_Number**: a value formatted with 6 decimals" in glossary
+    assert "6 fractional digits" not in text
+    fixed = render(_contract(numbers=[_numbers(NEW, 2016, 4, {"fixed2": 4}, 1, 1)]))
+    assert "with exactly 2 decimals (2016: 4 of 4 values; all years: 4 of 4)" in fixed
+    assert "zero Volume spelling undetermined (`000` 1 of 2 zero Volumes)" in fixed
+    assert "fractional digits" not in fixed
 
 
 def test_top_error_ties_to_lower_code_and_code_point_media_type() -> None:

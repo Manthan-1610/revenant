@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
+from decimal import Decimal
 
 import pytest
 from hypothesis import given, settings
@@ -11,10 +12,13 @@ from hypothesis import strategies as st
 from revenant.autopsy.body import (
     ISO_FORMAT,
     SHORT_FORMAT,
-    body_precision,
+    NumberSupport,
+    fixed,
+    number_support,
     parse_body,
     parse_row_date,
     row_order,
+    yahoo_number,
 )
 from revenant.autopsy.evidence import AutopsyError
 
@@ -111,17 +115,62 @@ def test_unparseable_row_date_is_none(field: str) -> None:
     assert parse_row_date(field, 2004) is None
 
 
-def test_body_precision_skips_date_and_volume() -> None:
+@st.composite
+def yahoo_strings(draw: st.DrawFn) -> str:
+    """Strings built by the F23 rule: 2 to 6 decimals, no trailing zero beyond the second."""
+    whole = str(draw(st.integers(min_value=0, max_value=10**7)))
+    width = draw(st.integers(min_value=2, max_value=6))
+    digits = draw(st.text(alphabet="0123456789", min_size=width, max_size=width))
+    if width > 2 and digits.endswith("0"):
+        digits = digits[:-1] + draw(st.sampled_from("123456789"))
+    return f"{whole}.{digits}"
+
+
+@settings(max_examples=100)
+@given(text=yahoo_strings())
+def test_yahoo_number_reproduces_f23_strings(text: str) -> None:
+    """F23: every Yahoo_Number string round-trips through `yahoo_number(Decimal(s))`."""
+    assert yahoo_number(Decimal(text)) == text
+
+
+def test_yahoo_number_and_fixed_examples() -> None:
+    examples = ["60.860001", "61.18", "52.00", "2105.22998", "0.00001"]
+    assert [yahoo_number(Decimal(s)) for s in examples] == examples
+    assert yahoo_number(Decimal(52)) == "52.00"
+    assert yahoo_number(Decimal("100.500000")) == "100.50"
+    assert fixed(Decimal("96.4"), 2) == "96.40"
+    assert fixed(Decimal(97), 0) == "97"
+
+
+def test_number_support_counts_values_outside_date_and_volume() -> None:
     header = "Date,Open,High,Low,Close,Volume,Adj Close"
     rows = [
         "2016-01-08,98.55,100.50,96.43,96.96,70798000,94.1213",
-        "2016-01-07,98.68,100.13,96.43,96.45,81094400.12345,93.62",
+        "2016-01-07,98.68,100.13,96.43,null,000,93.620003",
     ]
-    # Volume's 5 digits are skipped; Adj Close's 4 digits win.
-    assert body_precision(header, rows) == 4
-    assert body_precision("Date,Dividends", ["2015-11-05,0.52"]) == 2
-    assert body_precision("Date,Close,Volume", ["2016-01-08,97,100"]) == 0
-    assert body_precision(header, []) == 0
+    support = number_support(header, rows)
+    counts = dict(support.hypotheses)
+    assert [name for name, _ in support.hypotheses] == sorted(counts)
+    assert support.total == 10  # `null` counts in total and is supported by no hypothesis
+    assert counts["yahoo"] == 9
+    assert counts["fixed2"] == 7  # 94.1213, null and 93.620003 do not fit
+    assert counts["fixed4"] == 1 and counts["fixed6"] == 1 and counts["fixed0"] == 0
+    assert number_support(header, []) == NumberSupport(
+        hypotheses=tuple((name, 0) for name in counts),
+        total=0,
+        volume_zero_000=0,
+        volume_zero_other=0,
+    )
+
+
+def test_number_support_zero_volume_spellings() -> None:
+    """F24: a zero Volume is written `000`; `0` is counted as another spelling."""
+    header = "Date,Close,Volume"
+    rows = ["2016-01-08,1.00,000", "2016-01-07,1.00,0", "2016-01-06,1.00,000", "2016-01-05,1.00,5"]
+    support = number_support(header, rows)
+    assert (support.volume_zero_000, support.volume_zero_other) == (2, 1)
+    assert support.total == 4
+    assert number_support("Date,Dividends", ["2015-11-05,0.52"]).volume_zero_000 == 0
 
 
 def test_row_order_classes() -> None:
