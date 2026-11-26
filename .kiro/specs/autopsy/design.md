@@ -72,6 +72,10 @@ in `evidence.py` is the single input-error type; the CLI turns it into exit code
 - `render(contract: Contract) -> str`: fixed section order, f-strings and `"\n".join`, one trailing newline.
 - `write_spec(contract: Contract, specs_dir: Path) -> Path`: `atomic_write` to `revenant-<slug>/requirements.md`.
 - Selection follows the tie-breaks of Req 8.3, 8.4 and 8.6 exactly, so no choice depends on dict order.
+- F21 rollover ("IF `a` or `d` is 12, THEN … January of the following year"): only when 0-indexed and a documented
+  `a` or `d` has int max 12. Cites `months.overflow` count and keys (else the max-12 `present` counts), noting that
+  the captures cannot tell rolling over from capping at December.
+- The "Header-only 200 responses (<years>, Evidence_Count N)" note reads `header_only` (YearEvidence).
 
 **revenant/cli.py**: `@app.command() autopsy(slug: str, evidence_dir: Path = Path("evidence"), crypt_dir:
 Path = Path("crypt"), specs_dir: Path = Path(".kiro/specs")) -> None`, a sibling of `exhume`. Flow:
@@ -85,6 +89,7 @@ Dates are ISO `YYYY-MM-DD` strings.
 
 ```python
 class Evidence(BaseModel):  count: int; keys: list[str]            # [key asc], at most 3
+class YearEvidence(BaseModel): Evidence fields + first_year: int | None; last_year: int | None  # null if count 0
 class Source(BaseModel):    index_sha256: str; entry_count: int
 class Endpoint:   path: str; hosts: list[HostEvidence]              # hosts [host]
 class Parameter:  name: str; documented: bool; present: Evidence; empty: int; junk: int
@@ -93,6 +98,7 @@ class Parameter:  name: str; documented: bool; present: Evidence; empty: int; ju
 class EnumType:   kind: Literal["enum"]; values: list[ValueCount]   # [value]
 class Months:     indexing: Literal["0-indexed", "1-indexed", "undetermined"]
                   decisive_h0: Evidence; decisive_h1: Evidence; ambiguous: Evidence; unfit: Evidence
+                  overflow: Evidence    # Data_Captures whose first `a` or `d` is 12 (F21) [key asc]
 class Variant:    header: str; columns: list[str]; first_year: int; last_year: int; evidence: Evidence
 class IntervalVariants: interval: str; variants: list[Variant]      # variants [header]
 class Precision:  interval: str; header: str; year: int; values: list[DigitsCount]  # values [digits]
@@ -101,6 +107,7 @@ class Comments:   total: int; years: list[int]; example: str | None; after_last_
 class Default:    shape: Literal["s_only", "empty_range"]; evidence: Evidence; earliest: str | None
                   latest: str | None; recent_within_7d: int; spacing: Literal["d", "w", "m", "unknown"]
 class ErrorStatus: status: str; evidence: Evidence; media_types: list[NameCount]; shapes: list[NameCount]
+                  # evidence.keys newest first: Capture timestamp desc, then key (Req 7 cites the newest 404)
 class Contract(BaseModel):
     slug: str; source: Source
     endpoints: list[Endpoint]                  # [path]
@@ -110,7 +117,7 @@ class Contract(BaseModel):
     content_types: list[NameEvidence]          # [name]
     intervals: list[IntervalVariants]          # [interval]
     headers: list[Variant]                     # [header]
-    header_only: Evidence
+    header_only: YearEvidence
     date_formats: list[FormatEvidence]         # [format]
     row_order: RowOrder                        # descending, ascending, unordered, unparsed_dates: Evidence
     precision: list[Precision]                 # [interval, header, year]
