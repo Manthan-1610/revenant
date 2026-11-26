@@ -132,3 +132,49 @@ def test_eval_demo_no_response() -> None:
     result = check.eval_demo(None, ENTRY, DONOR_BYTES)
     assert result.result == "fail"
     assert result.observed == "no response"
+
+
+def test_run_checks_passes_all_against_fixture_server(tmp_path: Path) -> None:
+    slug_dir = _slug_dir(tmp_path)
+    index = DonorIndex(slug="yahoo-finance-ichart", entries={"AAPL": ENTRY})
+    results = check.run_checks(slug_dir, REPO, index, limits=check.Limits(ready=20.0))
+    assert {name: r.result for name, r in results.items()} == {
+        "demo": "pass",
+        "unknown_symbol": "pass",
+        "weekly": "pass",
+    }
+
+
+def test_unknown_symbol_avoids_donor_symbols() -> None:
+    symbol = check.unknown_symbol([check.UNKNOWN_SYMBOL, "AAPL"])
+    assert symbol not in {check.UNKNOWN_SYMBOL, "AAPL"}
+    assert check.unknown_path(symbol).startswith(f"/table.csv?s={symbol}&a=0")
+
+
+def test_eval_unknown() -> None:
+    html = {"content-type": "text/html; charset=utf-8"}
+    assert check.eval_unknown(_response(404, b"<html/>", html)).result == "pass"
+    wrong = check.eval_unknown(_response(200))
+    assert (wrong.name, wrong.result, wrong.observed) == ("unknown_symbol", "fail", "status 200")
+    csv = check.eval_unknown(_response(404, b"", {"content-type": "text/csv"}))
+    assert csv.result == "fail" and csv.expected == "Content-Type text/html"
+    assert check.eval_unknown(None).observed == "no response"
+
+
+def test_eval_weekly() -> None:
+    noted = {"content-type": "text/html", "x-revenant-note": "interval w is not reanimated yet"}
+    assert check.eval_weekly(_response(404, b"", noted)).result == "pass"
+    bare = check.eval_weekly(_response(404, b"", {"content-type": "text/html"}))
+    assert (bare.name, bare.result) == ("weekly", "fail")
+    assert bare.observed == "no X-Revenant-Note"
+    assert check.eval_weekly(_response(200)).observed == "status 200"
+    assert check.eval_weekly(None).result == "fail"
+
+
+def test_failures_lists_expected_and_observed() -> None:
+    results = {
+        "demo": check.CheckResult(name="demo", result="pass"),
+        "unknown_symbol": check.eval_unknown(_response(200)),
+        "weekly": check.not_run("weekly"),
+    }
+    assert check.failures(results) == ["unknown_symbol: expected status 404, observed status 200"]

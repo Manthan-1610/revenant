@@ -40,7 +40,7 @@ IDE_CHAT: BuildPath = "kiro-ide-chat"
 RECORD_NAME = "reanimate.json"
 LOG_NAME = "reanimate.log"
 DEMO_SYMBOL = "AAPL"
-CHECK_NAMES = ("demo", "unknown_symbol", "weekly")
+CHECK_NAMES = check.CHECK_NAMES
 FALLBACKS = (
     "use --prompt-only and paste the prompt into Kiro IDE chat, then --built-by kiro-ide-chat"
 )
@@ -56,6 +56,7 @@ class Deps:
     repo_root: Path = Path(".")
     chat_timeout: float = CHAT_TIMEOUT
     redactor: Redactor = field(default_factory=Redactor.from_env)  # Req 7.2
+    check_limits: check.Limits = field(default_factory=check.Limits)  # Req 6.1-6.5
 
 
 @dataclass
@@ -168,25 +169,19 @@ def _donors(inputs: _Inputs, deps: Deps, slug_dir: Path) -> DonorReport:
     return report
 
 
-def run_demo_check(slug_dir: Path, repo_root: Path) -> CheckResult:
-    """Req 6.1, 6.2, 6.5: start uvicorn, send the demo request, stop the server."""
+def run_checks(
+    slug_dir: Path, repo_root: Path, limits: check.Limits | None = None
+) -> dict[str, CheckResult]:
+    """Req 6.1-6.6: start uvicorn, run every Check whose precondition holds, stop the server."""
     index = load_donor_index(slug_dir, slug_dir.name)
-    entry = index.entries.get(DEMO_SYMBOL)
-    if entry is None:
-        return CheckResult(name="demo", result="fail", expected="an AAPL donor", observed="none")
-    donor_bytes = (slug_dir / "donor" / entry.file).read_bytes()
-    port = check.free_port()
-    proc = check.serve(slug_dir.resolve(), port, repo_root.resolve())
-    try:
-        try:
-            check.wait_ready(proc, port)
-        except ReanimateError as exc:
-            return CheckResult(
-                name="demo", result="fail", expected="server answering", observed=exc.message
-            )
-        return check.eval_demo(check.request(port, check.DEMO_PATH), entry, donor_bytes)
-    finally:
-        check.stop(proc)
+    return check.run_checks(slug_dir, repo_root, index, DEMO_SYMBOL, limits)
+
+
+def _raise_on_failed(checks: dict[str, CheckResult]) -> None:
+    """Req 6.6: name each failed Check with its expected and observed value; exit 1."""
+    failed = check.failures(checks)
+    if failed:
+        raise ReanimateError("check", "failed Check(s): " + "; ".join(failed))
 
 
 def audit_server(server: Path, repo_root: Path) -> list[str]:
@@ -205,6 +200,11 @@ def audit_server(server: Path, repo_root: Path) -> list[str]:
     return cleaned
 
 
+def _checks_field(checks: dict[str, CheckResult] | None) -> dict[str, CheckResult | None]:
+    """Every Check name; null for each when the Check stage did not run (Req 4.4)."""
+    return {name: (checks or {}).get(name) for name in CHECK_NAMES}
+
+
 def _write_record(
     slug_dir: Path,
     started: str,
@@ -213,7 +213,7 @@ def _write_record(
     version: str | None,
     chat: ChatResult | None,
     note: str | None,
-    demo: CheckResult | None,
+    checks: dict[str, CheckResult] | None,
     scope_changes: list[ScopeChange] | None = None,
     import_violations: list[str] | None = None,
     build_path: BuildPath = HEADLESS,
@@ -231,7 +231,7 @@ def _write_record(
         model=red(chat.model) if chat and chat.model else None,
         started_at=started,
         ended_at=_now(deps.clock),
-        checks={"demo": demo, "unknown_symbol": None, "weekly": None},
+        checks=_checks_field(checks),
     )
     # Req 7.2: the redacted spellings keep the JSON valid (JSON-escaped Home_Path included).
     text = deps.redactor(dump_model(record).decode("utf-8"))
@@ -242,7 +242,7 @@ def _summary(
     slug: str,
     build_path: BuildPath,
     report: DonorReport,
-    demo: CheckResult | None = None,
+    checks: dict[str, CheckResult] | None = None,
     prompt: str | None = None,
 ) -> Summary:
     return Summary(
@@ -250,7 +250,7 @@ def _summary(
         build_path=build_path,
         stored=list(report.stored),
         missing=dict(report.missing),
-        checks={"demo": demo, "unknown_symbol": None, "weekly": None},
+        checks=_checks_field(checks),
         prompt=prompt,
     )
 
@@ -290,15 +290,12 @@ def _check_ide_build(slug: str, deps: Deps, inputs: _Inputs, slug_dir: Path) -> 
             IDE_CHAT,
         )
         raise ReanimateError("audit", f"{note}: " + "; ".join(violations))
-    demo = run_demo_check(slug_dir, deps.repo_root)
+    checks = run_checks(slug_dir, deps.repo_root, deps.check_limits)
     _write_record(
-        slug_dir, started, deps, prompt_bytes, None, None, None, demo, build_path=IDE_CHAT
+        slug_dir, started, deps, prompt_bytes, None, None, None, checks, build_path=IDE_CHAT
     )
-    if demo.result != "pass":
-        raise ReanimateError(
-            "check", f"demo failed: expected {demo.expected}, observed {demo.observed}"
-        )
-    return _summary(slug, IDE_CHAT, report, demo=demo)
+    _raise_on_failed(checks)
+    return _summary(slug, IDE_CHAT, report, checks=checks)
 
 
 def reanimate(slug: str, prompt_only: bool, built_by: str, deps: Deps) -> Summary:
@@ -361,16 +358,7 @@ def reanimate(slug: str, prompt_only: bool, built_by: str, deps: Deps) -> Summar
         )
         raise ReanimateError("audit", f"{note}: " + "; ".join(violations))
 
-    demo = run_demo_check(slug_dir, root)
-    _write_record(slug_dir, started, deps, prompt_bytes, version, chat, None, demo)
-    if demo.result != "pass":
-        raise ReanimateError(
-            "check", f"demo failed: expected {demo.expected}, observed {demo.observed}"
-        )
-    return Summary(
-        slug=slug,
-        build_path=HEADLESS,
-        stored=list(report.stored),
-        missing=dict(report.missing),
-        checks={"demo": demo, "unknown_symbol": None, "weekly": None},
-    )
+    checks = run_checks(slug_dir, root, deps.check_limits)
+    _write_record(slug_dir, started, deps, prompt_bytes, version, chat, None, checks)
+    _raise_on_failed(checks)
+    return _summary(slug, HEADLESS, report, checks=checks)

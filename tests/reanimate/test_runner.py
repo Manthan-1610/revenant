@@ -166,7 +166,7 @@ def stages(monkeypatch: pytest.MonkeyPatch, deps: runner.Deps) -> list[str]:
     spy(build, "make_workspace", "workspace")
     spy(deps.kiro, "chat", "chat")
     spy(build, "copy_back", "copy_back")
-    spy(runner, "run_demo_check", "check")
+    spy(runner, "run_checks", "check")
     return calls
 
 
@@ -209,6 +209,8 @@ def test_happy_path_exits_0_and_writes_every_output(
     assert "donors missing: none" in result.output
     assert "build path: kiro-cli-headless" in result.output
     assert "check demo: pass" in result.output
+    assert "check unknown_symbol: pass" in result.output
+    assert "check weekly: pass" in result.output
 
     slug_dir = repo / "crypt" / SLUG
     assert set(_tree(slug_dir)) == WRITE_SCOPE
@@ -229,7 +231,8 @@ def test_happy_path_exits_0_and_writes_every_output(
     assert record.kiro_version is not None and record.kiro_version.startswith("kiro-cli 3.5.0")
     assert record.kiro_exit_code == 0 and not record.timed_out and record.note is None
     assert record.model == "fake-model-1"
-    assert record.checks["demo"] is not None and record.checks["demo"].result == "pass"
+    assert all(result is not None and result.result == "pass" for result in record.checks.values())
+    assert set(record.checks) == {"demo", "unknown_symbol", "weekly"}
     log_lines = (slug_dir / "reanimate.log").read_text(encoding="utf-8").splitlines()
     assert log_lines and all(line.startswith(("stdout: ", "stderr: ")) for line in log_lines)
 
