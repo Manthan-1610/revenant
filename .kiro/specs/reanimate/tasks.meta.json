@@ -1,0 +1,93 @@
+{
+  "pbtResults": {
+    "1.4 Write property test P1 in `tests/reanimate/test_donor.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795728879473
+    },
+    "1.6 Write property test P2 in `tests/reanimate/test_donor.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795729189197
+    }
+  },
+  "executionHistory": {
+    "1.1 Add the Tombstone fields, the error type and the donor models": [
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795728434833
+      },
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795728667516
+      }
+    ],
+    "1.2 Write example tests in `tests/reanimate/test_tombstone.py`": [
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795728671926
+      },
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795728795879
+      }
+    ],
+    "1.3 Write the pure helpers `candidates`, `accept` and `donor_file_name`": [
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795728672550
+      },
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795728796243
+      }
+    ],
+    "1.4 Write property test P1 in `tests/reanimate/test_donor.py`": [
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795728800138
+      },
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795729105390
+      }
+    ],
+    "1.5 Write `fetch_donors` and `DonorReport`": [
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795728800581
+      },
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795729105642
+      }
+    ],
+    "1.6 Write property test P2 in `tests/reanimate/test_donor.py`": [
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795729109057
+      },
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795729246319
+      }
+    ],
+    "1.7 Write example tests in `tests/reanimate/test_donor.py`": [
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795729249141
+      }
+    ]
+  }
+}

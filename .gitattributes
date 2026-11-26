@@ -1,2 +1,4 @@
 * text=auto eol=lf
 evidence/** -text
+crypt/*/donor/** -text
+crypt/*/error-404.html -text

@@ -4,3 +4,5 @@ died = "2017-05"
 hosts = ["ichart.yahoo.com", "ichart.finance.yahoo.com", "real-chart.finance.yahoo.com"]
 paths = ["table.csv"]
 mimetypes = ["text/csv"]
+donor_symbols = ["AAPL"]
+donor_required = ["AAPL"]

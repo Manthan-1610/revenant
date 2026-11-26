@@ -37,33 +37,33 @@ marked **(LIVE)** need the Archive or a real kiro-cli; their tests carry `@pytes
 
 ## Tasks
 
-- [ ] 1. Add the Tombstone donor fields and the Donor_Fetcher (`donor.py`)
-  - [ ] 1.1 Add the Tombstone fields, the error type and the donor models
+- [~] 1. Add the Tombstone donor fields and the Donor_Fetcher (`donor.py`)
+  - [x] 1.1 Add the Tombstone fields, the error type and the donor models
     - In `revenant/exhume/models.py`: `donor_symbols: list[str] = []`, `donor_required: list[str] = []`, and a `model_validator(mode="after")` whose error names each `donor_required` symbol missing from `donor_symbols`; `extra="forbid"` stays
     - In `tombstones/yahoo-finance-ichart.toml`: `donor_symbols = ["AAPL"]`, `donor_required = ["AAPL"]` (task 10 adds the optional symbols)
     - Create `revenant/reanimate/__init__.py`, `errors.py` with `ReanimateError(stage, message, code)`, and `record.py` with `DonorEntry`, `DonorIndex` (`ConfigDict(extra="forbid", frozen=True)`) and `dump_model` (Exhume's `dump_index` recipe)
     - Create `tests/reanimate/__init__.py`
     - In `.gitattributes`: add `crypt/*/donor/** -text` and `crypt/*/error-404.html -text`, so clones keep donor and Error_Page bytes unchanged
     - _Requirements: 2.1, 2.4, 7.5_
-  - [ ] 1.2 Write example tests in `tests/reanimate/test_tombstone.py`
+  - [x] 1.2 Write example tests in `tests/reanimate/test_tombstone.py`
     - Absent fields load as empty lists; the committed tombstone loads; a `donor_required` symbol missing from `donor_symbols` raises an error naming it; Exhume's existing Tombstone tests still pass
     - _Requirements: 2.1_
-  - [ ] 1.3 Write the pure helpers `candidates`, `accept` and `donor_file_name`
+  - [x] 1.3 Write the pure helpers `candidates`, `accept` and `donor_file_name`
     - `candidates(rows, symbol, mimetypes)`: status 2xx, listed mimetype, timestamp `< "20170501"`, no `has_auth_param`, first `s` of `parse_query(original)` equals `symbol` after percent-decoding, query `s_only` or Daily_Range (`interval == "d"`, `c` ASCII digits ≤ 1999, `f` absent, empty or digits ≥ timestamp year); sort by (timestamp desc, original asc); keep the first row per digest
     - `accept(body, served) -> str | None`: `None` when accepted, else the reason (served `< "20170501"`, first line exactly the Header_Line, ≥ 1 Data_Row via `parse_body`, newest Row_Date within 0..7 days before the served date)
     - `donor_file_name(symbol)`: keep `A-Z 0-9 . - _`, write every other UTF-8 byte as `%XX`, add `.csv` (`^GSPC` → `%5EGSPC.csv`)
     - _Requirements: 2.2, 2.3, 2.4_
-  - [ ] 1.4 Write property test P1 in `tests/reanimate/test_donor.py`
+  - [x] 1.4 Write property test P1 in `tests/reanimate/test_donor.py`
     - **Property 1: Donor candidate filter and order**: for any CDX rows (raw and `%5E` symbols, `&amp` artifacts, any status, mimetype, timestamp, auth-like names, repeated digests) and any symbol, every returned row meets each Req 2.2 condition, digests are unique, order is (timestamp desc, original asc), no qualifying digest is lost, and input order does not matter
     - **Validates: Requirements 2.2**
-  - [ ] 1.5 Write `fetch_donors` and `DonorReport`
+  - [x] 1.5 Write `fetch_donors` and `DonorReport`
     - `fetch_donors(tombstone, archive, store, slug_dir) -> DonorReport(stored, missing, required_missing)`: reuse a hash-valid Donor_Index entry with zero requests; else pool `get_listing(..., "data", refresh=False)` over every host, fetch at most 5 candidates via `archive.get(wayback_url(...))` (an `ArchiveError` counts as a tried non-qualifier), `atomic_write` the first accepted body unchanged to `crypt/<slug>/donor/<donor_file_name>`, replace the symbol's entry in `donor/index.json`
     - A symbol with no qualifier is reported missing with a message naming it; no entry or file is written and existing donor files stay unchanged
     - _Requirements: 2.2, 2.3, 2.4, 2.5, 2.6_
-  - [ ] 1.6 Write property test P2 in `tests/reanimate/test_donor.py`
+  - [x] 1.6 Write property test P2 in `tests/reanimate/test_donor.py`
     - **Property 2: Donor acceptance and the 5-try cap**: for any body, served timestamp and newest-Row_Date offset of -3 to 12 days, `accept` returns `None` exactly when Req 2.3 holds; for any sequence of candidate outcomes (qualifies, fails, `ArchiveError`) the fetcher makes `min(5, i + 1)` fetches for a first qualifier at index `i` (else `min(5, n)`) and stores its bytes unchanged as `donor_file_name(symbol)`, which uses only `A-Za-z0-9.-_%` and differs after case folding for distinct symbols
     - **Validates: Requirements 2.3, 2.4, 2.6**
-  - [ ] 1.7 Write example tests in `tests/reanimate/test_donor.py`
+  - [-] 1.7 Write example tests in `tests/reanimate/test_donor.py`
     - With `httpx.MockTransport` and an AAPL fixture body from `evidence/`: an accepted capture writes a Donor_Index entry with the `id_` URL, host, Served_Timestamp, SHA-256, row count, first and last dates; a second call makes zero requests; a corrupted donor file triggers a refetch; a missing optional symbol continues, a missing required symbol sets `required_missing`; nothing under `evidence/` except `cdx/` is written
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 2.2, 2.4, 2.5, 2.6, 7.6_

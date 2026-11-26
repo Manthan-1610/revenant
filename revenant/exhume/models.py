@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 PassKind = Literal["data", "error"]
 Kind = Literal["data", "error", "error_page"]
@@ -29,11 +29,21 @@ class Tombstone(BaseModel):
     hosts: list[str] = Field(min_length=1)
     paths: list[str] = Field(min_length=1)
     mimetypes: list[str] = Field(min_length=1)
+    donor_symbols: list[str] = []
+    donor_required: list[str] = []
 
     @field_validator("hosts")
     @classmethod
     def _lowercase_hosts(cls, hosts: list[str]) -> list[str]:
         return [host.lower() for host in hosts]
+
+    @model_validator(mode="after")
+    def _required_donors_listed(self) -> Tombstone:
+        missing = [symbol for symbol in self.donor_required if symbol not in self.donor_symbols]
+        if missing:
+            names = ", ".join(repr(symbol) for symbol in missing)
+            raise ValueError(f"donor_required names symbols missing from donor_symbols: {names}")
+        return self
 
 
 class CdxRow(BaseModel, frozen=True):
