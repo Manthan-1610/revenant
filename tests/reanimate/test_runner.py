@@ -1,4 +1,8 @@
-"""Happy-path and early-failure tests for the Reanimate Runner (Req 1.1-1.6, 7.6).
+"""Happy-path and exit-code tests for the Reanimate Runner (Req 1.1-1.6, 3.3, 3.5, 4.4, 4.6, 7.6).
+
+One test (or parametrized case) per row of the design's Error Handling table: missing input (2),
+kiro-cli preflight (2), required donor missing (1), kiro-cli build failure (1), scope change and
+audit violation (1); Check failures (row 6) belong to task 9.
 
 Offline: the Archive is an `httpx.MockTransport`, kiro-cli is `tests/reanimate/fake_kiro.py`, and the
 repo is a `tmp_path` copy holding only the Runner's inputs. No AAPL capture in `evidence/` is both a
@@ -9,6 +13,7 @@ body shaped like Yahoo's 2016 captures; the archived 404 page is the real one fr
 from __future__ import annotations
 
 import dataclasses
+import functools
 import hashlib
 import json
 import shutil
@@ -80,12 +85,13 @@ class MockArchive:
 
     def __init__(self) -> None:
         self.requests: list[httpx.Request] = []
+        self.serve_aapl = True  # False: the CDX listings hold no AAPL donor candidate
 
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         if request.url.path == "/cdx/search/cdx":
             page: list[list[str]] = [CDX_HEADER]
-            if request.url.params.get("url", "").startswith(AAPL_HOST + "/"):
+            if self.serve_aapl and request.url.params.get("url", "").startswith(AAPL_HOST + "/"):
                 page.append([AAPL_TIMESTAMP, AAPL_ORIGINAL, "text/csv", "200", "AAPLDIGEST", "600"])
             return httpx.Response(200, json=page)
         wanted = f"/web/{AAPL_TIMESTAMP}id_/{AAPL_ORIGINAL.split('?')[0]}"
@@ -267,13 +273,28 @@ def test_missing_contract_exits_2_before_any_request(
     assert not (repo / "crypt" / SLUG).exists() or not any((repo / "crypt" / SLUG).iterdir())
 
 
-def test_chat_exit_1_exits_1_with_no_check(
+@pytest.mark.parametrize(
+    ("mode", "exit_code", "timed_out", "note"),
+    [
+        ("fail", 1, False, "kiro-cli exited with code 1"),
+        ("sleep", None, True, "kiro-cli was stopped after 1 seconds"),
+        ("noserver", 0, False, "kiro-cli wrote no server"),
+    ],
+)
+def test_kiro_build_failure_exits_1_keeps_workspace_and_records(
     repo: Path,
     deps: runner.Deps,
     stages: list[str],
     monkeypatch: pytest.MonkeyPatch,
+    mode: str,
+    exit_code: int | None,
+    timed_out: bool,
+    note: str,
 ) -> None:
-    monkeypatch.setenv("FAKE_KIRO_MODE", "fail")
+    """Req 3.5, 4.4, 1.6: kiro-cli non-zero, timeout or no server.py -> exit 1, record, no Check."""
+    monkeypatch.setenv("FAKE_KIRO_MODE", mode)
+    monkeypatch.setenv("FAKE_KIRO_SLEEP", "30")
+    short = dataclasses.replace(deps, chat_timeout=1.0)
     workspaces: list[Path] = []
     make = build.make_workspace
     monkeypatch.setattr(
@@ -281,23 +302,103 @@ def test_chat_exit_1_exits_1_with_no_check(
     )
 
     try:
-        result = _invoke(monkeypatch, deps)
+        result = _invoke(monkeypatch, short)
 
         assert result.exit_code == 1, result.output
-        assert "error: build: kiro-cli exited with code 1" in result.stderr
-        assert "check" not in stages and "copy_back" not in stages
-        assert "check demo" not in result.output
+        assert f"error: build: {note}; workspace kept at " in result.stderr
+        assert "copy_back" not in stages and "check" not in stages
+        assert "check demo" not in result.output and "reanimate:" not in result.output
         slug_dir = repo / "crypt" / SLUG
         assert not (slug_dir / "server.py").exists()
-        record = json.loads((slug_dir / "reanimate.json").read_text(encoding="utf-8"))
-        assert record["kiro_exit_code"] == 1
-        assert record["checks"]["demo"] is None
+        record = BuildRecord.model_validate_json((slug_dir / "reanimate.json").read_bytes())
+        assert record.build_path == "kiro-cli-headless"
+        assert record.kiro_version is not None and record.kiro_version.startswith("kiro-cli 3.5.0")
+        assert record.kiro_exit_code == exit_code and record.timed_out is timed_out
+        assert record.note == note
+        assert record.model == "fake-model-1"  # reported before the stub misbehaved
+        assert record.started_at.endswith("Z") and record.ended_at.endswith("Z")
+        assert record.scope_changes == [] and record.import_violations == []
+        assert record.checks == {"demo": None, "unknown_symbol": None, "weekly": None}
+        prompt_bytes = (slug_dir / "reanimate-prompt.md").read_bytes()
+        assert record.prompt_sha256 == hashlib.sha256(prompt_bytes).hexdigest()
         log = (slug_dir / "reanimate.log").read_text(encoding="utf-8")
-        assert "stderr: stub failure" in log
+        if mode == "fail":
+            assert "stderr: stub failure" in log
         assert len(workspaces) == 1 and workspaces[0].exists()  # Req 3.5: kept on failure
+        shown = result.stderr.split("workspace kept at ", 1)[1].strip()
+        if workspaces[0].resolve().is_relative_to(Path.home().resolve()):
+            assert shown.startswith("~"), shown
+        assert shown.endswith(workspaces[0].name)
     finally:
         for workspace in workspaces:
             shutil.rmtree(workspace, ignore_errors=True)
+
+
+@pytest.mark.parametrize(
+    ("mode", "message"),
+    [
+        ("not-on-path", "kiro-cli is not on the PATH"),
+        ("whoami-fail", "kiro-cli whoami failed"),
+        ("version-fail", "kiro-cli --version exited with code 3"),
+        ("version-empty", "kiro-cli --version printed nothing"),
+        ("version-slow", "kiro-cli --version ran longer than 0.5 seconds"),
+    ],
+)
+def test_kiro_preflight_failure_exits_2_before_any_request(
+    repo: Path,
+    archive: MockArchive,
+    deps: runner.Deps,
+    stages: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    mode: str,
+    message: str,
+) -> None:
+    """Req 3.3, 4.6: kiro-cli missing, logged out or versionless -> exit 2 naming the fallbacks."""
+    if mode == "not-on-path":
+        monkeypatch.setattr(deps.kiro, "command", [str(repo / "no-such-kiro-cli")])
+    else:
+        monkeypatch.setenv("FAKE_KIRO_MODE", mode)
+    monkeypatch.setenv("FAKE_KIRO_SLEEP", "30")
+    monkeypatch.setattr(deps.kiro, "version", functools.partial(deps.kiro.version, timeout=0.5))
+
+    result = _invoke(monkeypatch, deps)
+
+    assert result.exit_code == 2, result.output
+    assert f"error: kiro: {message}" in result.stderr
+    assert "--built-by kiro-ide-chat" in result.stderr
+    if mode in ("not-on-path", "whoami-fail"):
+        assert "--prompt-only" in result.stderr
+    assert stages == ["preflight", "kiro_preflight"]
+    assert archive.requests == []
+    slug_dir = repo / "crypt" / SLUG
+    assert not (slug_dir / "reanimate.json").exists()
+    assert not (slug_dir / "reanimate-prompt.md").exists()
+
+
+def test_required_donor_missing_exits_1_before_the_build(
+    repo: Path,
+    archive: MockArchive,
+    deps: runner.Deps,
+    stages: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Req 2.6: no qualifying AAPL capture -> exit 1 naming it; no prompt, build or record."""
+    archive.serve_aapl = False
+    argv_file = repo / "argv.json"
+    monkeypatch.setenv("FAKE_KIRO_ARGV", str(argv_file))
+
+    result = _invoke(monkeypatch, deps)
+
+    assert result.exit_code == 1, result.output
+    assert "error: donor: required donor missing:" in result.stderr
+    assert "AAPL" in result.stderr
+    assert stages == ["preflight", "kiro_preflight", "donors"]
+    assert archive.requests  # the CDX listings were asked
+    assert json.loads(argv_file.read_text(encoding="utf-8")) == ["--version"]  # no chat
+    slug_dir = repo / "crypt" / SLUG
+    assert not (slug_dir / "reanimate.json").exists()
+    assert not (slug_dir / "reanimate-prompt.md").exists()
+    assert not (slug_dir / "server.py").exists()
 
 
 @pytest.mark.parametrize(

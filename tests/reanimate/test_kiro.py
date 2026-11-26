@@ -13,7 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from revenant.reanimate.errors import ReanimateError
-from revenant.reanimate.kiro import CHAT_ARGS, KiroCli
+from revenant.reanimate.kiro import CHAT_ARGS, KiroCli, find_model
 
 HERE = Path(__file__).resolve().parent
 STUB = [sys.executable, str(HERE / "fake_kiro.py")]
@@ -120,6 +120,29 @@ def test_model_equals_stub_event_id(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     monkeypatch.setenv("FAKE_KIRO_MODEL", "claude-test-42")
     result = KiroCli(STUB).chat(tmp_path, tmp_path / "reanimate.log")
     assert result.model == "claude-test-42"
+
+
+CONFIG_AUTO = {
+    "type": "config_option_update",
+    "params": {"configOptions": [{"id": "mode"}, {"id": "model", "currentValue": "auto"}]},
+}
+
+
+@pytest.mark.parametrize("key", ["model", "modelId", "model_id"])
+def test_find_model_key_wins_over_config_options(key: str) -> None:
+    """Req 4.4: a model key in any event, even a later one, beats the configOptions fallback."""
+    events = [CONFIG_AUTO, {"type": "session_info", "params": {"nested": [{key: "claude-x"}]}}]
+    assert find_model(events) == "claude-x"
+
+
+def test_find_model_falls_back_to_config_option_update() -> None:
+    assert find_model([{"type": "session_start"}, CONFIG_AUTO]) == "auto"
+
+
+def test_find_model_is_none_without_model_data() -> None:
+    events = [{"type": "session_start"}, None, "text", [{"id": "mode", "currentValue": "x"}]]
+    assert find_model(events) is None
+    assert find_model([]) is None
 
 
 def test_chat_argv_is_exact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
