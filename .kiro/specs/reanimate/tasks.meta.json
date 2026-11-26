@@ -7,6 +7,14 @@
     "1.6 Write property test P2 in `tests/reanimate/test_donor.py`": {
       "status": "passed",
       "lastRunTimestamp": 1795729189197
+    },
+    "3.3 Write property test P5 in `tests/reanimate/test_server.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795731385361
+    },
+    "3.4 Write property test P6 in `tests/reanimate/test_server.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795731491083
     }
   },
   "executionHistory": {
@@ -87,6 +95,116 @@
         "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
         "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
         "timestamp": 1795729249141
+      },
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795729531756
+      }
+    ],
+    "1. Add the Tombstone donor fields and the Donor_Fetcher (`donor.py`)": [
+      {
+        "executionId": "dfec6683-c8f1-44be-b170-ee34b9656ff9",
+        "chatSessionId": "sess_cf8c845a-3630-47ab-ba06-fb5991c81de7",
+        "timestamp": 1795729531905
+      }
+    ],
+    "2.1 Add the dependencies and `prompt.py`": [
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795729672377
+      },
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795729939692
+      }
+    ],
+    "2.2 Write `kiro.py`, the stub `tests/reanimate/fake_kiro.py` and the fixture server": [
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795729940636
+      },
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795730544760
+      }
+    ],
+    "2.3 Write `build.py`": [
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795729940966
+      },
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795730655406
+      }
+    ],
+    "2.4 Write example tests in `tests/reanimate/test_prompt.py`, `test_kiro.py` and `test_build.py`": [
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795730658420
+      },
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795730856993
+      }
+    ],
+    "2. Write the Reanimate_Prompt, the KiroCli wrapper and the Build_Workspace": [
+      {
+        "executionId": "f7f7671a-17f4-4102-886d-1b5f9dd962dc",
+        "chatSessionId": "sess_f6d5d7ff-aa1e-4120-a161-43c52d8da762",
+        "timestamp": 1795730857172
+      }
+    ],
+    "3.1 Write `check.py` and add `CheckResult` to `record.py`": [
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795730976571
+      },
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795731181612
+      }
+    ],
+    "3.2 Write example tests in `tests/reanimate/test_check.py`": [
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795731181881
+      },
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795731399793
+      }
+    ],
+    "3.3 Write property test P5 in `tests/reanimate/test_server.py`": [
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795731182082
+      },
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795731400198
+      }
+    ],
+    "3.4 Write property test P6 in `tests/reanimate/test_server.py`": [
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795731402796
       }
     ]
   }

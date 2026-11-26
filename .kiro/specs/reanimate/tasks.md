@@ -37,7 +37,7 @@ marked **(LIVE)** need the Archive or a real kiro-cli; their tests carry `@pytes
 
 ## Tasks
 
-- [~] 1. Add the Tombstone donor fields and the Donor_Fetcher (`donor.py`)
+- [x] 1. Add the Tombstone donor fields and the Donor_Fetcher (`donor.py`)
   - [x] 1.1 Add the Tombstone fields, the error type and the donor models
     - In `revenant/exhume/models.py`: `donor_symbols: list[str] = []`, `donor_required: list[str] = []`, and a `model_validator(mode="after")` whose error names each `donor_required` symbol missing from `donor_symbols`; `extra="forbid"` stays
     - In `tombstones/yahoo-finance-ichart.toml`: `donor_symbols = ["AAPL"]`, `donor_required = ["AAPL"]` (task 10 adds the optional symbols)
@@ -63,41 +63,41 @@ marked **(LIVE)** need the Archive or a real kiro-cli; their tests carry `@pytes
   - [x] 1.6 Write property test P2 in `tests/reanimate/test_donor.py`
     - **Property 2: Donor acceptance and the 5-try cap**: for any body, served timestamp and newest-Row_Date offset of -3 to 12 days, `accept` returns `None` exactly when Req 2.3 holds; for any sequence of candidate outcomes (qualifies, fails, `ArchiveError`) the fetcher makes `min(5, i + 1)` fetches for a first qualifier at index `i` (else `min(5, n)`) and stores its bytes unchanged as `donor_file_name(symbol)`, which uses only `A-Za-z0-9.-_%` and differs after case folding for distinct symbols
     - **Validates: Requirements 2.3, 2.4, 2.6**
-  - [-] 1.7 Write example tests in `tests/reanimate/test_donor.py`
+  - [x] 1.7 Write example tests in `tests/reanimate/test_donor.py`
     - With `httpx.MockTransport` and an AAPL fixture body from `evidence/`: an accepted capture writes a Donor_Index entry with the `id_` URL, host, Served_Timestamp, SHA-256, row count, first and last dates; a second call makes zero requests; a corrupted donor file triggers a refetch; a missing optional symbol continues, a missing required symbol sets `required_missing`; nothing under `evidence/` except `cdx/` is written
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 2.2, 2.4, 2.5, 2.6, 7.6_
 
-- [ ] 2. Write the Reanimate_Prompt, the KiroCli wrapper and the Build_Workspace
-  - [ ] 2.1 Add the dependencies and `prompt.py`
+- [x] 2. Write the Reanimate_Prompt, the KiroCli wrapper and the Build_Workspace
+  - [x] 2.1 Add the dependencies and `prompt.py`
     - Add `fastapi` and `uvicorn` to `pyproject.toml` dependencies and install them into `.venv`
     - `render_prompt(slug, donors) -> str` and `write_prompt(slug_dir, text)`: name inputs only by `requirements.md`, `contract.json`, `donor/index.json`, `error-404.html`; name `server.py` as the single file to write; state that no shell or command tool is available, so Kiro must not run, test or install anything and writes only `server.py`; state the Server rules of the design (Req 5 and 7.3), each followed by the Gen criteria it cites; replace any earlier prompt
     - _Requirements: 3.1, 7.3_
-  - [ ] 2.2 Write `kiro.py`, the stub `tests/reanimate/fake_kiro.py` and the fixture server
+  - [x] 2.2 Write `kiro.py`, the stub `tests/reanimate/fake_kiro.py` and the fixture server
     - `KiroCli(command=["kiro-cli"])`: `available()` via `shutil.which` (or the stub's path), `whoami() -> int` with stdout discarded, `version() -> str` (30 s timeout), `chat(cwd, log, timeout=900) -> ChatResult(exit_code, timed_out, model)` running exactly `chat --v3 --no-interactive --trust-workspace --trust-tools=fs_read,fs_write --output-format stream-json "Read reanimate-prompt.md in this directory and follow it exactly."`; reader threads label lines `stdout: `/`stderr: ` and append them to the Build_Log as they arrive; `model` is the first model id a stream-json event reports, else `None` (never guessed); `chat` stdout/stderr and `version` output decode with `encoding="utf-8", errors="replace"` (Windows defaults to cp1252); on timeout `terminate()`, then `kill()`
     - `fake_kiro.py` handles `whoami`, `--version` and `chat`; by env `FAKE_KIRO_MODE` it copies `tests/reanimate/fixtures/server.py` into its cwd, exits non-zero, sleeps, or writes no server; it records its argv to a file named by env
     - `tests/reanimate/fixtures/server.py`: a hand-written server that follows the Server rules (Req 5), so Runner tests never depend on Kiro
     - _Requirements: 3.2, 3.4, 3.5, 4.5, 4.6, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 7.3, 7.6_
-  - [ ] 2.3 Write `build.py`
+  - [x] 2.3 Write `build.py`
     - `make_workspace(slug_dir, spec_path)`: `tempfile.mkdtemp(prefix="revenant-build-")` holding copies of only the glossary files; `copy_back(workspace, slug_dir)` copies `server.py` byte for byte; `display(path)` replaces the Home_Path with `~`; delete the workspace on success, keep it on failure
     - _Requirements: 3.2, 3.5, 3.6_
-  - [ ] 2.4 Write example tests in `tests/reanimate/test_prompt.py`, `test_kiro.py` and `test_build.py`
+  - [x] 2.4 Write example tests in `tests/reanimate/test_prompt.py`, `test_kiro.py` and `test_build.py`
     - Prompt names only relative file names and contains no absolute path; it states that no shell or command tool is available and only `server.py` may be written; every Server rule is followed by a Gen citation; stub argv equals the exact chat argv; the Build_Log labels every line by stream and is complete after a non-zero exit and after a short-timeout stop (partial output kept); `whoami` stdout appears nowhere; a stub emitting non-cp1252 bytes (e.g. `→`, `✓`, an invalid UTF-8 byte) on `chat` and `--version` neither raises nor loses the line; `ChatResult.model` equals the id from a stub stream-json event, and is `None` when no event reports one; the workspace holds only the listed files; copy-back is byte-identical and deletes the workspace; a failed build keeps it
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 3.1, 3.2, 3.4, 3.5, 3.6, 7.2_
 
-- [ ] 3. Implement the Check runner (`check.py`) and the server properties
-  - [ ] 3.1 Write `check.py` and add `CheckResult` to `record.py`
+- [~] 3. Implement the Check runner (`check.py`) and the server properties
+  - [x] 3.1 Write `check.py` and add `CheckResult` to `record.py`
     - `free_port()` (bind `127.0.0.1:0`); `serve(slug_dir, port)` runs `sys.executable -m uvicorn server:app --app-dir <slug_dir> --host 127.0.0.1 --port <p>` with cwd = repo root; `wait_ready` treats any HTTP response as answering, at most 30 s, and fails if the process exits first; pure `eval_demo(response, donor_entry, donor_bytes) -> CheckResult` (10 s timeout, status 200, `text/csv` media type, Header_Line, the five 2016-01-08..04 rows byte-equal to the donor lines, `X-Revenant-Donor` from the AAPL entry); `stop(proc)` waits 10 s, then kills
     - _Requirements: 6.1, 6.2, 6.5_
-  - [ ] 3.2 Write example tests in `tests/reanimate/test_check.py`
+  - [x] 3.2 Write example tests in `tests/reanimate/test_check.py`
     - Copy `fixtures/server.py` beside a fixture `donor/` and `error-404.html` in `tmp_path`, start it with `serve`, and assert the demo Check passes; `eval_demo` fails with expected and observed values for a wrong status, a reformatted row, a missing row and a wrong donor header; the process has exited after `stop`
     - _Requirements: 6.1, 6.2, 6.5_
-  - [ ] 3.3 Write property test P5 in `tests/reanimate/test_server.py`
+  - [x] 3.3 Write property test P5 in `tests/reanimate/test_server.py`
     - **Property 5: Served rows equal donor lines in range**: for any fixture donor (random newest-first trading days, Yahoo_Number values, `000` volumes) and any Daily_Request whose `a`–`f` mix in-range ints, 12, out-of-range ints, day 31, empty, absent and junk such as `{{(-1 month).year}}`, with raw or percent-encoded `s`, `server.py` answers as a reference selector predicts: 200 with the Header_Line and exactly the in-range donor lines, byte-equal, newest first; else 404 + Error_Page
     - Load `crypt/<slug>/server.py` (fall back to `fixtures/server.py` before the slice build exists) from `tmp_path` with `importlib`, drive it with `fastapi.testclient.TestClient`
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.4**
-  - [ ] 3.4 Write property test P6 in `tests/reanimate/test_server.py`
+  - [-] 3.4 Write property test P6 in `tests/reanimate/test_server.py`
     - **Property 6: Donor header and interval gate**: for any request the response has exactly one `X-Revenant-Donor`, equal to `wayback:<host>/<served_timestamp>` when `s` has a donor and `none` otherwise; for any non-empty `g` other than `d`, whatever `s` is, the status is 404 with a non-empty `X-Revenant-Note`
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - **Validates: Requirements 5.5, 5.6**

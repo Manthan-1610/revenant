@@ -224,3 +224,51 @@ def test_served_rows_equal_donor_lines_in_range(
         assert response.status_code == 404
         assert response.headers["content-type"].split(";")[0].strip() == "text/html"
         assert response.content == ERROR_PAGE
+
+
+# --- Property 6 -------------------------------------------------------------------------------
+
+# A non-empty interval other than `d`: the deferred ones plus arbitrary printable ASCII strings.
+other_interval = st.one_of(
+    st.sampled_from(["w", "m", "v"]),
+    st.text(alphabet=st.characters(min_codepoint=0x20, max_codepoint=0x7E), min_size=1).filter(
+        lambda g: g != "d"
+    ),
+)
+any_symbol = st.one_of(symbol_choice, st.from_regex(r"[A-Z^.]{1,6}", fullmatch=True))
+
+
+# Feature: reanimate, Property 6: Donor header and interval gate
+@settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.too_slow])
+@given(
+    aapl=donor_body(),
+    gspc=donor_body(),
+    req=daily_request(),
+    symbol=any_symbol,
+    gate=st.booleans(),
+    interval=other_interval,
+)
+def test_donor_header_and_interval_gate(
+    tmp_path_factory: pytest.TempPathFactory,
+    aapl: tuple[bytes, list[tuple[dt.date, bytes]]],
+    gspc: tuple[bytes, list[tuple[dt.date, bytes]]],
+    req: tuple[str | None, dict[str, str | None], str | None, bool],
+    symbol: str | None,
+    gate: bool,
+    interval: str,
+) -> None:
+    """**Validates: Requirements 5.5, 5.6**"""
+    _, parts, daily_g, encode = req
+    g = quote(interval, safe="") if gate else daily_g
+    directory = tmp_path_factory.mktemp("server")
+    index = write_server_dir(directory, {"AAPL": aapl[0], "^GSPC": gspc[0]})
+
+    with server_client(directory) as client:
+        response = client.get(build_query(symbol, parts, g, encode))
+
+    assert response.headers.get_list("x-revenant-donor") == [donor_header(index, symbol)]
+    if gate:
+        assert response.status_code == 404
+        assert response.headers["content-type"].split(";")[0].strip() == "text/html"
+        assert response.content == ERROR_PAGE
+        assert response.headers.get("x-revenant-note", "").strip()
