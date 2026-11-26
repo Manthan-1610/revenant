@@ -25,7 +25,7 @@ from revenant.reanimate.audit import audit
 from revenant.reanimate.donor import DonorReport, fetch_donors, load_donor_index
 from revenant.reanimate.errors import ReanimateError
 from revenant.reanimate.kiro import CHAT_TIMEOUT, ChatResult, KiroCli
-from revenant.reanimate.prompt import render_prompt, write_prompt
+from revenant.reanimate.prompt import PROMPT_NAME, render_prompt, write_prompt
 from revenant.reanimate.record import (
     BuildPath,
     BuildRecord,
@@ -67,6 +67,7 @@ class Summary:
     stored: list[str]
     missing: dict[str, str]
     checks: dict[str, CheckResult | None]
+    prompt: str | None = None  # set by --prompt-only (Req 4.1): repo-relative prompt path
 
     def lines(self) -> list[str]:
         missing = ", ".join(self.missing) or "none"
@@ -74,8 +75,10 @@ class Summary:
             f"reanimate: {self.slug}",
             f"donors stored: {', '.join(self.stored) or 'none'}",
             f"donors missing: {missing}",
-            f"build path: {self.build_path}",
         ]
+        if self.prompt is not None:
+            return [*out, f"prompt: {self.prompt}"]
+        out.append(f"build path: {self.build_path}")
         for name in CHECK_NAMES:
             result = self.checks.get(name)
             out.append(f"check {name}: {result.result if result else 'not_run'}")
@@ -213,12 +216,13 @@ def _write_record(
     demo: CheckResult | None,
     scope_changes: list[ScopeChange] | None = None,
     import_violations: list[str] | None = None,
+    build_path: BuildPath = HEADLESS,
 ) -> None:
     red = deps.redactor  # Req 7.2: redact each string before JSON encoding, then the whole text
     record = BuildRecord(
         scope_changes=scope_changes or [],
         import_violations=[red(violation) for violation in import_violations or []],
-        build_path=HEADLESS,
+        build_path=build_path,
         prompt_sha256=hashlib.sha256(prompt_bytes).hexdigest(),
         kiro_version=red(version) if version is not None else None,
         kiro_exit_code=chat.exit_code if chat else None,
@@ -234,20 +238,94 @@ def _write_record(
     atomic_write(slug_dir / RECORD_NAME, text.encode("utf-8"))
 
 
+def _summary(
+    slug: str,
+    build_path: BuildPath,
+    report: DonorReport,
+    demo: CheckResult | None = None,
+    prompt: str | None = None,
+) -> Summary:
+    return Summary(
+        slug=slug,
+        build_path=build_path,
+        stored=list(report.stored),
+        missing=dict(report.missing),
+        checks={"demo": demo, "unknown_symbol": None, "weekly": None},
+        prompt=prompt,
+    )
+
+
+def _ide_chat_files(slug_dir: Path, slug: str) -> None:
+    """Req 4.3: the IDE-built server and the prompt it was built from must both exist."""
+    missing = [
+        f"crypt/{slug}/{name}"
+        for name in (build.SERVER_NAME, PROMPT_NAME)
+        if not (slug_dir / name).is_file()
+    ]
+    if missing:
+        raise ReanimateError(
+            "ide-chat", "missing file(s) for --built-by kiro-ide-chat: " + ", ".join(missing), 2
+        )
+
+
+def _check_ide_build(slug: str, deps: Deps, inputs: _Inputs, slug_dir: Path) -> Summary:
+    """Req 4.2, 4.4: audit and Check the IDE-built server; prompt and server.py stay unchanged."""
+    report = _donors(inputs, deps, slug_dir)
+    started = _now(deps.clock)
+    prompt_bytes = (slug_dir / PROMPT_NAME).read_bytes()
+    violations = audit_server(slug_dir / build.SERVER_NAME, deps.repo_root)  # Req 7.4
+    if violations:
+        note = "server.py failed the import audit"
+        _write_record(
+            slug_dir,
+            started,
+            deps,
+            prompt_bytes,
+            None,
+            None,
+            note,
+            None,
+            None,
+            violations,
+            IDE_CHAT,
+        )
+        raise ReanimateError("audit", f"{note}: " + "; ".join(violations))
+    demo = run_demo_check(slug_dir, deps.repo_root)
+    _write_record(
+        slug_dir, started, deps, prompt_bytes, None, None, None, demo, build_path=IDE_CHAT
+    )
+    if demo.result != "pass":
+        raise ReanimateError(
+            "check", f"demo failed: expected {demo.expected}, observed {demo.observed}"
+        )
+    return _summary(slug, IDE_CHAT, report, demo=demo)
+
+
 def reanimate(slug: str, prompt_only: bool, built_by: str, deps: Deps) -> Summary:
     """Run every stage in order (Req 1.1); any failure raises ReanimateError with its exit code."""
-    if prompt_only or built_by != HEADLESS:
-        # Task 8 adds --prompt-only and --built-by kiro-ide-chat.
-        raise ReanimateError("cli", "only the kiro-cli-headless build is implemented", 2)
+    if built_by not in (HEADLESS, IDE_CHAT):
+        raise ReanimateError(
+            "cli", f"--built-by must be {HEADLESS} or {IDE_CHAT}, not {built_by!r}", 2
+        )
+    if prompt_only and built_by == IDE_CHAT:
+        raise ReanimateError(
+            "cli", "--prompt-only and --built-by kiro-ide-chat exclude each other", 2
+        )
     root = deps.repo_root
     inputs = preflight(root, slug)
-    version = kiro_preflight(deps.kiro)
     slug_dir = root / "crypt" / slug
+    if built_by == IDE_CHAT:
+        _ide_chat_files(slug_dir, slug)  # Req 4.3: before any network, Check or Build_Record
+    version = None if prompt_only or built_by == IDE_CHAT else kiro_preflight(deps.kiro)
     atomic_write(slug_dir / build.ERROR_PAGE_NAME, inputs.error_body)  # Req 1.3
+    if built_by == IDE_CHAT:
+        return _check_ide_build(slug, deps, inputs, slug_dir)  # Req 4.2: prompt not rewritten
     report = _donors(inputs, deps, slug_dir)
 
     entries = load_donor_index(slug_dir, slug).entries.values()
     prompt = write_prompt(slug_dir, deps.redactor(render_prompt(slug, entries)))  # Req 7.2
+    if prompt_only:  # Req 4.1: no kiro-cli, no build, no Check
+        return _summary(slug, HEADLESS, report, prompt=f"crypt/{slug}/{PROMPT_NAME}")
     prompt_bytes = prompt.read_bytes()
 
     started = _now(deps.clock)

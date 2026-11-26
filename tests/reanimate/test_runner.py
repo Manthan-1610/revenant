@@ -504,3 +504,113 @@ def test_secrets_never_reach_write_scope_or_console(
     assert record.kiro_version is not None and "[REDACTED]" in record.kiro_version
     prompt_bytes = (slug_dir / "reanimate-prompt.md").read_bytes()
     assert record.prompt_sha256 == hashlib.sha256(prompt_bytes).hexdigest()
+
+
+# --- IDE fallback options (task 8.2, Req 4.1, 4.2, 4.3) ---
+
+
+def _invoke_args(monkeypatch: pytest.MonkeyPatch, deps: runner.Deps, *args: str):
+    monkeypatch.setattr(cli, "Deps", lambda: deps)
+    return CliRunner().invoke(cli.app, ["reanimate", SLUG, *args])
+
+
+def test_prompt_only_passes_without_kiro_cli(
+    repo: Path,
+    archive: MockArchive,
+    deps: runner.Deps,
+    stages: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Req 4.1: --prompt-only fetches donors, writes the prompt and prints its path; no kiro, no Check."""
+    monkeypatch.setattr(deps.kiro, "command", [str(repo / "no-such-kiro-cli")])
+    assert not deps.kiro.available()
+
+    result = _invoke_args(monkeypatch, deps, "--prompt-only")
+
+    assert result.exit_code == 0, result.output
+    assert stages == ["preflight", "donors", "prompt"]
+    prompt_rel = f"crypt/{SLUG}/reanimate-prompt.md"
+    assert f"prompt: {prompt_rel}" in result.output
+    assert "check demo" not in result.output
+    slug_dir = repo / "crypt" / SLUG
+    assert (repo / prompt_rel).is_file()
+    assert not (slug_dir / "server.py").exists()
+    assert not (slug_dir / "reanimate.json").exists()
+    assert archive.requests
+
+
+def _place_ide_build(slug_dir: Path) -> tuple[bytes, bytes]:
+    """Stand in for a Kiro IDE chat build: the fixture server and a prompt already on disk."""
+    server = (FAKE_KIRO.parent / "fixtures" / "server.py").read_bytes()
+    prompt = b"# prompt pasted into Kiro IDE chat\n"
+    slug_dir.mkdir(parents=True, exist_ok=True)
+    (slug_dir / "server.py").write_bytes(server)
+    (slug_dir / "reanimate-prompt.md").write_bytes(prompt)
+    return server, prompt
+
+
+def test_built_by_ide_chat_checks_without_kiro_and_keeps_files(
+    repo: Path,
+    deps: runner.Deps,
+    stages: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Req 4.2: server.py and the prompt stay byte-identical; record kiro-ide-chat with nulls."""
+    slug_dir = repo / "crypt" / SLUG
+    server, prompt = _place_ide_build(slug_dir)
+    argv_file = repo / "argv.json"
+    monkeypatch.setenv("FAKE_KIRO_ARGV", str(argv_file))
+
+    result = _invoke_args(monkeypatch, deps, "--built-by", "kiro-ide-chat")
+
+    assert result.exit_code == 0, result.output
+    assert stages == ["preflight", "donors", "check"]
+    assert not argv_file.exists()  # kiro-cli never invoked
+    assert "build path: kiro-ide-chat" in result.output
+    assert "check demo: pass" in result.output
+    assert (slug_dir / "server.py").read_bytes() == server
+    assert (slug_dir / "reanimate-prompt.md").read_bytes() == prompt
+    raw = json.loads((slug_dir / "reanimate.json").read_bytes())
+    assert raw["build_path"] == "kiro-ide-chat"
+    assert raw["kiro_version"] is None and raw["kiro_exit_code"] is None and raw["model"] is None
+    assert raw["prompt_sha256"] == hashlib.sha256(prompt).hexdigest()
+    assert raw["checks"]["demo"]["result"] == "pass"
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [("server.py",), ("reanimate-prompt.md",), ("server.py", "reanimate-prompt.md")],
+)
+def test_built_by_ide_chat_missing_files_exit_2(
+    repo: Path,
+    archive: MockArchive,
+    deps: runner.Deps,
+    stages: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    missing: tuple[str, ...],
+) -> None:
+    """Req 4.3: each missing file is named; no Check, no Build_Record, exit 2."""
+    slug_dir = repo / "crypt" / SLUG
+    _place_ide_build(slug_dir)
+    for name in missing:
+        (slug_dir / name).unlink()
+
+    result = _invoke_args(monkeypatch, deps, "--built-by", "kiro-ide-chat")
+
+    assert result.exit_code == 2, result.output
+    assert "error: ide-chat:" in result.stderr
+    for name in missing:
+        assert f"crypt/{SLUG}/{name}" in result.stderr
+    for name in {"server.py", "reanimate-prompt.md"} - set(missing):
+        assert f"crypt/{SLUG}/{name}" not in result.stderr
+    assert stages == ["preflight"]
+    assert archive.requests == []
+    assert not (slug_dir / "reanimate.json").exists()
+
+
+def test_help_lists_both_ide_fallback_options() -> None:
+    result = CliRunner().invoke(cli.app, ["reanimate", "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "--prompt-only" in result.output
+    assert "--built-by" in result.output

@@ -1,5 +1,6 @@
 """Revenant command-line interface."""
 
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -27,10 +28,18 @@ from revenant.exhume.store import EvidenceStore
 from revenant.exhume.verify import F19_HINT
 from revenant.exhume.verify import verify as run_verify
 from revenant.reanimate.errors import ReanimateError
-from revenant.reanimate.runner import HEADLESS, Deps
+from revenant.reanimate.runner import HEADLESS, IDE_CHAT, Deps
 from revenant.reanimate.runner import reanimate as run_reanimate
 
 app = typer.Typer()
+
+
+class BuiltBy(StrEnum):
+    """Values of `reanimate --built-by` (Build_Path, Req 4.2)."""
+
+    headless = HEADLESS
+    ide_chat = IDE_CHAT
+
 
 # Fits the longest hero host (28 chars).
 HOST_MIN_WIDTH = len("real-chart.finance.yahoo.com")
@@ -125,17 +134,21 @@ def autopsy(
 def reanimate(
     slug: str,
     prompt_only: Annotated[
-        bool, typer.Option(help="Write the Reanimate_Prompt and stop (no kiro-cli).")
+        bool,
+        typer.Option(
+            help="Fetch donors, write the Reanimate_Prompt, print its path and stop (no kiro-cli)."
+        ),
     ] = False,
     built_by: Annotated[
-        str, typer.Option(help="kiro-cli-headless, or kiro-ide-chat for an IDE-built server.")
-    ] = HEADLESS,
+        BuiltBy,
+        typer.Option(help="Who wrote server.py: kiro-cli headless, or Kiro IDE chat (Check only)."),
+    ] = BuiltBy.headless,
 ) -> None:
     """Build and check a revenant server from the generated spec."""
     deps = Deps()
     redact = deps.redactor  # Req 7.2: every console line is redacted
     try:
-        summary = run_reanimate(slug, prompt_only, built_by, deps)
+        summary = run_reanimate(slug, prompt_only, built_by.value, deps)
     except ReanimateError as exc:
         typer.echo(redact(f"error: {exc.stage}: {exc.message}"), err=True)
         raise typer.Exit(exc.code) from exc
