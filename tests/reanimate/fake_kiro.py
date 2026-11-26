@@ -7,7 +7,7 @@ Run as `[sys.executable, "<abs>/tests/reanimate/fake_kiro.py", ...]`. Environmen
   `version-slow`.
 - `FAKE_KIRO_ARGV`: when set, the argv (after the script path) is written there as JSON.
 - `FAKE_KIRO_MODEL`: model id reported by a stream-json event (default `fake-model-1`); empty means
-  no event reports a model.
+  no event reports a model, and so does `none` (Windows removes empty environment values).
 """
 
 from __future__ import annotations
@@ -55,6 +55,8 @@ def main(argv: list[str]) -> int:
         return 2
 
     model = os.environ.get("FAKE_KIRO_MODEL", "fake-model-1")
+    if model == "none":  # Windows drops empty env values, so tests use this sentinel
+        model = ""
     _event({"type": "session_start", "session": "stub"})
     if model:
         _event({"type": "session_info", "params": {"modelId": model}})
