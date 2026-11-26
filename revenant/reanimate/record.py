@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -30,6 +31,17 @@ class DonorIndex(BaseModel):
 
     slug: str
     entries: dict[str, DonorEntry] = {}
+
+
+class CheckResult(BaseModel):
+    """The outcome of one post-build Check (Req 6.2-6.4, 6.6)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: Literal["demo", "unknown_symbol", "weekly"]
+    result: Literal["pass", "fail", "not_run"]
+    expected: str | None = None
+    observed: str | None = None
 
 
 def dump_model(model: BaseModel) -> bytes:
