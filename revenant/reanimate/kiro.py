@@ -6,7 +6,7 @@ import json
 import shutil
 import subprocess
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, Any
@@ -44,31 +44,68 @@ def _identity(text: str) -> str:
     return text
 
 
-def find_model(event: Any) -> str | None:
-    """The first non-empty model id found in a parsed stream-json event (depth-first), else None."""
+def _key_model(event: Any) -> str | None:
+    """The first non-empty `model`/`modelId`/`model_id` value in one event (depth-first)."""
     if isinstance(event, dict):
         for key in MODEL_KEYS:
             value = event.get(key)
             if isinstance(value, str) and value.strip():
                 return value.strip()
-        for value in event.values():
-            found = find_model(value)
-            if found is not None:
-                return found
+        values: Iterable[Any] = event.values()
     elif isinstance(event, list):
-        for value in event:
-            found = find_model(value)
-            if found is not None:
-                return found
+        values = event
+    else:
+        return None
+    for value in values:
+        found = _key_model(value)
+        if found is not None:
+            return found
     return None
 
 
-def _model_from_line(line: str) -> str | None:
+def _config_model(event: Any) -> str | None:
+    """The `currentValue` of the first `configOptions` entry with `id == "model"` (depth-first)."""
+    if isinstance(event, dict):
+        options = event.get("configOptions")
+        if isinstance(options, list):
+            for option in options:
+                if isinstance(option, dict) and option.get("id") == "model":
+                    value = option.get("currentValue")
+                    if isinstance(value, str) and value.strip():
+                        return value.strip()
+        values: Iterable[Any] = event.values()
+    elif isinstance(event, list):
+        values = event
+    else:
+        return None
+    for value in values:
+        found = _config_model(value)
+        if found is not None:
+            return found
+    return None
+
+
+def find_model(events: Iterable[Any]) -> str | None:
+    """Req 4.4: the first model key any event reports, else the first `configOptions` model value.
+
+    kiro-cli 3.5.0 reported no model key, only `config_option_update` events whose `configOptions`
+    held `{"id": "model", "currentValue": "auto"}`. Returns None when neither exists; never guessed.
+    """
+    fallback: str | None = None
+    for event in events:
+        found = _key_model(event)
+        if found is not None:
+            return found
+        if fallback is None:
+            fallback = _config_model(event)
+    return fallback
+
+
+def _parse_event(line: str) -> Any:
     try:
-        event = json.loads(line)
+        return json.loads(line)
     except ValueError:
         return None
-    return find_model(event)
 
 
 class KiroCli:
@@ -134,7 +171,8 @@ class KiroCli:
         """Run the headless chat in `cwd`, streaming labelled lines to `log` (replaced)."""
         log.parent.mkdir(parents=True, exist_ok=True)
         lock = threading.Lock()
-        models: list[str] = []
+        key_models: list[str] = []  # first model key any event reports
+        config_models: list[str] = []  # first configOptions model value (fallback)
         with log.open("w", encoding="utf-8", newline="\n") as sink:
             proc = subprocess.Popen(
                 [*self.command, *CHAT_ARGS],
@@ -150,10 +188,15 @@ class KiroCli:
             def pump(stream: IO[str], label: str) -> None:
                 for raw in stream:
                     line = raw.rstrip("\r\n")
-                    if label == "stdout" and not models:
-                        model = _model_from_line(line)
-                        if model is not None:
-                            models.append(model)
+                    if label == "stdout" and not key_models:
+                        event = _parse_event(line)
+                        key = _key_model(event)
+                        if key is not None:
+                            key_models.append(key)
+                        elif not config_models:
+                            config = _config_model(event)
+                            if config is not None:
+                                config_models.append(config)
                     with lock:
                         sink.write(f"{label}: {redactor(line)}\n")
                         sink.flush()
@@ -180,6 +223,5 @@ class KiroCli:
             for reader in readers:
                 reader.join(timeout=STOP_GRACE)
         exit_code = None if timed_out else proc.returncode
-        return ChatResult(
-            exit_code=exit_code, timed_out=timed_out, model=models[0] if models else None
-        )
+        model = (key_models or config_models or [None])[0]
+        return ChatResult(exit_code=exit_code, timed_out=timed_out, model=model)
