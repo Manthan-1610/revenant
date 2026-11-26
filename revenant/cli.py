@@ -26,6 +26,9 @@ from revenant.exhume.run import exhume as run_exhume
 from revenant.exhume.store import EvidenceStore
 from revenant.exhume.verify import F19_HINT
 from revenant.exhume.verify import verify as run_verify
+from revenant.reanimate.errors import ReanimateError
+from revenant.reanimate.runner import HEADLESS, Deps
+from revenant.reanimate.runner import reanimate as run_reanimate
 
 app = typer.Typer()
 
@@ -116,6 +119,26 @@ def autopsy(
     # Req 8.1: the renderer reads only the contract.json just written, never the in-memory model.
     spec = write_spec(load_contract(path), specs_dir)
     typer.echo(f"wrote: {spec.as_posix()}")
+
+
+@app.command()
+def reanimate(
+    slug: str,
+    prompt_only: Annotated[
+        bool, typer.Option(help="Write the Reanimate_Prompt and stop (no kiro-cli).")
+    ] = False,
+    built_by: Annotated[
+        str, typer.Option(help="kiro-cli-headless, or kiro-ide-chat for an IDE-built server.")
+    ] = HEADLESS,
+) -> None:
+    """Build and check a revenant server from the generated spec."""
+    try:
+        summary = run_reanimate(slug, prompt_only, built_by, Deps())
+    except ReanimateError as exc:
+        typer.echo(f"error: {exc.stage}: {exc.message}", err=True)
+        raise typer.Exit(exc.code) from exc
+    for line in summary.lines():
+        typer.echo(line)
 
 
 def _validation_message(exc: ValidationError) -> str:
