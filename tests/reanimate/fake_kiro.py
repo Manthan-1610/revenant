@@ -4,7 +4,8 @@ Run as `[sys.executable, "<abs>/tests/reanimate/fake_kiro.py", ...]`. Environmen
 - `FAKE_KIRO_MODE`: `ok` (default, copies `fixtures/server.py` into the cwd), `fail` (chat exits 1),
   `sleep` (chat prints a line, then sleeps `FAKE_KIRO_SLEEP` seconds, default 60), `noserver`
   (chat exits 0 without writing `server.py`), `whoami-fail`, `version-fail`, `version-empty`,
-  `version-slow`.
+  `version-slow`, `touch-repo` / `delete-repo` (chat writes the server, then writes or deletes the
+  file named by `FAKE_KIRO_TARGET`, standing in for a trusted `fs_write` outside the workspace).
 - `FAKE_KIRO_ARGV`: when set, the argv (after the script path) is written there as JSON.
 - `FAKE_KIRO_MODEL`: model id reported by a stream-json event (default `fake-model-1`); empty means
   no event reports a model, and so does `none` (Windows removes empty environment values).
@@ -68,8 +69,12 @@ def main(argv: list[str]) -> int:
     if mode == "sleep":
         time.sleep(float(os.environ.get("FAKE_KIRO_SLEEP", "60")))
         return 0
-    if mode == "ok":
+    if mode in ("ok", "touch-repo", "delete-repo"):
         shutil.copyfile(FIXTURE_SERVER, Path.cwd() / "server.py")
+    if mode == "touch-repo":
+        Path(os.environ["FAKE_KIRO_TARGET"]).write_bytes(b"written by a trusted fs_write\n")
+    if mode == "delete-repo":
+        Path(os.environ["FAKE_KIRO_TARGET"]).unlink()
     _event({"type": "end_turn"})
     return 0
 

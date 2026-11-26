@@ -44,6 +44,15 @@ class CheckResult(BaseModel):
     observed: str | None = None
 
 
+class ScopeChange(BaseModel):
+    """One repository file created, changed or deleted while kiro-cli ran (Req 7.1)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    path: str  # POSIX path relative to the repository root
+    change: Literal["created", "changed", "deleted"]
+
+
 BuildPath = Literal["kiro-cli-headless", "kiro-ide-chat"]
 
 
@@ -61,6 +70,8 @@ class BuildRecord(BaseModel):
     model: str | None  # id reported by a stream-json event, else null; never guessed
     started_at: str  # ISO 8601 UTC with "Z"
     ended_at: str
+    scope_changes: list[ScopeChange] = []  # empty = clean (Req 7.1)
+    import_violations: list[str] = []  # imports, evidence/ paths, py_compile, ruff F (Req 7.4)
     checks: dict[str, CheckResult | None]  # null = did not run
 
 

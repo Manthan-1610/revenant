@@ -20,12 +20,19 @@ from revenant.exhume.archive import (
 )
 from revenant.exhume.models import Index, Tombstone, TombstoneError, load_tombstone
 from revenant.exhume.store import EvidenceStore, atomic_write
-from revenant.reanimate import build, check
+from revenant.reanimate import build, check, scope
+from revenant.reanimate.audit import audit
 from revenant.reanimate.donor import DonorReport, fetch_donors, load_donor_index
 from revenant.reanimate.errors import ReanimateError
 from revenant.reanimate.kiro import CHAT_TIMEOUT, ChatResult, KiroCli
 from revenant.reanimate.prompt import render_prompt, write_prompt
-from revenant.reanimate.record import BuildPath, BuildRecord, CheckResult, dump_model
+from revenant.reanimate.record import (
+    BuildPath,
+    BuildRecord,
+    CheckResult,
+    ScopeChange,
+    dump_model,
+)
 
 HEADLESS: BuildPath = "kiro-cli-headless"
 IDE_CHAT: BuildPath = "kiro-ide-chat"
@@ -177,6 +184,22 @@ def run_demo_check(slug_dir: Path, repo_root: Path) -> CheckResult:
         check.stop(proc)
 
 
+def audit_server(server: Path, repo_root: Path) -> list[str]:
+    """Req 7.4: audit violations with the absolute server path replaced by its repo-relative one."""
+    violations = audit(server)
+    try:
+        rel = server.resolve().relative_to(repo_root.resolve()).as_posix()
+    except ValueError:
+        rel = server.name
+    spellings = {str(server), server.as_posix(), str(server.resolve()), server.resolve().as_posix()}
+    cleaned: list[str] = []
+    for violation in violations:
+        for spelling in sorted(spellings, key=len, reverse=True):
+            violation = violation.replace(spelling, rel)
+        cleaned.append(violation)
+    return cleaned
+
+
 def _write_record(
     slug_dir: Path,
     started: str,
@@ -186,8 +209,12 @@ def _write_record(
     chat: ChatResult | None,
     note: str | None,
     demo: CheckResult | None,
+    scope_changes: list[ScopeChange] | None = None,
+    import_violations: list[str] | None = None,
 ) -> None:
     record = BuildRecord(
+        scope_changes=scope_changes or [],
+        import_violations=import_violations or [],
         build_path=HEADLESS,
         prompt_sha256=hashlib.sha256(prompt_bytes).hexdigest(),
         kiro_version=version,
@@ -220,7 +247,15 @@ def reanimate(slug: str, prompt_only: bool, built_by: str, deps: Deps) -> Summar
 
     started = _now(deps.clock)
     workspace = build.make_workspace(slug_dir, inputs.spec)
+    log_rel = f"crypt/{slug}/{LOG_NAME}"
+    before = scope.snapshot(root.resolve(), exclude=(log_rel,))  # Req 7.1
     chat = deps.kiro.chat(workspace, slug_dir / LOG_NAME, timeout=deps.chat_timeout)
+    changes = scope.diff(before, scope.snapshot(root.resolve(), exclude=(log_rel,)))
+    if changes:
+        listed = ", ".join(f"{change.path} ({change.change})" for change in changes)
+        note = f"kiro-cli changed repository files: {listed}"
+        _write_record(slug_dir, started, deps, prompt_bytes, version, chat, note, None, changes)
+        raise ReanimateError("scope", f"{note}; workspace kept at {build.display(workspace)}")
     failure: str | None = None
     if chat.timed_out:
         failure = f"kiro-cli was stopped after {deps.chat_timeout:g} seconds"
@@ -232,6 +267,14 @@ def reanimate(slug: str, prompt_only: bool, built_by: str, deps: Deps) -> Summar
         _write_record(slug_dir, started, deps, prompt_bytes, version, chat, failure, None)
         raise ReanimateError("build", f"{failure}; workspace kept at {build.display(workspace)}")
     build.copy_back(workspace, slug_dir)
+
+    violations = audit_server(slug_dir / build.SERVER_NAME, root)  # Req 7.4
+    if violations:
+        note = "server.py failed the import audit"
+        _write_record(
+            slug_dir, started, deps, prompt_bytes, version, chat, note, None, None, violations
+        )
+        raise ReanimateError("audit", f"{note}: " + "; ".join(violations))
 
     demo = run_demo_check(slug_dir, root)
     _write_record(slug_dir, started, deps, prompt_bytes, version, chat, None, demo)

@@ -9,6 +9,7 @@ from revenant.exhume.store import atomic_write
 from revenant.reanimate.record import DonorEntry
 
 PROMPT_NAME = "reanimate-prompt.md"
+STYLE_LINE = "Python 3.12 style: `X | None`, f-strings."
 
 SERVER_RULES = (
     (
@@ -111,6 +112,8 @@ def render_prompt(slug: str, donors: Iterable[DonorEntry]) -> str:
             "Write exactly one file: `server.py` in this directory, exposing the FastAPI app as `app` "
             "(served by `uvicorn server:app`). Create, change or delete no other file."
         ),
+        "",
+        STYLE_LINE,
         "",
         "## Tools",
         "",

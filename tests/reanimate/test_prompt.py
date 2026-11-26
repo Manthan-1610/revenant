@@ -66,6 +66,10 @@ def test_prompt_forbids_tools_and_names_single_output() -> None:
     assert "Create, change or delete no other file." in text
 
 
+def test_prompt_has_python_312_style_line() -> None:
+    assert "Python 3.12 style: `X | None`, f-strings." in _prompt().splitlines()
+
+
 def test_every_server_rule_cites_gen() -> None:
     text = _prompt()
     for number, rule in enumerate(SERVER_RULES, start=1):

@@ -295,3 +295,74 @@ def test_chat_exit_1_exits_1_with_no_check(
     finally:
         for workspace in workspaces:
             shutil.rmtree(workspace, ignore_errors=True)
+
+
+@pytest.mark.parametrize(
+    ("mode", "target", "change"),
+    [
+        ("touch-repo", "intruder.txt", "created"),
+        ("delete-repo", f"tombstones/{SLUG}.toml", "deleted"),
+    ],
+)
+def test_repo_change_during_chat_exits_1_with_no_check(
+    repo: Path,
+    deps: runner.Deps,
+    stages: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    mode: str,
+    target: str,
+    change: str,
+) -> None:
+    """Req 7.1: a file created or deleted while kiro-cli ran is listed, recorded and left as is."""
+    monkeypatch.setenv("FAKE_KIRO_MODE", mode)
+    monkeypatch.setenv("FAKE_KIRO_TARGET", str(repo / target))
+    workspaces: list[Path] = []
+    make = build.make_workspace
+    monkeypatch.setattr(
+        build, "make_workspace", lambda *a: workspaces.append(make(*a)) or workspaces[-1]
+    )
+
+    try:
+        result = _invoke(monkeypatch, deps)
+
+        assert result.exit_code == 1, result.output
+        assert "error: scope:" in result.stderr
+        assert f"{target} ({change})" in result.stderr
+        assert "copy_back" not in stages and "check" not in stages
+        assert "check demo" not in result.output
+        slug_dir = repo / "crypt" / SLUG
+        assert not (slug_dir / "server.py").exists()  # no copy-back
+        assert (repo / target).exists() == (change == "created")  # left as it is
+        record = BuildRecord.model_validate_json((slug_dir / "reanimate.json").read_bytes())
+        assert [(c.path, c.change) for c in record.scope_changes] == [(target, change)]
+        assert record.checks["demo"] is None
+    finally:
+        for workspace in workspaces:
+            shutil.rmtree(workspace, ignore_errors=True)
+
+
+def test_audit_violation_exits_1_with_no_check(
+    repo: Path,
+    deps: runner.Deps,
+    stages: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Req 7.4: a copied-back server.py with a disallowed import is recorded and not Checked."""
+    original = build.copy_back
+
+    def bad_copy_back(workspace: Path, slug_dir: Path) -> Path:
+        (workspace / "server.py").write_text("import requests\n", encoding="utf-8")
+        return original(workspace, slug_dir)
+
+    monkeypatch.setattr(build, "copy_back", bad_copy_back)
+
+    result = _invoke(monkeypatch, deps)
+
+    assert result.exit_code == 1, result.output
+    assert "error: audit:" in result.stderr and "`requests`" in result.stderr
+    assert "check" not in stages
+    slug_dir = repo / "crypt" / SLUG
+    record = BuildRecord.model_validate_json((slug_dir / "reanimate.json").read_bytes())
+    assert record.import_violations and all(str(repo) not in v for v in record.import_violations)
+    assert any("requests" in v for v in record.import_violations)
+    assert record.checks["demo"] is None
