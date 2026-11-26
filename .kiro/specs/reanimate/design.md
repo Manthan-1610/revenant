@@ -54,14 +54,18 @@ a `model_validator(mode="after")` names each required symbol missing from `donor
   file's bytes stay on disk and the missing message says the entry was removed (Req 2.6).
 
 **prompt.py**: `render_prompt(slug, donors) -> str`, `write_prompt` (3.1): relative file names only; no shell or command
-tool exists, so Kiro must not run, test or install anything and writes only `server.py`; the Server rules with Gen citations.
+tool exists, so Kiro must not run, test or install anything and writes only `server.py`; the Server rules with Gen citations;
+the line "Python 3.12 style: `X | None`, f-strings."
 
 **kiro.py**: `KiroCli(command=["kiro-cli"])` with `available()` (`shutil.which`), `whoami() -> int` (stdout discarded,
 Req 7.2), `version() -> str` (30 s timeout, Req 4.6), `chat(cwd, log, redactor) -> ChatResult(exit_code: int | None,
 timed_out: bool, model: str | None)`. `chat` runs `command + ["chat", "--v3", "--no-interactive", "--trust-workspace",
 "--trust-tools=fs_read,fs_write", "--output-format", "stream-json", "Read reanimate-prompt.md in this directory and follow
 it exactly."]` in the Build_Workspace; reader threads label lines `stdout: `/`stderr: `, redact and append them to the
-Build_Log as they arrive, and keep the first model id an event reports. `chat` and `version` decode with `encoding="utf-8",
+Build_Log as they arrive, and pass the parsed events to `find_model(events) -> str | None` (Req 4.4): the first
+`model`, `modelId` or `model_id` value any event reports; else the `currentValue` of the first `configOptions`
+entry with `id == "model"` (kiro-cli 3.5.0 emitted only `config_option_update` events with `"currentValue": "auto"`);
+else `None`. Never guessed. `chat` and `version` decode with `encoding="utf-8",
 errors="replace"` (Windows defaults to cp1252). At 900 s `chat` calls `terminate()`, then `kill()` (Req 3.2, 3.4, 3.5).
 Tests pass `command=[sys.executable, "tests/reanimate/fake_kiro.py"]`, a stub for `whoami`, `--version` and `chat`
 that copies a canned `server.py` into its cwd or misbehaves per env `FAKE_KIRO_MODE`.
@@ -73,8 +77,16 @@ that copies a canned `server.py` into its cwd or misbehaves per env `FAKE_KIRO_M
 - **.gitattributes**: `crypt/*/donor/** -text`, `crypt/*/error-404.html -text`; clones keep the bytes, so 2.5 never refetches (7.5).
 - **audit.py**: `audit(server) -> list[str]` via `ast`: imports must be `fastapi`, `uvicorn` or in
   `sys.stdlib_module_names`; relative imports and strings containing `evidence/` or `evidence\` fail (7.3, 7.4).
+  It also runs `py_compile` on `server.py` and the Ruff_F_Check (`sys.executable -m ruff check --isolated --select F
+  <server.py>`); a compile error or any finding is a violation, named in the list (exit 1). Style is not checked.
+- **Ruff exclude (approved)**: the first live build (commit 37130d0) produced a `server.py` with 12 ruff style
+  findings, so `pyproject.toml` (line 42) adds `crypt/*/server.py` to `extend-exclude`. The project-wide
+  `ruff check .` skips generated servers; the audit's `--isolated --select F` run still catches real errors in them.
 - **redact.py**: `Redactor(api_key, home)(text)`: key, then Email_Like_Strings → `[REDACTED]`, then Home_Path
-  spellings, longest first → `~`; applied to prompt, Build_Log, Build_Record and console (7.2).
+  spellings, longest first → `~`; applied to prompt, Build_Log, Build_Record and console (7.2). Spellings: native,
+  forward-slash, JSON-escaped and percent-encoded (`c%3A/Users/<name>`, `C%3A%5CUsers%5C<name>`, seen as
+  `file:///c%3A/Users/...` in the first Build_Log), each matched with the drive letter case-insensitive. The class
+  docstring documents the accepted over-redaction: the email pattern also matches `n@app.get` in an escaped `\n@app.get`.
 - **check.py**: `free_port()` (bind `127.0.0.1:0`); `serve` runs `sys.executable -m uvicorn server:app --app-dir
   <slug_dir> --host 127.0.0.1 --port <p>` with cwd = repo root, so a cwd-dependent server fails; `wait_ready`
   (30 s); pure `eval_demo`, `eval_unknown`, `eval_weekly -> CheckResult` (6.2–6.4); `stop` waits 10 s, kills (6.5).
@@ -112,10 +124,10 @@ class CheckResult: name: Literal["demo", "unknown_symbol", "weekly"]
                    result: Literal["pass", "fail", "not_run"]; expected: str | None; observed: str | None
 class BuildRecord: build_path: Literal["kiro-cli-headless", "kiro-ide-chat"]; prompt_sha256: str
                    kiro_version: str | None; kiro_exit_code: int | None; timed_out: bool; note: str | None
-                   model: str | None    # id reported by a stream-json event, else null; never guessed (Req 4.4)
+                   model: str | None    # find_model: model key, else configOptions[id=="model"].currentValue, else null (Req 4.4)
                    started_at: str; ended_at: str                       # ISO 8601 UTC with "Z"
                    scope_changes: list[ScopeChange]                     # [path]; empty = clean (Req 7.1)
-                   import_violations: list[str]                         # Req 7.4
+                   import_violations: list[str]                         # imports, evidence/ paths, py_compile, ruff F (Req 7.4)
                    checks: dict[str, CheckResult | None]                # null = did not run (Req 4.4)
 ```
 
@@ -145,7 +157,8 @@ which uses only `A-Za-z0-9.-_%` and differs after case folding for distinct symb
 ### Property 3: Redaction removes every secret
 
 For any text embedding a key (16+ characters, not a substring of `[REDACTED]` or `~`), Email_Like_Strings and
-Home_Path in all three spellings, the output contains none of them, and redacting twice equals redacting once.
+Home_Path in every spelling (native, forward-slash, JSON-escaped, percent-encoded with `/` or `%5C` separators, drive
+letter in either case), the output contains none of them, and redacting twice equals redacting once.
 
 **Validates: Requirements 7.2**
 
@@ -181,7 +194,7 @@ status is 404 with a non-empty `X-Revenant-Note`.
 | `kiro-cli` not on PATH or `whoami` non-zero; `--version` non-zero, empty or > 30 s | 3.3, 4.6 | 2 |
 | Required_Donor_Symbol missing | 2.6 | 1 |
 | kiro-cli non-zero, 15-minute timeout, or no `server.py` (workspace kept) | 3.5 | 1 |
-| A repository file changed during kiro-cli; disallowed import or `evidence/` path in `server.py` | 7.1, 7.4 | 1 |
+| A repository file changed during kiro-cli; disallowed import, `evidence/` path, `py_compile` error or Ruff_F_Check finding in `server.py` | 7.1, 7.4 | 1 |
 | Server silent for 30 s, exits early, or any Check fails | 6.6 | 1 |
 | Success, or `--prompt-only` | 1.4, 4.1 | 0 |
 
@@ -199,8 +212,9 @@ P5 and P6 copy the built `server.py` into `tmp_path` beside a fixture `donor/` a
 a hand-written `tests/reanimate/fixtures/server.py`, so Runner tests never depend on Kiro.
 
 Example tests: `test_tombstone.py` (2.1); `test_kiro.py` (argv, labelled log, timeout, partial log, non-cp1252 bytes,
-model id or null); `test_runner.py` (each exit-code row, stage order, zero-request reuse, Error_Page copy, Write_Scope, a
-stub printing a fake key, email and home path); `test_audit.py`; `test_check.py`; `git check-ignore`/`check-attr` (7.5).
+`find_model`: model key, `configOptions` fallback, or null); `test_runner.py` (each exit-code row, stage order,
+zero-request reuse, Error_Page copy, Write_Scope, a stub printing a fake key, email and home path in every spelling);
+`test_audit.py` (imports, `evidence/` strings, a syntax error for `py_compile`, an undefined name for the Ruff_F_Check); `test_check.py`; `git check-ignore`/`check-attr` (7.5).
 
 Live tests (`@pytest.mark.live`): AAPL donor fetch, a real kiro-cli headless build, the demo Check on it. The first 4
 tasks deliver this slice (Tombstone + donors; prompt + kiro/build; check; runner + CLI); hardening follows.
@@ -208,3 +222,5 @@ tasks deliver this slice (Tombstone + donors; prompt + kiro/build; check; runner
 ## Open Items
 
 1. `kiro-cli whoami` exiting non-zero without a login is unverified (help covers only `chat`, `--version`); confirm for Req 3.3.
+2. kiro-cli self-updated from 3.5.0 to 3.6.2 after the first build; the chat flags are not re-checked on 3.6.2. A flag
+   failure in task 10.2 follows the task 4.4 stop rule.

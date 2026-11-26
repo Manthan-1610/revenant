@@ -2,11 +2,11 @@
   "pbtResults": {
     "1.4 Write property test P1 in `tests/reanimate/test_donor.py`": {
       "status": "passed",
-      "lastRunTimestamp": 1795728879473
+      "lastRunTimestamp": 1795732982815
     },
     "1.6 Write property test P2 in `tests/reanimate/test_donor.py`": {
       "status": "passed",
-      "lastRunTimestamp": 1795729189197
+      "lastRunTimestamp": 1795732983407
     },
     "3.3 Write property test P5 in `tests/reanimate/test_server.py`": {
       "status": "passed",
@@ -205,6 +205,73 @@
         "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
         "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
         "timestamp": 1795731402796
+      },
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795731574003
+      }
+    ],
+    "3. Implement the Check runner (`check.py`) and the server properties": [
+      {
+        "executionId": "8f82e531-f017-4db4-add1-521c7774732d",
+        "chatSessionId": "sess_9089ae6d-2291-4115-b587-5e5046c1e306",
+        "timestamp": 1795731574211
+      }
+    ],
+    "4.1 Write the happy path in `runner.py`, a minimal `BuildRecord` and the CLI command": [
+      {
+        "executionId": "bc6738c6-fdbb-40aa-9d10-edddec08d5ab",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795731652303
+      },
+      {
+        "executionId": "bc6738c6-fdbb-40aa-9d10-edddec08d5ab",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795731871078
+      }
+    ],
+    "4.2 Write happy-path tests in `tests/reanimate/test_runner.py`": [
+      {
+        "executionId": "bc6738c6-fdbb-40aa-9d10-edddec08d5ab",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795731875114
+      },
+      {
+        "executionId": "bc6738c6-fdbb-40aa-9d10-edddec08d5ab",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795732139748
+      }
+    ],
+    "4.3 (LIVE) Fetch the AAPL donor through the Archive": [
+      {
+        "executionId": "bc6738c6-fdbb-40aa-9d10-edddec08d5ab",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795732142911
+      },
+      {
+        "executionId": "42b6c693-e6e4-4af6-b1a6-366a83434de6",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795733158679
+      }
+    ],
+    "4.4 (LIVE) Build the server with real kiro-cli headless and pass the demo Check": [
+      {
+        "executionId": "42b6c693-e6e4-4af6-b1a6-366a83434de6",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795733159285
+      },
+      {
+        "executionId": "42b6c693-e6e4-4af6-b1a6-366a83434de6",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795733681840
+      }
+    ],
+    "4. Wire the minimal Runner and CLI, then run the slice live": [
+      {
+        "executionId": "42b6c693-e6e4-4af6-b1a6-366a83434de6",
+        "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
+        "timestamp": 1795733682030
       }
     ]
   }
