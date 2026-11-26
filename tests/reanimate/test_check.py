@@ -1,16 +1,26 @@
-"""Example tests for the post-build Check (Req 6.1, 6.2, 6.5)."""
+"""Example tests for the post-build Check (Req 6.1-6.6), including misbehaving fixture servers."""
 
 from __future__ import annotations
 
+import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import httpx
 import pytest
+from click.testing import Result
+from typer.testing import CliRunner
 
-from revenant.reanimate import check
+from revenant import cli
+from revenant.autopsy.contract import contract_path, load_contract
+from revenant.autopsy.render import spec_path
+from revenant.reanimate import check, runner
 from revenant.reanimate.errors import ReanimateError
-from revenant.reanimate.record import DonorEntry, DonorIndex, dump_model
+from revenant.reanimate.kiro import KiroCli
+from revenant.reanimate.record import BuildRecord, DonorEntry, DonorIndex, dump_model
+from tests.reanimate import test_runner as tr
 
 REPO = Path(__file__).resolve().parents[2]
 FIXTURE_SERVER = Path(__file__).parent / "fixtures" / "server.py"
@@ -169,6 +179,166 @@ def test_eval_weekly() -> None:
     assert bare.observed == "no X-Revenant-Note"
     assert check.eval_weekly(_response(200)).observed == "status 200"
     assert check.eval_weekly(None).result == "fail"
+
+
+FIXTURES = Path(__file__).parent / "fixtures"
+SHORT = check.Limits(ready=20.0, request=5.0, stop=5.0)
+
+
+@pytest.fixture
+def served(monkeypatch: pytest.MonkeyPatch) -> list[subprocess.Popen[bytes]]:
+    """Every server process `run_checks` starts, so a test can assert none remains (Req 6.5)."""
+    procs: list[subprocess.Popen[bytes]] = []
+    original = check.serve
+
+    def spy(*args, **kwargs):
+        procs.append(original(*args, **kwargs))
+        return procs[-1]
+
+    monkeypatch.setattr(check, "serve", spy)
+    return procs
+
+
+# (variant, Limits, expected result per Check, the printed failure line as a regex)
+MISBEHAVING = [
+    pytest.param(
+        "server_silent.py",
+        check.Limits(ready=2.0, request=5.0, stop=5.0),
+        {"demo": "fail", "unknown_symbol": "not_run", "weekly": "not_run"},
+        r"demo: expected server answering, observed Revenant_Server did not answer within 2 seconds",
+        id="never-answers",
+    ),
+    pytest.param(
+        "server_import_error.py",
+        SHORT,
+        {"demo": "fail", "unknown_symbol": "not_run", "weekly": "not_run"},
+        r"demo: expected server answering, observed Revenant_Server exited with code -?\d+ "
+        r"before answering",
+        id="exits-on-import",
+    ),
+    pytest.param(
+        "server_unknown_200.py",
+        SHORT,
+        {"demo": "pass", "unknown_symbol": "fail", "weekly": "pass"},
+        r"unknown_symbol: expected status 404, observed status 200",
+        id="unknown-symbol-200",
+    ),
+    pytest.param(
+        "server_no_note.py",
+        SHORT,
+        {"demo": "pass", "unknown_symbol": "pass", "weekly": "fail"},
+        r"weekly: expected a non-empty X-Revenant-Note, observed no X-Revenant-Note",
+        id="no-revenant-note",
+    ),
+]
+
+
+@pytest.mark.parametrize(("variant", "limits", "expected", "line"), MISBEHAVING)
+def test_run_checks_records_misbehaving_server(
+    tmp_path: Path,
+    served: list[subprocess.Popen[bytes]],
+    variant: str,
+    limits: check.Limits,
+    expected: dict[str, str],
+    line: str,
+) -> None:
+    """Req 6.1, 6.3-6.6: each Check gets pass, fail or not_run; the server is always stopped."""
+    slug_dir = _slug_dir(tmp_path)
+    shutil.copyfile(FIXTURES / variant, slug_dir / "server.py")
+    index = DonorIndex(slug="yahoo-finance-ichart", entries={"AAPL": ENTRY})
+
+    results = check.run_checks(slug_dir, REPO, index, limits=limits)
+
+    assert {name: r.result for name, r in results.items()} == expected
+    assert [re.fullmatch(line, f) is not None for f in check.failures(results)] == [True]
+    assert len(served) == 1 and served[0].poll() is not None
+
+
+def _ide_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str, limits: check.Limits
+) -> tuple[Path, Result]:
+    """A `--built-by kiro-ide-chat` run (Req 4.2) of a misbehaving server through the CLI."""
+    monkeypatch.delenv("KIRO_API_KEY", raising=False)
+    error_page, _ = runner._error_capture(
+        REPO, tr.SLUG, load_contract(contract_path(REPO / "crypt", tr.SLUG))
+    )
+    for path in (
+        REPO / "tombstones" / f"{tr.SLUG}.toml",
+        contract_path(REPO / "crypt", tr.SLUG),
+        spec_path(REPO / ".kiro" / "specs", tr.SLUG),
+        REPO / "evidence" / tr.SLUG / "index.json",
+        error_page,
+    ):
+        tr._copy(path, tmp_path / path.relative_to(REPO))
+    slug_dir = tmp_path / "crypt" / tr.SLUG
+    shutil.copyfile(FIXTURES / variant, slug_dir / "server.py")
+    (slug_dir / "reanimate-prompt.md").write_bytes(b"# prompt pasted into Kiro IDE chat\n")
+    deps = runner.Deps(
+        kiro=KiroCli([sys.executable, str(tr.FAKE_KIRO)]),
+        transport=httpx.MockTransport(tr.MockArchive().handler),
+        clock=tr.NoSleepClock(),
+        repo_root=tmp_path,
+        check_limits=limits,
+    )
+    monkeypatch.setattr(cli, "Deps", lambda: deps)
+    args = ["reanimate", tr.SLUG, "--built-by", "kiro-ide-chat"]
+    return slug_dir, CliRunner().invoke(cli.app, args)
+
+
+@pytest.mark.parametrize(("variant", "limits", "expected", "line"), MISBEHAVING)
+def test_runner_exits_1_and_prints_failed_check(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    served: list[subprocess.Popen[bytes]],
+    variant: str,
+    limits: check.Limits,
+    expected: dict[str, str],
+    line: str,
+) -> None:
+    """Req 6.6: expected and observed values printed, every result recorded, no success, exit 1."""
+    slug_dir, result = _ide_run(tmp_path, monkeypatch, variant, limits)
+
+    assert result.exit_code == 1, result.output
+    assert re.search(r"error: check: failed Check\(s\): " + line, result.stderr), result.stderr
+    assert "check demo: pass" not in result.stdout  # no success summary
+    assert "build path:" not in result.stdout
+    record = BuildRecord.model_validate_json((slug_dir / "reanimate.json").read_bytes())
+    assert record.build_path == "kiro-ide-chat"
+    assert {name: r.result if r else None for name, r in record.checks.items()} == expected
+    assert len(served) == 1 and served[0].poll() is not None
+
+
+def test_stop_force_terminates_a_server_that_ignores_the_stop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Req 6.5: a server that will not stop is force-terminated after the stop wait.
+
+    Platform caveat: on POSIX `terminate()` sends SIGTERM, which the fixture ignores, so `stop`
+    must fall through to `kill()`. On Windows `terminate()` is already TerminateProcess (a hard
+    kill), so the process exits within the wait and `kill()` is never needed.
+    """
+    slug_dir = _slug_dir(tmp_path)
+    shutil.copyfile(FIXTURES / "server_stubborn.py", slug_dir / "server.py")
+    kills: list[int] = []
+    original_kill = subprocess.Popen.kill
+
+    def spy_kill(self: subprocess.Popen[bytes]) -> None:
+        kills.append(self.pid)
+        original_kill(self)
+
+    monkeypatch.setattr(subprocess.Popen, "kill", spy_kill)
+    port = check.free_port()
+    proc = check.serve(slug_dir, port, REPO)
+    try:
+        check.wait_ready(proc, port, timeout=20.0)
+        assert check.eval_demo(
+            check.request(port, check.DEMO_PATH), ENTRY, DONOR_BYTES
+        ).observed == ("status 503")
+    finally:
+        check.stop(proc, timeout=1.0)
+
+    assert proc.poll() is not None
+    assert kills == ([] if sys.platform == "win32" else [proc.pid])
 
 
 def test_failures_lists_expected_and_observed() -> None:
