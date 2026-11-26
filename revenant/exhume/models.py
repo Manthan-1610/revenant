@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import re
 import tomllib
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
@@ -12,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 PassKind = Literal["data", "error"]
 Kind = Literal["data", "error", "error_page"]
 Shape = Literal["s_only", "empty_range", "full_range", "other"]
+_ISO_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
 class TombstoneError(Exception):
@@ -31,6 +34,32 @@ class Tombstone(BaseModel):
     mimetypes: list[str] = Field(min_length=1)
     donor_symbols: list[str] = []
     donor_required: list[str] = []
+    donor_cover: list[str] | None = None  # Donor_Cover: [start, end] ISO dates (Reanimate 2.1)
+
+    @field_validator("donor_cover")
+    @classmethod
+    def _valid_cover(cls, cover: list[str] | None) -> list[str] | None:
+        if cover is None:
+            return None
+        if len(cover) != 2:
+            raise ValueError(f"donor_cover must hold exactly two dates, got {len(cover)}")
+        parsed = []
+        for value in cover:
+            if not _ISO_DATE.fullmatch(value):
+                raise ValueError(f"donor_cover date {value!r} is not YYYY-MM-DD")
+            try:
+                parsed.append(date.fromisoformat(value))
+            except ValueError as exc:
+                raise ValueError(f"donor_cover date {value!r} does not parse") from exc
+        if parsed[0] > parsed[1]:
+            raise ValueError(f"donor_cover start {cover[0]} is after end {cover[1]}")
+        return cover
+
+    def cover(self) -> tuple[date, date] | None:
+        """The parsed Donor_Cover `(start, end)`, or None when the field is absent."""
+        if self.donor_cover is None:
+            return None
+        return date.fromisoformat(self.donor_cover[0]), date.fromisoformat(self.donor_cover[1])
 
     @field_validator("hosts")
     @classmethod

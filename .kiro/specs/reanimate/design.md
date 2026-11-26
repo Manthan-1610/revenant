@@ -28,22 +28,30 @@ New modules live in `revenant/reanimate/` (< ~150 LOC each); `ReanimateError(sta
 
 **Tombstone change** (`revenant/exhume/models.py`, Req 2.1): `donor_symbols`, `donor_required: list[str] = []`;
 a `model_validator(mode="after")` names each required symbol missing from `donor_symbols`; `extra="forbid"` stays.
+`donor_cover: list[str] | None = None`: a `field_validator` rejects a length other than 2, a value that is not
+`YYYY-MM-DD` or does not parse, and start > end; `cover() -> tuple[date, date] | None` returns the parsed pair.
 
 **donor.py** (Donor_Fetcher):
 - `candidates(rows: Sequence[CdxRow], symbol: str, mimetypes: list[str]) -> list[CdxRow]` (pure, Req 2.2):
   status 2xx, listed mimetype, timestamp `< "20170501"`, no `has_auth_param`, first `s` of
-  `parse_query(original)` equals `symbol`, query `s_only` or Daily_Range (`interval == "d"`, `c` ASCII digits
-  ≤ 1999, `f` absent, empty or digits ≥ the timestamp year; Exhume's `full_range` needs `f`, so it is not
-  reused). Sort by (timestamp desc, original asc); keep the first row per digest.
-- `accept(body: bytes, served: str | None) -> str | None` (pure, Req 2.3): `None` if accepted, else the
-  reason. Needs `served < "20170501"`, bytes before the first `\n` exactly the Header_Line, ≥ 1 Data_Row
-  (`parse_body`), newest Row_Date `n` with `served_date - 7 days <= n <= served_date`.
+  `parse_query(original)` equals `symbol`, query Full_History (every pair is `s`, `ignore`, a `g` of `""` or
+  `d`, or one of `a`–`f` with value `""`; Exhume's `s_only` is a subset, so it is not reused) or Daily_Range
+  (`interval == "d"`, `c` ASCII digits ≤ 1999, `f` absent, empty or digits ≥ the timestamp year; Exhume's
+  `full_range` needs `f`, so it is not reused). Sort by (timestamp desc, original asc); keep the first row per digest.
+- `accept(body: bytes, served: str | None, cover: tuple[date, date] | None = None) -> str | None` (pure,
+  Req 2.3): `None` if accepted, else the reason. Needs `served < "20170501"`, bytes before the first `\n`
+  exactly the Header_Line, ≥ 1 Data_Row (`parse_body`), every Row_Date parsed by `parse_row_date` (strict),
+  newest Row_Date `n` with `served_date - 7 days <= n <= served_date`, and with a Donor_Cover `(start, end)`
+  oldest Row_Date ≤ start and `n` ≥ end. Rejected alternatives: freshness against the requested end date,
+  and relaxing the `f` rule.
 - `donor_file_name(symbol: str) -> str` (pure, Req 2.4): keep `A-Z 0-9 . - _`, write every other UTF-8 byte
   (lower-case letters included) as `%XX`, add `.csv`. `^GSPC` → `%5EGSPC.csv`; distinct on Windows too.
 - `fetch_donors(tombstone, archive, store, slug_dir) -> DonorReport(stored, missing, required_missing)`:
   reuse a hash-valid entry with zero requests (Req 2.5); else pool `get_listing(..., "data", refresh=False)`
   over all hosts, fetch at most 5 candidates via `archive.get(wayback_url(...))` (an `ArchiveError` counts as
   a tried non-qualifier), `atomic_write` the first accepted body, rewrite `donor/index.json` (Req 2.4, 2.6).
+  A stale entry (file missing or hash mismatch) with no qualifier is removed from `donor/index.json`; its
+  file's bytes stay on disk and the missing message says the entry was removed (Req 2.6).
 
 **prompt.py**: `render_prompt(slug, donors) -> str`, `write_prompt` (3.1): relative file names only; no shell or command
 tool exists, so Kiro must not run, test or install anything and writes only `server.py`; the Server rules with Gen citations.
@@ -117,7 +125,8 @@ class BuildRecord: build_path: Literal["kiro-cli-headless", "kiro-ide-chat"]; pr
 
 ### Property 1: Donor candidate filter and order
 
-For any list of CDX rows (raw and `%5E` symbols, `&amp` artifacts, any status, mimetype, timestamp, auth-like names,
+For any list of CDX rows (raw and `%5E` symbols, `&amp` artifacts, Full_History queries with absent, empty or `d`
+`g` and absent or empty `a`–`f`, Daily_Range and other queries, any status, mimetype, timestamp, auth-like names,
 repeated digests) and any symbol, every returned row meets each Req 2.2 condition, digests are unique, order is
 (timestamp desc, original asc), no qualifying digest is lost, and input order does not matter.
 
@@ -125,8 +134,9 @@ repeated digests) and any symbol, every returned row meets each Req 2.2 conditio
 
 ### Property 2: Donor acceptance and the 5-try cap
 
-For any body, served timestamp and newest-Row_Date offset of -3 to 12 days, `accept` returns `None` exactly when Req 2.3
-holds; and for any sequence of candidate outcomes (qualifies, fails, `ArchiveError`), the fetcher makes `min(5, i + 1)`
+For any body, served timestamp, newest-Row_Date offset of -3 to 12 days, optional unparseable Row_Date and optional
+Donor_Cover, `accept` returns `None` exactly when Req 2.3 holds; and for any sequence of candidate outcomes (qualifies,
+fails, misses the Donor_Cover, `ArchiveError`), the fetcher makes `min(5, i + 1)`
 fetches for a first qualifier at index `i` (else `min(5, n)`) and stores its bytes unchanged as `donor_file_name(symbol)`,
 which uses only `A-Za-z0-9.-_%` and differs after case folding for distinct symbols.
 

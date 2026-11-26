@@ -63,6 +63,24 @@ def test_candidates_filters_orders_and_dedups() -> None:
     assert result == [keep_new, keep_tie, keep_old]  # same timestamp: `original` ascending
 
 
+def test_candidates_full_history_queries() -> None:
+    keep = [
+        _row("s=AAPL&g=d&ignore=.csv", digest="F1"),  # the shape of capture 20161222215700
+        _row("s=AAPL&a=&b=&c=&d=&e=&f=&g=&ignore=.csv", digest="F2"),  # empty_range
+        _row("s=AAPL&g=&ignore=.csv", digest="F3"),
+        _row("s=AAPL&ignore=.csv", digest="F4"),  # s_only
+        _row("s=AAPL&amp;g=d&amp;b=", digest="F5"),
+    ]
+    rejected = [
+        _row("s=AAPL&g=w&ignore=.csv", digest="R1"),
+        _row("s=AAPL&a=0&g=d", digest="R2"),  # non-empty a without a Daily_Range
+        _row("s=AAPL&g=d&x=1", digest="R3"),  # unknown parameter
+        _row("g=d&ignore=.csv", digest="R4"),
+    ]
+    result = candidates([*rejected, *keep], "AAPL", ["text/csv"])
+    assert {row.digest for row in result} == {"F1", "F2", "F3", "F4", "F5"}
+
+
 def test_candidates_matches_percent_encoded_symbol() -> None:
     raw, encoded = _row("s=^GSPC", digest="R"), _row("s=%5EGSPC", digest="E")
     assert set(candidates([raw, encoded], "^GSPC", ["text/csv"])) == {raw, encoded}
@@ -77,6 +95,25 @@ def test_accept_good_and_bad_bodies() -> None:
     assert accept(body, None) is not None
     assert accept(HEADER + b"\n", "20160110000000") is not None
     assert accept(b"Date,Open,High,Low,Close,Volume,Adj. Close*\n" + body, "20160110") is not None
+
+
+def test_accept_rejects_any_unparseable_row_date() -> None:
+    good = HEADER + b"\n2016-01-08,1,2,0.5,1.5,10,1.5\n"
+    assert accept(good, "20160110000000") is None
+    reason = accept(good + b"2016-02-30,1,2,0.5,1.5,10,1.5\n", "20160110000000")
+    assert reason is not None and "unparseable" in reason
+    assert accept(good + b"junk,1,2,0.5,1.5,10,1.5\n", "20160110000000") is not None
+
+
+def test_accept_requires_the_donor_cover() -> None:
+    days = [date(2016, 1, 8) - timedelta(days=i) for i in range(6)]  # 2016-01-08..03
+    body = HEADER + b"\n" + b"".join(f"{d},1,2,0.5,1.5,10,1.5\n".encode() for d in days)
+    served = "20160110000000"
+    assert accept(body, served, (date(2016, 1, 4), date(2016, 1, 8))) is None
+    assert accept(body, served, (date(2016, 1, 3), date(2016, 1, 8))) is None  # bounds inclusive
+    assert accept(body, served, (date(2016, 1, 2), date(2016, 1, 8))) is not None  # too old
+    assert accept(body, served, (date(2016, 1, 4), date(2016, 1, 9))) is not None  # too new
+    assert accept(body, served) is None
 
 
 def test_donor_file_name() -> None:
@@ -98,7 +135,10 @@ class Spec:
 
     symbol: str
     encoding: str  # "raw", "%5E" or "%5e"
-    shape: str  # "s_only" or "range"
+    shape: str  # "history" (s plus optional g, ignore and blank a-f) or "range"
+    hist_g: str | None  # history shape: the `g` value, None means `g` is absent
+    blanks: tuple[str, ...]  # history shape: names among a-f sent with an empty value
+    filled: bool  # history shape: also send `a=0`, which no Full_History query has
     ignore: bool
     c: str
     f: str | None  # None means `f` is absent
@@ -113,6 +153,12 @@ class Spec:
     def row(self) -> CdxRow:
         s = self.symbol if self.encoding == "raw" else self.symbol.replace("^", self.encoding)
         parts = [f"s={s}"]
+        if self.shape == "history":
+            parts += [f"{name}=" for name in self.blanks]
+            if self.hist_g is not None:
+                parts.append(f"g={self.hist_g}")
+            if self.filled:
+                parts.append("a=0")
         if self.shape == "range":
             parts += ["a=0", "b=1", f"c={self.c}", "d=0", "e=8"]
             if self.f is not None:
@@ -137,8 +183,8 @@ class Spec:
             return False
         if self.timestamp >= "20170501" or self.auth is not None or self.symbol != symbol:
             return False
-        if self.shape == "s_only":
-            return True
+        if self.shape == "history":
+            return self.hist_g in (None, "", "d") and not self.filled
         if self.g != "d" or not self.c.isdigit() or int(self.c) > 1999:
             return False
         year = int(self.timestamp[:4])
@@ -149,7 +195,10 @@ specs = st.builds(
     Spec,
     symbol=st.sampled_from(SYMBOLS),
     encoding=st.sampled_from(["raw", "%5E", "%5e"]),
-    shape=st.sampled_from(["s_only", "range"]),
+    shape=st.sampled_from(["history", "range"]),
+    hist_g=st.sampled_from([None, "", "d", "w", "v"]),
+    blanks=st.lists(st.sampled_from("abcdef"), unique=True, max_size=6).map(tuple),
+    filled=st.booleans(),
     ignore=st.booleans(),
     c=st.sampled_from(["", "1900", "1980", "1999", "2000", "{{(-1 month).year}}"]),
     f=st.sampled_from([None, "", "2014", "2015", "2016", "2017", "x"]),
@@ -232,15 +281,37 @@ def _body(header: bytes, newest: date, rows: int, tag: int = 0) -> bytes:
     offset=st.integers(min_value=-3, max_value=12),
     rows=st.integers(min_value=0, max_value=4),
     header=st.one_of(st.just(HEADER), st.sampled_from(BAD_HEADERS)),
+    bad_date=st.sampled_from([None, b"junk", b"2016-02-30", b"2016-13-01"]),
+    cover=st.one_of(
+        st.none(),
+        st.tuples(st.integers(min_value=-2, max_value=6), st.integers(min_value=0, max_value=4)),
+    ),
 )
 def test_property_accept(
-    served_on: date, clock: str, offset: int, rows: int, header: bytes
+    served_on: date,
+    clock: str,
+    offset: int,
+    rows: int,
+    header: bytes,
+    bad_date: bytes | None,
+    cover: tuple[int, int] | None,
 ) -> None:
     """**Validates: Requirements 2.3**"""
     served = served_on.strftime("%Y%m%d") + clock
-    body = _body(header, served_on - timedelta(days=offset), rows)
+    newest = served_on - timedelta(days=offset)
+    body = _body(header, newest, rows)
+    if bad_date is not None:  # one Data_Row whose Row_Date does not parse
+        body += bad_date + b",1.5,2.25,0.75,1.875,000,1.875\n"
     expected = served_on < CUTOFF_DATE and header == HEADER and rows >= 1 and 0 <= offset <= 7
-    assert (accept(body, served) is None) == expected
+    expected = expected and bad_date is None
+    window = None
+    if cover is not None:  # start `back` days before the newest row, `span` days long
+        back, span = cover
+        start = newest - timedelta(days=back)
+        window = (start, start + timedelta(days=span))
+        oldest = newest - timedelta(days=rows - 1)
+        expected = expected and oldest <= window[0] and newest >= window[1]
+    assert (accept(body, served, window) is None) == expected
 
 
 class FakeArchive:
@@ -260,18 +331,33 @@ class FakeArchive:
         return httpx.Response(status, content=body, request=httpx.Request("GET", url))
 
 
-OUTCOMES = ("qualifies", "stale", "bad_header", "header_only", "not_found", "error")
+OUTCOMES = (
+    "qualifies",
+    "stale",
+    "bad_header",
+    "header_only",
+    "uncovered",
+    "bad_date",
+    "not_found",
+    "error",
+)
+COVER = ["2016-01-01", "2016-01-05"]  # every candidate below is served 2016-01-12..20
 
 
 def _scripted(timestamp: str, kind: str, tag: int) -> bytes:
     served_on = date(int(timestamp[:4]), int(timestamp[4:6]), int(timestamp[6:8]))
+    covering = (served_on - date.fromisoformat(COVER[0])).days + 1
     if kind == "stale":
         return _body(HEADER, served_on - timedelta(days=9), 3, tag)
     if kind == "bad_header":
-        return _body(BAD_HEADERS[0], served_on, 3, tag)
+        return _body(BAD_HEADERS[0], served_on, covering, tag)
     if kind == "header_only":
         return HEADER + b"\n"
-    return _body(HEADER, served_on, 3, tag)
+    if kind == "uncovered":
+        return _body(HEADER, served_on, 3, tag)
+    if kind == "bad_date":
+        return _body(HEADER, served_on, covering, tag) + b"junk,1,2,0.5,1.5,000,1.5\n"
+    return _body(HEADER, served_on, covering, tag)
 
 
 # Feature: reanimate, Property 2: Donor acceptance and the 5-try cap
@@ -308,6 +394,7 @@ def test_property_five_try_cap(kinds: list[str], symbol: str) -> None:
         mimetypes=["text/csv"],
         donor_symbols=[symbol],
         donor_required=[symbol],
+        donor_cover=COVER,
     )
     archive = FakeArchive(outcomes)
     with tempfile.TemporaryDirectory() as tmp:
@@ -420,8 +507,11 @@ class MockArchive:
         return sum(1 for r in self.requests if r.url.path.startswith("/web/"))
 
 
-def _tombstone(symbols: list[str], required: list[str]) -> Tombstone:
+def _tombstone(
+    symbols: list[str], required: list[str], cover: list[str] | None = None
+) -> Tombstone:
     return Tombstone(
+        donor_cover=cover,
         slug=SLUG,
         name="Yahoo Finance historical prices",
         died="2017-05",
@@ -520,3 +610,37 @@ def test_missing_required_symbol_sets_required_missing(env) -> None:
     assert report.required_missing == ["MSFT"] and "MSFT" in report.missing
     assert report.stored == ["YHOO"]
     assert not (slug_dir / "donor" / "MSFT.csv").exists()
+
+
+def test_corrupted_donor_without_replacement_loses_its_entry(env) -> None:
+    root, store, mock, archive = env
+    slug_dir = root / "crypt" / SLUG
+    fetch_donors(_tombstone(["YHOO"], ["YHOO"]), archive, store, slug_dir)
+    stored = slug_dir / "donor" / "YHOO.csv"
+    corrupt = b"Date,Open,High,Low,Close,Volume,Adj Close\ncorrupt\n"
+    stored.write_bytes(corrupt)
+    mock.body = b"<html>not a csv</html>"  # the only candidate no longer qualifies
+
+    report = fetch_donors(_tombstone(["YHOO"], ["YHOO"]), archive, store, slug_dir)
+
+    assert report.stored == [] and report.required_missing == ["YHOO"]
+    assert "no capture qualified" in report.missing["YHOO"]
+    assert "removed" in report.missing["YHOO"]
+    assert load_donor_index(slug_dir, SLUG).entries == {}
+    assert stored.read_bytes() == corrupt  # the file's bytes stay on disk
+
+
+def test_donor_cover_rejects_a_capture_that_misses_it(env) -> None:
+    root, store, mock, archive = env
+    slug_dir = root / "crypt" / SLUG
+    # The YHOO fixture's newest Row_Date is 2016-05-02, so it cannot cover 2016-05-03.
+    report = fetch_donors(
+        _tombstone(["YHOO"], ["YHOO"], ["2016-04-25", "2016-05-03"]), archive, store, slug_dir
+    )
+    assert report.required_missing == ["YHOO"] and mock.capture_requests == 2
+    assert not (slug_dir / "donor" / "YHOO.csv").exists()
+
+    covered = fetch_donors(
+        _tombstone(["YHOO"], ["YHOO"], ["2016-04-25", "2016-05-02"]), archive, store, slug_dir
+    )
+    assert covered.stored == ["YHOO"]

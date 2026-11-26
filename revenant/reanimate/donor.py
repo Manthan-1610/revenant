@@ -16,7 +16,7 @@ from revenant.exhume.cdx import DiscoveryError, get_listing
 from revenant.exhume.ethics import has_auth_param
 from revenant.exhume.models import CdxRow, Tombstone
 from revenant.exhume.run import served_timestamp, wayback_url
-from revenant.exhume.select import interval, parameter_shape, parse_query
+from revenant.exhume.select import NUMERIC_NAMES, interval, parse_query
 from revenant.exhume.store import EvidenceStore, atomic_write
 from revenant.reanimate.errors import ReanimateError
 from revenant.reanimate.record import DonorEntry, DonorIndex, dump_model
@@ -48,6 +48,21 @@ def _daily_range(pairs: list[tuple[str, str]], year: int) -> bool:
     return end == "" or (_digits(end) and int(end) >= year)
 
 
+def full_history(pairs: list[tuple[str, str]]) -> bool:
+    """Full_History: `s`, optional `ignore`, `g` empty or `d`, and `a`-`f` only when empty (Req 2.2)."""
+    if not any(key == "s" for key, _ in pairs):
+        return False
+    for key, value in pairs:
+        if key in ("s", "ignore"):
+            continue
+        if key == "g" and value in ("", "d"):
+            continue
+        if key in NUMERIC_NAMES and value == "":
+            continue
+        return False
+    return True
+
+
 def _qualifies(row: CdxRow, symbol: str, mimetypes: list[str]) -> bool:
     if not (row.statuscode.startswith("2") and len(row.statuscode) == 3):
         return False
@@ -58,7 +73,7 @@ def _qualifies(row: CdxRow, symbol: str, mimetypes: list[str]) -> bool:
     pairs = parse_query(row.original)  # HTML-unescaped (F15) and percent-decoded
     if _first(pairs, "s") != symbol:
         return False
-    if parameter_shape(pairs) == "s_only":
+    if full_history(pairs):
         return True
     year = row.timestamp[:4]
     return _digits(year) and _daily_range(pairs, int(year))
@@ -86,7 +101,7 @@ def _served_date(served: str) -> date | None:
         return None
 
 
-def accept(body: bytes, served: str | None) -> str | None:
+def accept(body: bytes, served: str | None, cover: tuple[date, date] | None = None) -> str | None:
     """None when `body` qualifies as a Donor_Capture, else the reason it does not (Req 2.3)."""
     if served is None or len(served) < 8 or not _digits(served):
         return f"served timestamp {served!r} is not a capture timestamp"
@@ -103,14 +118,26 @@ def accept(body: bytes, served: str | None) -> str | None:
         return "body is not valid UTF-8"
     if not parsed.rows:
         return "body has no Data_Row"
-    found = [parse_row_date(row.split(",", 1)[0], served_on.year) for row in parsed.rows]
-    dates = [item[0] for item in found if item is not None]
-    if not dates:
-        return "no Data_Row has a valid Row_Date"
-    newest = max(dates)
+    dates = _row_dates(parsed.rows, served_on.year)
+    if dates is None:
+        return "a Data_Row has an unparseable Row_Date"
+    oldest, newest = min(dates), max(dates)
     if not served_on - MAX_STALENESS <= newest <= served_on:
         return f"newest Row_Date {newest} is not within 7 days before {served_on}"
+    if cover is not None and not (oldest <= cover[0] and newest >= cover[1]):
+        return f"Row_Dates {oldest}..{newest} do not cover {cover[0]}..{cover[1]}"
     return None
+
+
+def _row_dates(rows: Sequence[str], year: int) -> list[date] | None:
+    """Every Data_Row's Row_Date, or None when any one fails to parse (strict, Req 2.3)."""
+    dates: list[date] = []
+    for row in rows:
+        found = parse_row_date(row.split(",", 1)[0], year)
+        if found is None:
+            return None
+        dates.append(found[0])
+    return dates
 
 
 def donor_file_name(symbol: str) -> str:
@@ -157,9 +184,7 @@ def _reusable(slug_dir: Path, entry: DonorEntry | None) -> bool:
 
 def _make_entry(symbol: str, row: CdxRow, url: str, served: str, body: bytes) -> DonorEntry:
     parsed = parse_body(body, "donor")
-    year = int(served[:4])
-    found = [parse_row_date(line.split(",", 1)[0], year) for line in parsed.rows]
-    dates = sorted(item[0] for item in found if item is not None)
+    dates = sorted(_row_dates(parsed.rows, int(served[:4])) or [])  # accept() parsed them all
     return DonorEntry(
         symbol=symbol,
         file=donor_file_name(symbol),
@@ -174,7 +199,10 @@ def _make_entry(symbol: str, row: CdxRow, url: str, served: str, body: bytes) ->
 
 
 def _try_candidates(
-    archive: ArchiveClient, symbol: str, rows: Sequence[CdxRow]
+    archive: ArchiveClient,
+    symbol: str,
+    rows: Sequence[CdxRow],
+    cover: tuple[date, date] | None = None,
 ) -> tuple[DonorEntry, bytes] | None:
     """Fetch at most MAX_TRIES candidates; the first that `accept`s wins (Req 2.3)."""
     for row in rows[:MAX_TRIES]:
@@ -187,7 +215,7 @@ def _try_candidates(
             continue
         served = served_timestamp(response)
         body = response.content
-        if served is None or accept(body, served) is not None:
+        if served is None or accept(body, served, cover) is not None:
             continue
         return _make_entry(symbol, row, url, served, body), body
     return None
@@ -219,17 +247,24 @@ def fetch_donors(
             continue
         if pooled is None:
             pooled = _pool_rows(archive, store, tombstone)
-        found = _try_candidates(archive, symbol, candidates(pooled, symbol, tombstone.mimetypes))
+        rows = candidates(pooled, symbol, tombstone.mimetypes)
+        found = _try_candidates(archive, symbol, rows, tombstone.cover())
         if found is None:
-            report.missing[symbol] = f"{symbol}: no capture qualified as a donor"
+            message = f"{symbol}: no capture qualified as a donor"
+            if entries.pop(symbol, None) is not None:  # stale entry; its file stays on disk
+                message += "; its stale Donor_Index entry was removed"
+                _write_index(slug_dir, tombstone.slug, entries)
+            report.missing[symbol] = message
             if symbol in tombstone.donor_required:
                 report.required_missing.append(symbol)
             continue
         entry, body = found
         atomic_write(slug_dir / "donor" / entry.file, body)
         entries[symbol] = entry
-        atomic_write(
-            index_path(slug_dir), dump_model(DonorIndex(slug=tombstone.slug, entries=entries))
-        )
+        _write_index(slug_dir, tombstone.slug, entries)
         report.stored.append(symbol)
     return report
+
+
+def _write_index(slug_dir: Path, slug: str, entries: dict[str, DonorEntry]) -> None:
+    atomic_write(index_path(slug_dir), dump_model(DonorIndex(slug=slug, entries=entries)))
