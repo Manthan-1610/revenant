@@ -66,18 +66,19 @@ Exhume (Kiro Spec session, using the execution-rules prompt)
 - [x] Fire both hooks once from a real IDE save (a shell can't trigger them) *(done Sat)*
 - [x] **Install Kiro CLI + headless smoke test** *(kiro-cli 3.5.0, Google login, `--v3 --no-interactive` returned PULSE)*
 - [ ] Social post #2 (the 0-indexed-month discovery)
-- [ ] **Must-have:** the generated spec exists, and 2 hooks are committed and have fired at least once
+- [x] **Must-have:** the generated spec exists, and 2 hooks are committed and have fired at least once
 
 ### Wed Nov 25: Reanimate
 - [x] Reanimate spec (requirements + design + tasks, lean) *(done Thu: 7 requirements, 200-line design, 10 tasks; approved with 5 amendments)*
 - [x] Autopsy precision fix: Yahoo_Number (F23) and `000` volume (F24) *(708,285 of 708,285 values; dividends use a fixed 6 decimals)*
-- [ ] Runner: `kiro-cli chat --v3 --no-interactive --trust-tools=<narrow list>` builds `crypt/<slug>/server.py` from the generated spec + `contract.json`
-- [ ] Donor adapter (the live source from Saturday) + **offline replay fallback** (serve archived evidence when the donor fails, so the judges' demo never dies)
-- [ ] **Must-have:** `curl "http://127.0.0.1:8000/table.csv?s=AAPL&a=0&b=4&c=2016&d=0&e=8&f=2016&g=d&ignore=.csv"` returns CSV in the old format
+- [x] Runner: `kiro-cli chat --v3 --no-interactive --trust-tools=<narrow list>` builds `crypt/<slug>/server.py` from the generated spec + `contract.json` *(done Thu Nov 26: first headless build passed on attempt 1, 46 s)*
+- [x] Donor = Yahoo's own archived AAPL capture `20161222215700` (9,086 rows, 1980–2016), committed, so the server never needs the network *(it doesn't need a live donor or a replay fallback)*
+- [x] **Must-have:** `curl "http://127.0.0.1:8000/table.csv?s=AAPL&a=0&b=4&c=2016&d=0&e=8&f=2016&g=d&ignore=.csv"` returns CSV in the old format *(Claude verified: rows byte-identical to the archive)*
+- [x] Reanimate tasks 5–10: scope check, import audit, redaction, full Build_Record, IDE fallback, all 3 Checks, optional donors, final rebuild *(done Thu: kiro-cli 3.6.2 rebuild passed all 3 Checks; 4 donors (AAPL, MSFT, ^GSPC, YHOO), Claude verified every served row verbatim against them; 354 tests)*
 
 ### Thu Nov 26 (Thanksgiving): light day
-- [ ] Fix whatever Wednesday left broken
-- [ ] Check that the revenant keeps every quirk: newest-first rows, header, `text/csv`, 0-indexed months
+- [x] Fix whatever Wednesday left broken *(nothing was broken)*
+- [x] Check that the revenant keeps every quirk: newest-first rows, header, `text/csv`, 0-indexed months *(Claude probed: month-12 rollover, day 31, template junk, unknown symbol, g=w, s-only, any Host header)*
 - [ ] **Must-have:** none. Rest if you need to.
 
 ---

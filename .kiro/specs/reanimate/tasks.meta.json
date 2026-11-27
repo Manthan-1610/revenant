@@ -15,6 +15,14 @@
     "3.4 Write property test P6 in `tests/reanimate/test_server.py`": {
       "status": "passed",
       "lastRunTimestamp": 1795731491083
+    },
+    "5.2 Write property test P4 in `tests/reanimate/test_scope.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795734765997
+    },
+    "6.2 Write property test P3 in `tests/reanimate/test_redact.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795735378858
     }
   },
   "executionHistory": {
@@ -272,6 +280,228 @@
         "executionId": "42b6c693-e6e4-4af6-b1a6-366a83434de6",
         "chatSessionId": "sess_3ff368a7-b527-4421-96e2-66c04212622c",
         "timestamp": 1795733682030
+      }
+    ],
+    "5.1 Write `scope.py` and add `ScopeChange` to `record.py`": [
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795734514764
+      },
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795734646528
+      }
+    ],
+    "5.2 Write property test P4 in `tests/reanimate/test_scope.py`": [
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795734647595
+      },
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795734796593
+      }
+    ],
+    "5.3 Write `audit.py`": [
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795734647815
+      },
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795734796981
+      }
+    ],
+    "5.4 Wire scope and audit into `runner.py` and write tests in `test_audit.py` and `test_runner.py`": [
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795734799986
+      },
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795735016303
+      }
+    ],
+    "5. Add the scope diff (`scope.py`) and the import audit (`audit.py`)": [
+      {
+        "executionId": "12d5cd68-fbf0-40bd-97a5-a5c49018b448",
+        "chatSessionId": "sess_1ac30629-0e94-4784-a6d3-8c12e84850d3",
+        "timestamp": 1795735016497
+      }
+    ],
+    "6.1 Write `Redactor(api_key, home)`": [
+      {
+        "executionId": "7252d18d-7978-48d8-ab19-e6e44d6553f5",
+        "chatSessionId": "sess_7023d74f-f90d-40e0-a876-448a380e38a7",
+        "timestamp": 1795735117478
+      },
+      {
+        "executionId": "7252d18d-7978-48d8-ab19-e6e44d6553f5",
+        "chatSessionId": "sess_7023d74f-f90d-40e0-a876-448a380e38a7",
+        "timestamp": 1795735310556
+      }
+    ],
+    "6.2 Write property test P3 in `tests/reanimate/test_redact.py`": [
+      {
+        "executionId": "7252d18d-7978-48d8-ab19-e6e44d6553f5",
+        "chatSessionId": "sess_7023d74f-f90d-40e0-a876-448a380e38a7",
+        "timestamp": 1795735313193
+      },
+      {
+        "executionId": "7252d18d-7978-48d8-ab19-e6e44d6553f5",
+        "chatSessionId": "sess_7023d74f-f90d-40e0-a876-448a380e38a7",
+        "timestamp": 1795735454368
+      }
+    ],
+    "6.3 Apply the Redactor everywhere and test it end to end": [
+      {
+        "executionId": "7252d18d-7978-48d8-ab19-e6e44d6553f5",
+        "chatSessionId": "sess_7023d74f-f90d-40e0-a876-448a380e38a7",
+        "timestamp": 1795735457028
+      },
+      {
+        "executionId": "7252d18d-7978-48d8-ab19-e6e44d6553f5",
+        "chatSessionId": "sess_7023d74f-f90d-40e0-a876-448a380e38a7",
+        "timestamp": 1795735715806
+      }
+    ],
+    "6. Add redaction (`redact.py`)": [
+      {
+        "executionId": "7252d18d-7978-48d8-ab19-e6e44d6553f5",
+        "chatSessionId": "sess_7023d74f-f90d-40e0-a876-448a380e38a7",
+        "timestamp": 1795735715971
+      }
+    ],
+    "7.1 Complete `BuildRecord` and the failure paths in `runner.py`": [
+      {
+        "executionId": "dd4285e8-3a63-45d3-af8a-ac2fce7e69fd",
+        "chatSessionId": "sess_a1e86eda-f2d9-4599-b0ee-be7d6eb96c55",
+        "timestamp": 1795735894727
+      },
+      {
+        "executionId": "dd4285e8-3a63-45d3-af8a-ac2fce7e69fd",
+        "chatSessionId": "sess_a1e86eda-f2d9-4599-b0ee-be7d6eb96c55",
+        "timestamp": 1795736063381
+      }
+    ],
+    "7.2 Write exit-code tests in `tests/reanimate/test_runner.py`": [
+      {
+        "executionId": "dd4285e8-3a63-45d3-af8a-ac2fce7e69fd",
+        "chatSessionId": "sess_a1e86eda-f2d9-4599-b0ee-be7d6eb96c55",
+        "timestamp": 1795736063788
+      },
+      {
+        "executionId": "dd4285e8-3a63-45d3-af8a-ac2fce7e69fd",
+        "chatSessionId": "sess_a1e86eda-f2d9-4599-b0ee-be7d6eb96c55",
+        "timestamp": 1795736249359
+      }
+    ],
+    "7. Complete the Build_Record and the exit-code mapping": [
+      {
+        "executionId": "dd4285e8-3a63-45d3-af8a-ac2fce7e69fd",
+        "chatSessionId": "sess_a1e86eda-f2d9-4599-b0ee-be7d6eb96c55",
+        "timestamp": 1795736249507
+      }
+    ],
+    "8.1 Implement `--prompt-only` and `--built-by kiro-ide-chat` in `runner.py` and `revenant/cli.py`": [
+      {
+        "executionId": "f837b976-0e88-4f31-abda-f65036b7c870",
+        "chatSessionId": "sess_7e44b817-8143-4117-b98a-df0a282805cb",
+        "timestamp": 1795736362323
+      },
+      {
+        "executionId": "f837b976-0e88-4f31-abda-f65036b7c870",
+        "chatSessionId": "sess_7e44b817-8143-4117-b98a-df0a282805cb",
+        "timestamp": 1795736565241
+      }
+    ],
+    "8.2 Write tests in `tests/reanimate/test_runner.py`": [
+      {
+        "executionId": "f837b976-0e88-4f31-abda-f65036b7c870",
+        "chatSessionId": "sess_7e44b817-8143-4117-b98a-df0a282805cb",
+        "timestamp": 1795736568258
+      },
+      {
+        "executionId": "f837b976-0e88-4f31-abda-f65036b7c870",
+        "chatSessionId": "sess_7e44b817-8143-4117-b98a-df0a282805cb",
+        "timestamp": 1795736791041
+      }
+    ],
+    "8. Add the IDE fallback options": [
+      {
+        "executionId": "f837b976-0e88-4f31-abda-f65036b7c870",
+        "chatSessionId": "sess_7e44b817-8143-4117-b98a-df0a282805cb",
+        "timestamp": 1795736791190
+      }
+    ],
+    "9.1 Add `eval_unknown`, `eval_weekly` and the Check sequence to `check.py` and `runner.py`": [
+      {
+        "executionId": "22408738-739f-4c87-94b7-a7ba1cbc2aec",
+        "chatSessionId": "sess_ea41a55e-148d-4b66-8420-3bafa448bd52",
+        "timestamp": 1795736953775
+      },
+      {
+        "executionId": "22408738-739f-4c87-94b7-a7ba1cbc2aec",
+        "chatSessionId": "sess_ea41a55e-148d-4b66-8420-3bafa448bd52",
+        "timestamp": 1795737147289
+      }
+    ],
+    "9.2 Write tests in `tests/reanimate/test_check.py` with misbehaving fixture servers": [
+      {
+        "executionId": "22408738-739f-4c87-94b7-a7ba1cbc2aec",
+        "chatSessionId": "sess_ea41a55e-148d-4b66-8420-3bafa448bd52",
+        "timestamp": 1795737148096
+      },
+      {
+        "executionId": "22408738-739f-4c87-94b7-a7ba1cbc2aec",
+        "chatSessionId": "sess_ea41a55e-148d-4b66-8420-3bafa448bd52",
+        "timestamp": 1795737421108
+      }
+    ],
+    "9. Complete the Check cases": [
+      {
+        "executionId": "22408738-739f-4c87-94b7-a7ba1cbc2aec",
+        "chatSessionId": "sess_ea41a55e-148d-4b66-8420-3bafa448bd52",
+        "timestamp": 1795737421318
+      }
+    ],
+    "10.1 Add the optional symbols and the gitignore smoke test": [
+      {
+        "executionId": "cd98cf25-e692-4ccc-b9cf-aa302749aaa7",
+        "chatSessionId": "sess_4779c5e0-262f-468b-aa2f-fb285f078773",
+        "timestamp": 1795737466910
+      },
+      {
+        "executionId": "cd98cf25-e692-4ccc-b9cf-aa302749aaa7",
+        "chatSessionId": "sess_4779c5e0-262f-468b-aa2f-fb285f078773",
+        "timestamp": 1795737723603
+      }
+    ],
+    "10.2 (LIVE) Final end-to-end run": [
+      {
+        "executionId": "cd98cf25-e692-4ccc-b9cf-aa302749aaa7",
+        "chatSessionId": "sess_4779c5e0-262f-468b-aa2f-fb285f078773",
+        "timestamp": 1795737726593
+      },
+      {
+        "executionId": "cd98cf25-e692-4ccc-b9cf-aa302749aaa7",
+        "chatSessionId": "sess_4779c5e0-262f-468b-aa2f-fb285f078773",
+        "timestamp": 1795738439017
+      }
+    ],
+    "10. Add the optional donors, commit the outputs and run end to end": [
+      {
+        "executionId": "cd98cf25-e692-4ccc-b9cf-aa302749aaa7",
+        "chatSessionId": "sess_4779c5e0-262f-468b-aa2f-fb285f078773",
+        "timestamp": 1795738439227
       }
     ]
   }

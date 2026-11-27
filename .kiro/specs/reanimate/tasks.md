@@ -123,76 +123,76 @@ marked **(LIVE)** need the Archive or a real kiro-cli; their tests carry `@pytes
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 3.2, 3.6, 4.4, 4.5, 6.1, 6.2, 7.6_
 
-- [ ] 5. Add the scope diff (`scope.py`) and the import audit (`audit.py`)
-  - [ ] 5.1 Write `scope.py` and add `ScopeChange` to `record.py`
+- [x] 5. Add the scope diff (`scope.py`) and the import audit (`audit.py`)
+  - [x] 5.1 Write `scope.py` and add `ScopeChange` to `record.py`
     - `snapshot(root, exclude) -> dict[str, str]` (POSIX path → SHA-256) skips the Build_Log, the root-level `.git/`, `.venv/`, `.hypothesis/`, `.pytest_cache/`, `.ruff_cache/`, and any `__pycache__/` at any depth; `diff(before, after) -> list[ScopeChange]` in path order
     - _Requirements: 7.1_
-  - [ ] 5.2 Write property test P4 in `tests/reanimate/test_scope.py`
+  - [x] 5.2 Write property test P4 in `tests/reanimate/test_scope.py`
     - **Property 4: Scope diff is exact**: for any snapshot and any set of creations, changes and deletions applied to it, `diff` returns exactly those paths with their change types in path order, and an empty list when nothing changed
     - Example tests in the same file: a change under each excluded location (`.git/`, `.venv/`, `.hypothesis/`, `.pytest_cache/`, `.ruff_cache/`, a nested `__pycache__/`, the Build_Log) yields no change; a change to any other file (including a nested `.venv/` that is not at root) is still reported
     - **Validates: Requirements 7.1**
-  - [ ] 5.3 Write `audit.py`
+  - [x] 5.3 Write `audit.py`
     - `audit(server) -> list[str]` via `ast`: imports must be `fastapi`, `uvicorn` or in `sys.stdlib_module_names`; relative imports and string constants containing `evidence/` or `evidence\` are violations, each named
     - Also run `py_compile` on `server.py` and the Ruff_F_Check `sys.executable -m ruff check --isolated --select F <server.py>`; a compile error or any finding is a violation, named in the list (exit 1 via the Runner). Style is not checked (`crypt/*/server.py` stays in `extend-exclude`, `pyproject.toml` line 42)
     - In `prompt.py`, add the line "Python 3.12 style: `X | None`, f-strings." to the Reanimate_Prompt
     - _Requirements: 3.1, 7.3, 7.4_
-  - [ ] 5.4 Wire scope and audit into `runner.py` and write tests in `test_audit.py` and `test_runner.py`
+  - [x] 5.4 Wire scope and audit into `runner.py` and write tests in `test_audit.py` and `test_runner.py`
     - Snapshot immediately before `chat` and after it exits or is stopped, before `copy_back`; any change → list each path with its change type, record it, leave files as they are, skip the Check, exit 1; audit after `copy_back` → record violations, skip the Check, exit 1
     - Tests: a stub mode that writes a file in the repo and one that deletes one; audit cases for `requests`, `httpx`, a relative import, an `evidence/` string, a syntax error (`py_compile`), an undefined name (Ruff_F_Check), a style-only issue that passes, and the fixture server passing; the prompt contains the Python 3.12 style line
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 3.1, 7.1, 7.3, 7.4_
 
-- [ ] 6. Add redaction (`redact.py`)
-  - [ ] 6.1 Write `Redactor(api_key, home)`
+- [x] 6. Add redaction (`redact.py`)
+  - [x] 6.1 Write `Redactor(api_key, home)`
     - Replace the `KIRO_API_KEY` value (when set and non-empty), then every Email_Like_String, with `[REDACTED]`; then each Home_Path spelling (native, forward-slash, JSON-escaped, percent-encoded such as `c%3A/Users/<name>` and `C%3A%5CUsers%5C<name>`), longest first, drive letter case-insensitive, with `~`
     - The `Redactor` docstring documents the accepted over-redaction: the email pattern also matches `n@app.get` in an escaped `\n@app.get`
     - _Requirements: 7.2_
-  - [ ] 6.2 Write property test P3 in `tests/reanimate/test_redact.py`
+  - [x] 6.2 Write property test P3 in `tests/reanimate/test_redact.py`
     - **Property 3: Redaction removes every secret**: for any text embedding a key (16+ characters, not a substring of `[REDACTED]` or `~`), Email_Like_Strings and the Home_Path in every spelling (native, forward-slash, JSON-escaped, percent-encoded with `/` or `%5C` separators, drive letter in either case), the output contains none of them, and redacting twice equals redacting once
     - **Validates: Requirements 7.2**
-  - [ ] 6.3 Apply the Redactor everywhere and test it end to end
+  - [x] 6.3 Apply the Redactor everywhere and test it end to end
     - Redact the Reanimate_Prompt, each Build_Log line, the Build_Record and all console output; keep `whoami` stdout discarded
     - Add a `FAKE_KIRO_MODE` that prints a fake key (also set as `KIRO_API_KEY` via `monkeypatch`), a fake email such as `ghost@example.invalid` and a fake home path in native, forward-slash, JSON-escaped and percent-encoded (`file:///c%3A/Users/<name>/...`) spellings on `whoami`, `--version` and `chat`; assert none appears in any Write_Scope file or captured console output
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 7.2, 7.6_
 
-- [ ] 7. Complete the Build_Record and the exit-code mapping
-  - [ ] 7.1 Complete `BuildRecord` and the failure paths in `runner.py`
+- [x] 7. Complete the Build_Record and the exit-code mapping
+  - [x] 7.1 Complete `BuildRecord` and the failure paths in `runner.py`
     - Fields: `build_path`, `prompt_sha256` (bytes on disk after redaction), `kiro_version`, `kiro_exit_code`, `timed_out`, `note`, `model: str | None` (from `ChatResult.model`; null for `kiro-ide-chat`; in `kiro.py`, `find_model(events)` returns the first `model`, `modelId` or `model_id` value an event reports, else the `currentValue` of the first `configOptions` entry with `id == "model"` (e.g. `"auto"` from `config_option_update`), else `None`; never guessed), `started_at`/`ended_at` (ISO 8601 UTC with `Z`), `scope_changes`, `import_violations`, `checks` (null per Check that did not run); write it after every finished build: exit 0, non-zero, 15-minute stop, and no `server.py` ("kiro-cli wrote no server")
     - `kiro-cli` not on PATH or `whoami` non-zero → message naming the prerequisite and the `--prompt-only` / `--built-by kiro-ide-chat` fallbacks, exit 2; `--version` non-zero, empty or > 30 s → name the IDE fallback, exit 2; kiro failure → print the kept workspace path via `display`, no success message, exit 1
     - _Requirements: 3.3, 3.5, 4.4, 4.5, 4.6, 1.6_
-  - [ ] 7.2 Write exit-code tests in `tests/reanimate/test_runner.py`
+  - [x] 7.2 Write exit-code tests in `tests/reanimate/test_runner.py`
     - One test per row of the design's Error Handling table with the stub modes (not on PATH, whoami fails, version fails/empty/slow, chat non-zero, timeout with a short limit, no server.py, required donor missing); each asserts the exit code, that no later stage ran, the Build_Record contents where one is written, and that the kept workspace path starts with `~` when under the home directory
     - `find_model` examples in `tests/reanimate/test_kiro.py`: a `model`/`modelId`/`model_id` key wins over `configOptions`; a `config_option_update` event with `{"id": "model", "currentValue": "auto"}` yields `"auto"`; no such data yields `None`
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 1.2, 1.5, 1.6, 3.3, 3.5, 4.4, 4.6_
 
-- [ ] 8. Add the IDE fallback options
-  - [ ] 8.1 Implement `--prompt-only` and `--built-by kiro-ide-chat` in `runner.py` and `revenant/cli.py`
+- [x] 8. Add the IDE fallback options
+  - [x] 8.1 Implement `--prompt-only` and `--built-by kiro-ide-chat` in `runner.py` and `revenant/cli.py`
     - `--prompt-only`: Donor_Fetcher, write the prompt, print its path, exit 0; no kiro-cli check, no Check
     - `--built-by kiro-ide-chat`: Donor_Fetcher, no kiro-cli invocation or check, no Build_Workspace, existing prompt and `server.py` unchanged, Check with Build_Path `kiro-ide-chat` and null kiro version and exit code; if `server.py` or the prompt is missing, name each, run no Check, write no Build_Record, exit 2
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
-  - [ ] 8.2 Write tests in `tests/reanimate/test_runner.py`
+  - [x] 8.2 Write tests in `tests/reanimate/test_runner.py`
     - `--prompt-only` passes with no kiro-cli on PATH; `--built-by kiro-ide-chat` leaves `server.py` and the prompt byte-identical and records `kiro-ide-chat`; each missing-file case exits 2 with no `reanimate.json` written; `--help` lists both options
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 9. Complete the Check cases
-  - [ ] 9.1 Add `eval_unknown`, `eval_weekly` and the Check sequence to `check.py` and `runner.py`
+- [x] 9. Complete the Check cases
+  - [x] 9.1 Add `eval_unknown`, `eval_weekly` and the Check sequence to `check.py` and `runner.py`
     - Unknown-symbol Check: demo request with an `s` that has no Donor_Capture → 404 and `text/html` within 10 s; weekly Check: `g=w` → 404 with a non-empty `X-Revenant-Note`; both run only after the demo Check passes
     - At the end of the sequence (all run, demo failed, or 30-s wait expired) stop the server, confirm exit within 10 s, force-terminate otherwise; print each failed Check with expected and observed values, record pass, fail or not_run for every Check, no success message, exit 1
     - _Requirements: 6.3, 6.4, 6.5, 6.6_
-  - [ ] 9.2 Write tests in `tests/reanimate/test_check.py` with misbehaving fixture servers
+  - [x] 9.2 Write tests in `tests/reanimate/test_check.py` with misbehaving fixture servers
     - Fixture variants under `tests/reanimate/fixtures/`: one that never answers (short wait limit in the test), one that exits on import, one that returns 200 for an unknown symbol, one without `X-Revenant-Note`, one that ignores SIGTERM-style stop; assert the recorded results, the printed expected/observed values, exit 1 and that no server process remains
     - Checkpoint: run ruff and pytest; all non-live tests pass
     - _Requirements: 6.1, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 10. Add the optional donors, commit the outputs and run end to end
-  - [ ] 10.1 Add the optional symbols and the gitignore smoke test
+- [x] 10. Add the optional donors, commit the outputs and run end to end
+  - [x] 10.1 Add the optional symbols and the gitignore smoke test
     - In `tombstones/yahoo-finance-ichart.toml`: `donor_symbols = ["AAPL", "MSFT", "^GSPC", "YHOO"]`, `donor_required = ["AAPL"]`
     - Write `tests/reanimate/test_gitignore.py`: `git check-ignore` reports none of `crypt/yahoo-finance-ichart/{server.py,donor/index.json,error-404.html,reanimate-prompt.md,reanimate.json,reanimate.log}` as ignored, and `git check-attr text` reports `unset` for `crypt/yahoo-finance-ichart/donor/AAPL.csv` and `crypt/yahoo-finance-ichart/error-404.html` (the `.gitattributes` lines from task 1.1)
     - _Requirements: 2.1, 2.6, 7.5_
-  - [ ] 10.2 (LIVE) Final end-to-end run
+  - [x] 10.2 (LIVE) Final end-to-end run
     - Requires `kiro-cli whoami` to exit 0; if it fails, stop and ask the user to log in
     - Run `.venv\Scripts\revenant reanimate yahoo-finance-ichart`; confirm exit 0, MSFT, `^GSPC` (stored as `%5EGSPC.csv`) and YHOO each stored or reported missing, AAPL reused with zero Archive requests, all three Checks pass, `reanimate.json` complete
     - kiro-cli is now 3.6.2: if its build fails on a flag (or otherwise: non-zero exit, timeout or no `server.py`), apply the 4.4 stop rule: report the exit code and the last 20 Build_Log lines, retry at most once, and if the retry also fails, STOP and report
