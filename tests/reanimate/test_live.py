@@ -84,7 +84,8 @@ def test_live_build(tmp_path: Path) -> None:
     """Req 3.2, 3.6, 4.4, 4.5, 6.2: a real `kiro-cli chat --v3` headless build passes the demo Check.
 
     Runs in a `tmp_path` repo copy, so the committed `crypt/<slug>/` is untouched. The committed
-    AAPL donor is copied in, so the Donor_Fetcher reuses it (Req 2.5) and makes no Archive request.
+    donor files are copied in, so the Donor_Fetcher reuses them (Req 2.5) and makes no Archive
+    request.
     Needs a stored kiro-cli login (`kiro-cli whoami` exits 0).
     """
     kiro = KiroCli()
@@ -113,7 +114,8 @@ def test_live_build(tmp_path: Path) -> None:
     summary = runner.reanimate(SLUG, prompt_only=False, built_by=runner.HEADLESS, deps=deps)
 
     slug_dir = tmp_path / "crypt" / SLUG
-    assert summary.stored == ["AAPL"]
+    # Every committed donor (AAPL plus the optional symbols of task 10.1) is reused offline.
+    assert summary.stored == load_tombstone(SLUG, REPO / "tombstones").donor_symbols
     assert summary.checks["demo"] is not None and summary.checks["demo"].result == "pass"
     assert (slug_dir / "server.py").is_file()
     record = BuildRecord.model_validate_json((slug_dir / runner.RECORD_NAME).read_bytes())

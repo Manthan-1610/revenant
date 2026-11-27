@@ -10,6 +10,39 @@
       "sha256": "6a41a369c4f8c7cd2c4cbf71b10e18cf3be8560f9269f1295cacfab19dc8b4ed",
       "source_url": "https://web.archive.org/web/20161222215700id_/http://ichart.finance.yahoo.com/table.csv?s=AAPL&g=d&ignore=.csv",
       "symbol": "AAPL"
+    },
+    "MSFT": {
+      "file": "MSFT.csv",
+      "first_date": "1986-03-13",
+      "host": "ichart.yahoo.com",
+      "last_date": "2017-03-17",
+      "rows": 7819,
+      "served_timestamp": "20170319115659",
+      "sha256": "58e195c3d708cc30c1c9cc9fd0a9c9b6f117670ff4b8a20e9e0bc8bce5b402b3",
+      "source_url": "https://web.archive.org/web/20170319115659id_/http://ichart.yahoo.com/table.csv?s=MSFT",
+      "symbol": "MSFT"
+    },
+    "YHOO": {
+      "file": "YHOO.csv",
+      "first_date": "1996-04-12",
+      "host": "real-chart.finance.yahoo.com",
+      "last_date": "2016-10-12",
+      "rows": 5162,
+      "served_timestamp": "20161013060742",
+      "sha256": "111c3d3918c5d77fc6a31e06fdfb4263b2266b7cacaefcff1488e570208c12f5",
+      "source_url": "https://web.archive.org/web/20161013060742id_/http://real-chart.finance.yahoo.com:80/table.csv?s=YHOO&amp;ignore=.csv",
+      "symbol": "YHOO"
+    },
+    "^GSPC": {
+      "file": "%5EGSPC.csv",
+      "first_date": "1950-01-03",
+      "host": "ichart.finance.yahoo.com",
+      "last_date": "2016-08-02",
+      "rows": 16754,
+      "served_timestamp": "20160803061104",
+      "sha256": "3750cf3590c15397255f6d4ff605f9ca3271537022c19899053ef8ac790bce9a",
+      "source_url": "https://web.archive.org/web/20160803061104id_/http://ichart.finance.yahoo.com:80/table.csv?s=%5EGSPC&ignore=.csv",
+      "symbol": "^GSPC"
     }
   },
   "slug": "yahoo-finance-ichart"

@@ -2,7 +2,6 @@ import calendar
 import json
 from datetime import date
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI, Request
 from fastapi.responses import Response
@@ -12,99 +11,95 @@ HEADER_LINE = b"Date,Open,High,Low,Close,Volume,Adj Close"
 
 app = FastAPI()
 
-_index = json.loads((BASE / "donor" / "index.json").read_text(encoding="utf-8"))
-_entries = _index.get("entries", _index)
-_404_BODY = (BASE / "error-404.html").read_bytes()
-
-_donors = {}
-for _sym, _entry in _entries.items():
-    _raw = (BASE / "donor" / _entry["file"]).read_bytes()
-    _rows = []
-    for _line in _raw.split(b"\n"):
-        _field = _line.split(b",", 1)[0].strip()
-        try:
-            _d = date.fromisoformat(_field.decode("ascii"))
-        except Exception:
-            continue
-        _rows.append((_d, _line))
-    _donors[_sym] = _rows
+_INDEX: dict = json.loads((BASE / "donor" / "index.json").read_text(encoding="utf-8")).get("entries", {})
+_ERROR_404: bytes = (BASE / "error-404.html").read_bytes()
+_DONORS: dict[str, list[tuple[date, bytes]]] = {}
 
 
-def _donor_header(symbol: Optional[str]) -> str:
-    entry = _entries.get(symbol) if symbol else None
-    if entry is None:
-        return "none"
-    return "wayback:%s/%s" % (entry["host"], entry["served_timestamp"])
-
-
-def _not_found(symbol: Optional[str], note: Optional[str] = None) -> Response:
-    headers = {
-        "X-Revenant-Donor": _donor_header(symbol),
-        "Content-Type": "text/html",
-    }
-    if note:
-        headers["X-Revenant-Note"] = note
-    return Response(content=_404_BODY, status_code=404, headers=headers)
-
-
-def _to_int(value: Optional[str]) -> Optional[int]:
-    if value is None:
-        return None
+def _parse_row_date(row: bytes) -> date | None:
     try:
-        return int(value)
-    except Exception:
+        text = row[:10].decode("ascii")
+        return date(int(text[0:4]), int(text[5:7]), int(text[8:10]))
+    except (ValueError, UnicodeDecodeError):
         return None
 
 
-def _resolve(params, month_key, day_key, year_key) -> Optional[date]:
-    m = _to_int(params.get(month_key))
-    d = _to_int(params.get(day_key))
-    y = _to_int(params.get(year_key))
-    if m is None or d is None or y is None:
+def _load(symbol: str) -> list[tuple[date, bytes]]:
+    rows = _DONORS.get(symbol)
+    if rows is None:
+        data = (BASE / "donor" / _INDEX[symbol]["file"]).read_bytes()
+        rows = []
+        for line in data.split(b"\n")[1:]:
+            if not line.strip():
+                continue
+            d = _parse_row_date(line)
+            if d is not None:
+                rows.append((d, line))
+        _DONORS[symbol] = rows
+    return rows
+
+
+def _resolve_date(params, names: tuple[str, str, str]) -> date | None:
+    try:
+        month = int(params.get(names[0], ""))
+        day = int(params.get(names[1], ""))
+        year = int(params.get(names[2], ""))
+        year += month // 12
+        month = month % 12 + 1
+        if not 1 <= year <= 9999:
+            return None
+        day = max(1, min(day, calendar.monthrange(year, month)[1]))
+        return date(year, month, day)
+    except (ValueError, TypeError, OverflowError):
         return None
-    year = y + m // 12
-    month = m % 12 + 1
-    if year < 1 or year > 9999:
-        return None
-    dim = calendar.monthrange(year, month)[1]
-    day = min(max(d, 1), dim)
-    return date(year, month, day)
+
+
+def _donor_header(symbol: str | None) -> str:
+    if symbol is None:
+        return "none"
+    entry = _INDEX[symbol]
+    return f"wayback:{entry['host']}/{entry['served_timestamp']}"
+
+
+def _not_found(symbol: str | None, extra: dict[str, str] | None = None) -> Response:
+    headers = {"X-Revenant-Donor": _donor_header(symbol)}
+    if extra:
+        headers.update(extra)
+    return Response(content=_ERROR_404, status_code=404, media_type="text/html", headers=headers)
 
 
 @app.get("/table.csv")
-async def table_csv(request: Request):
+def table_csv(request: Request) -> Response:
     params = request.query_params
-    g = params.get("g")
-    s = params.get("s")
+    s = params.get("s", "")
+    symbol = s if s in _INDEX else None
 
-    if g:
-        if g != "d":
-            return _not_found(
-                s if s in _entries else None,
-                "interval %s is not reanimated yet" % g,
-            )
+    g = params.get("g", "")
+    if g != "" and g != "d":
+        return _not_found(symbol, {"X-Revenant-Note": f"interval {g} is not reanimated yet"})
 
-    if not s or s not in _entries:
+    if symbol is None:
         return _not_found(None)
 
-    rows = _donors[s]
+    rows = _load(symbol)
     if not rows:
-        return _not_found(s)
+        return _not_found(symbol)
 
-    dates = [r[0] for r in rows]
-    start = _resolve(params, "a", "b", "c") or min(dates)
-    end = _resolve(params, "d", "e", "f") or max(dates)
+    start = _resolve_date(params, ("a", "b", "c"))
+    end = _resolve_date(params, ("d", "e", "f"))
+    if start is None:
+        start = min(d for d, _ in rows)
+    if end is None:
+        end = max(d for d, _ in rows)
 
     kept = [line for d, line in rows if start <= d <= end]
     if not kept:
-        return _not_found(s)
+        return _not_found(symbol)
 
-    body = HEADER_LINE + b"\n" + b"\n".join(kept) + b"\n"
+    body = HEADER_LINE + b"\n" + b"".join(line + b"\n" for line in kept)
     return Response(
         content=body,
         status_code=200,
-        headers={
-            "X-Revenant-Donor": _donor_header(s),
-            "Content-Type": "text/csv",
-        },
+        media_type="text/csv",
+        headers={"X-Revenant-Donor": _donor_header(symbol)},
     )

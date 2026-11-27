@@ -7,15 +7,27 @@
       "observed": null,
       "result": "pass"
     },
-    "unknown_symbol": null,
-    "weekly": null
+    "unknown_symbol": {
+      "expected": null,
+      "name": "unknown_symbol",
+      "observed": null,
+      "result": "pass"
+    },
+    "weekly": {
+      "expected": null,
+      "name": "weekly",
+      "observed": null,
+      "result": "pass"
+    }
   },
-  "ended_at": "2026-11-26T22:47:25Z",
+  "ended_at": "2026-11-27T00:03:47Z",
+  "import_violations": [],
   "kiro_exit_code": 0,
-  "kiro_version": "kiro-cli 3.5.0",
-  "model": null,
+  "kiro_version": "kiro-cli 3.6.2",
+  "model": "auto",
   "note": null,
-  "prompt_sha256": "184cbe7cb6696e0fbe9cb3e478267f48407623171cf24a496c39edb6496055b3",
-  "started_at": "2026-11-26T22:46:39Z",
+  "prompt_sha256": "9e3a395c76d18b0927f7deb5cdb7ea7c8b00f536eb31221d8b262c814fe46a28",
+  "scope_changes": [],
+  "started_at": "2026-11-27T00:03:13Z",
   "timed_out": false
 }

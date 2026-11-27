@@ -12,10 +12,15 @@ Write a FastAPI server that answers as the dead API did. All files named here ar
 Donors available now:
 
 - `AAPL`: `donor/AAPL.csv`, 9086 Data_Rows from 1980-12-12 to 2016-12-21, served by `ichart.finance.yahoo.com` at 20161222215700
+- `MSFT`: `donor/MSFT.csv`, 7819 Data_Rows from 1986-03-13 to 2017-03-17, served by `ichart.yahoo.com` at 20170319115659
+- `YHOO`: `donor/YHOO.csv`, 5162 Data_Rows from 1996-04-12 to 2016-10-12, served by `real-chart.finance.yahoo.com` at 20161013060742
+- `^GSPC`: `donor/%5EGSPC.csv`, 16754 Data_Rows from 1950-01-03 to 2016-08-02, served by `ichart.finance.yahoo.com` at 20160803061104
 
 ## Output
 
 Write exactly one file: `server.py` in this directory, exposing the FastAPI app as `app` (served by `uvicorn server:app`). Create, change or delete no other file.
+
+Python 3.12 style: `X | None`, f-strings.
 
 ## Tools
 
