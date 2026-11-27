@@ -206,7 +206,8 @@ def test_happy_path_exits_0_and_writes_every_output(
         "check",
     ]
     assert "donors stored: AAPL" in result.output
-    assert "donors missing: none" in result.output
+    # The committed Tombstone also lists optional symbols the mock archive does not serve.
+    assert "donors missing: MSFT, ^GSPC, YHOO" in result.output
     assert "build path: kiro-cli-headless" in result.output
     assert "check demo: pass" in result.output
     assert "check unknown_symbol: pass" in result.output
